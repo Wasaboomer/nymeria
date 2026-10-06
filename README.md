@@ -1,6 +1,6 @@
-# Nymeria Combat Prototype 0.1
+# Nymeria Class & Build System 0.1 — M4
 
-Combat 0.1 aggiunge il primo scontro automatico 1 contro 1 al sistema già esistente. Base Equipment & Inventory 0.1: manichino SVG e art direction esistenti, 16 slot, inventario di 44 oggetti demo e regole centralizzate. Nessun framework, backend, build obbligatoria o dipendenza runtime. GitHub Pages può servire direttamente la radice.
+M4 estende Combat 0.1 con Custode e Cacciatore, risorse e sei tendenze di build sullo stesso motore di combattimento. Base Equipment & Inventory 0.1: manichino SVG e art direction esistenti, 16 slot, inventario di 44 oggetti demo e regole centralizzate. Nessun framework, backend, build obbligatoria o dipendenza runtime. GitHub Pages può servire direttamente la radice.
 
 ## Avvio e test
 
@@ -29,7 +29,7 @@ I test touch coprono 320/390/430 px: tutte le famiglie arma/supporto, 2H, slot d
 | `equipment.js` | Stato, compatibilità, equip/rimozione, confronto, statistiche, Potere e persistenza. |
 | `character.js` | Rendering dei gruppi SVG da `appearanceItem` e riepiloghi statistiche. |
 | `inventory.js` | Pannelli equipaggiamento/inventario, filtri, ordinamento e dialogo di confronto. |
-| `app.js` | Collegamento dei moduli, tab mobile e editor dell'aspetto esistente. |
+| `app.js` | Collegamento dei moduli e editor dell'aspetto esistente. |
 | `styles.css` / `index.html` | UI, struttura, materiali e animazioni del prototipo. |
 
 ## Modello e regole
@@ -60,56 +60,139 @@ Il rig conserva la geometria originale e aggiunge gruppi per i nuovi slot. Aggio
 Per un nuovo oggetto, aggiungere dati a `equipment-data.js` e un asset/mapping a `character.js`; le regole di compatibilità restano in `equipment.js`. Non sono implementati party, dungeon, crafting, classi definitive, backend, multiplayer o monetizzazione.
 
 
-## Combat 0.1
+## Class & Build 0.1 — M4
 
-Il nuovo tab **Combattimento** richiede realmente **Arco + Faretra** (normale o delle Spine). Il messaggio porta a Equipaggiamento senza cambiare oggetti automaticamente. Il kit temporaneo Arciere comprende Tiro Rapido, Freccia Lacerante, Tiro Potente, Colpo Finale e Passo del Vento. Il Guardiano delle Rovine attacca automaticamente e usa Frattura delle Rovine ogni 8 s quando pronta; può uccidere il giocatore.
+Il tab **Classe** permette il cambio libero tra **Custode** e **Cacciatore** e la selezione di una tendenza principale. Non modifica l'inventario o l'equipaggiamento. I requisiti di combattimento sono **Spada 1H + Scudo** e **Arco + Faretra**: la UI spiega il kit richiesto e gli oggetti attuali, porta a Equipaggiamento e rifiuta l'avvio se il kit manca. Anche un profilo marcato `kitValid: false` non può avviare il motore.
 
-### Architettura
+### Architettura estesa
 
-- `combat-data.js`: formule, cinque abilità, effetti, nemico, hook degli oggetti, condizioni e validazione delle preferenze.
-- `combat-engine.js`: simulazione pura, senza DOM o timer; `create({ stats, effects, rules, seed })`, `start`, `advance`, `pause`, `resume`, `setRules`, `snapshot`. `seed` è opzionale e interno: in uso normale ogni incontro sceglie un seed casuale.
-- `combat-ui.js`: bridge all'Equipment System, pannello mobile, configurazione e un solo loop `requestAnimationFrame`. 1×/2×/4× moltiplicano il delta dello stesso loop. Nessun `setInterval` parallelo.
-- `navigation.js`: bootstrap dei tab indipendente dai moduli applicativi. Tutti gli asset usano una versione condivisa nella query URL per evitare il precedente problema di cache; aggiornarla insieme ai file durante ogni rilascio.
+| Modulo | Responsabilità |
+| --- | --- |
+| `classes-data.js` | Identità, ruolo, risorsa, statistiche preferite, tipi arma/supporto, abilità, passiva, modificatori, AUTO, sei tendenze, metriche di riepilogo. |
+| `class-system.js` | Selezione/persistenza, requisito kit e composizione di un profilo di combattimento. Nessuna copia delle statistiche degli oggetti. |
+| `build-system.js` | Compatibilità per classe, pesi/score, componenti effetti e hook futuri per sinergie/set; consigli per gli oggetti posseduti. |
+| `class-ui.js` | Pannello Classe, schede abilità, selezione tendenza e pesi dichiarati provvisori. |
+| `combat-data.js` | Formule comuni, kit legacy, nemico, effetti/hook, condizioni e normalizzazione parametrizzata sul profilo. |
+| `combat-engine.js` | Motore puro a passi fissi: risorse, abilità, effetti, mitigazione/blocco, log e risultati. Non confronta ID/nome delle classi. |
+| `combat-ui.js` | Bridge all'Equipment System, un clock RAF, risorsa sotto HP, strategie separate per classe e risultati. |
+| `inventory.js` | UI esistente con indicatori discreti e score nel confronto. |
+| `navigation.js` | Bootstrap indipendente dai moduli; cinque tab, tastiera e `hidden`. |
 
-Ogni scontro usa una copia delle statistiche reali `Equipment.state.resultingStats` e degli effetti effettivamente equipaggiati. Una modifica all'equipaggiamento interrompe/resetta lo scontro e aggiorna il modello: serve avviare un nuovo combattimento. Non viene mutato l'inventario né vengono assegnati loot, XP o ricompense.
+Il motore continua a usare copie di `Equipment.state.resultingStats` e degli effetti degli oggetti effettivamente equipaggiati. `create({ stats, effects, rules, seed, profile })` estende la vecchia API: senza `profile` il kit Combat 0.1 rimane disponibile per regressione. Il profilo contiene abilità, risorsa, modificatori, effetti, AUTO e metadati classe/build. La simulazione non accede a DOM/storage e non muta Equipment. Per aggiungere una classe usare dati e hook generici; una meccanica nuova richiederà un hook del motore, non un controllo sul nome della classe.
+
+Cambiare classe, tendenza o equipaggiamento azzera lo scontro (anche in pausa) e aggiorna il profilo. Cambiare soltanto capelli/occhi/tintura aggiorna il manichino senza interromperlo. I preset AUTO seguono la build; PERSONALIZZATA mantiene ordine e condizioni separatamente per ciascuna classe. Disponibili otto condizioni: Sempre, debuff assente, buff assente, HP nemico < X%, HP giocatore < X%, abilità pronta, Risorsa > X, Risorsa < X. Si può scegliere quale buff/debuff controllare. Tutte le soglie sono confronti stretti.
+
+### Risorse e abilità
+
+**Cacciatore:** Concentrazione iniziale 100/100, rigenerazione 6/s; Tiro Rapido recupera 4 punti. Statistiche desiderate: Agilità, Critico e Velocità. Il kit conserva Sanguinamento e il vero hook `thorn-bleed` della Faretra delle Spine.
+
+| Abilità | Danno (base × coefficiente + bonus) / effetto | CD | Costo |
+| --- | --- | --- | --- |
+| Tiro Rapido | 0,65 + 8; recupero 4 | 0 s | 0 |
+| Freccia Lacerante | 0,55 + 4; Sanguinamento | 4 s | 12 |
+| Tiro Potente | 1,8 + 12 | 6 s | 28 |
+| Colpo Finale | 0,85 + 8; ×2,3 sotto 25% HP nemico | 5 s | 22 |
+| Passo del Vento | 6 s: Agilità +8, Velocità +20 punti, Schivata +12 punti | 12 s | 10 |
+
+**Custode:** Risolutezza iniziale 0/100, nessuna rigenerazione passiva; +10 quando un colpo raggiunge il giocatore, +18 aggiuntivi se bloccato. Un colpo schivato non genera risorsa. I costi limitano la difesa attiva e il contrattacco. Passiva **Baluardo**, con kit valido: Armatura ×1,6, HP ×1,15, mitigazione aggiuntiva 12%, blocco 23% che dimezza il colpo. Statistiche desiderate: Vigor, Armatura, Forza.
+
+| Abilità | Danno / effetto | CD | Costo |
+| --- | --- | --- | --- |
+| Fendente | 0,65 × base + 6 | 0 s | 0 |
+| Guardia Ferrea | 6 s: mitigazione +18 punti, blocco +25 punti | 10 s | 15 |
+| Colpo di Scudo | 0,9 × base + 10; Sbilanciato: danno nemico −15% per 4 s | 5 s | 10 |
+| Ritorsione | 1,15 × base + 8 + 1,6 × Risolutezza spesa | 4 s | 30 |
+| Ultimo Baluardo | 7 s: mitigazione +35 punti, blocco +20 punti; AUTO sotto 35% HP | 20 s | 20 |
+
+I guadagni sono limitati al massimo; la metrica «generata» conta i punti effettivamente recuperati, escludendo quelli persi al cap. I costi vengono verificati prima della selezione/azione e non rendono negativa la risorsa. Il modello supporta anche perdita al secondo (`decay`, attualmente 0 per entrambe le classi) e guadagni da eventi. Durante la pausa non rigenera e non decade nulla.
+
+### Sei tendenze reali
+
+| Classe / tendenza | Effetto sul combattimento | AUTO (in ordine) |
+| --- | --- | --- |
+| Custode / Baluardo | Blocco +12 punti; Guardia dura 8 s e aggiunge altri 8 punti mitigazione / 10 blocco | Ultimo Baluardo → Guardia → Ritorsione (>45 risorsa) → Scudo → Fendente |
+| Custode / Ritorsione | Generazione Risolutezza ×1,5; danno Ritorsione ×1,35 | Ultimo Baluardo → Ritorsione (>29) → Scudo → Guardia → Fendente |
+| Custode / Comando | Sbilanciato dura 6 s e riduce il danno nemico del 25%; base per futura utilità di gruppo | Ultimo Baluardo → Scudo → Guardia → Ritorsione → Fendente |
+| Cacciatore / Predatore | Critico +5 punti; danno Tiro Potente ×1,15 | Finale → Potente → Lacerante → Vento → Rapido |
+| Cacciatore / Laceratore | Tick Sanguinamento ×1,45, durata +2 s | Lacerante → Finale → Potente → Vento → Rapido |
+| Cacciatore / Esploratore | Velocità +8 punti; rigenerazione ×1,25; Vento dura 8 s | Vento → Lacerante → Finale → Potente → Rapido |
+
+Ogni riga conserva le condizioni dell'abilità (es. debuff/buff assente, Finale sotto 25%, Ultimo Baluardo sotto 35%), non lancia abilità alla cieca. Queste tendenze sono una singola scelta provvisoria; nessun albero talenti o specializzazione rigida.
 
 ### Formule provvisorie
 
 Con F = Forza, A = Agilità, V = Vigor, S = Spirito, C = Critico, Ve = Velocità e Ar = Armatura:
 
 ```text
-HP massimo = round(160 + 9 × V)
-Danno base = 8 + 0,75 × F + 1,3 × A + 0,3 × S
-Danno diretto = round((base × coefficiente abilità + bonus) × eventuale critico × 100 / (100 + Ar bersaglio))
-Probabilità critico = clamp(5% + 0,15% × A + C%, 0%, 60%)
+HP = round((160 + 9 × V) × moltiplicatore HP del profilo)
+Base Cacciatore/legacy = 8 + 0,75 × F + 1,3 × A + 0,3 × S
+Base Custode = 8 + 1,6 × F + 0,25 × A + 0,2 × S
+Danno diretto = (base × coefficiente + bonus + costo × danno-per-risorsa)
+                × modificatore classe (Custode 0,95) × modificatore abilità/build
+                × eventuale critico × 100/(100 + Ar bersaglio)
+Critico = min(60%, clamp(5% + 0,15% × A + C%, 0%, 60%) + bonus build)
 Moltiplicatore critico = 1,75
-GCD = max(0,55 s, 1,6 s / (1 + Ve / 100 + A / 200))
-Schivata = clamp(0,1% × A + bonus buff, 0%, 35%)
+GCD = max(0,55 s, 1,6 s / (1 + Ve/100 + A/200))
+Schivata = clamp(0,1% × A + buff, 0%, 35%)
+Danno nemico = danno attacco × (1 − riduzione Sbilanciato, cap 80%)
+              × 100/(100 + Armatura effettiva)
+              × (1 − mitigazione complessiva, cap 80%)
+              × (1 − riduzione blocco, cap 90%) se il colpo è bloccato
+Probabilità blocco = min(80%, passiva + build + buff)
 ```
 
-Tiro Rapido: coefficiente 0,65 e bonus 8. Freccia Lacerante: 0,55 e bonus 4, cooldown 4 s. Tiro Potente: 1,8 e bonus 12, cooldown 6 s. Colpo Finale: 0,85 e bonus 8, cooldown 5 s, danno ×2,3 **sotto** il 25% HP nemico. Passo del Vento: Agilità +8, Velocità +20 punti percentuali e Schivata +12 punti per 6 s, cooldown 12 s.
+Danni arrotondati e limitati agli HP rimasti; minimo 1 per un colpo andato a segno. La risorsa usa valori frazionari e un epsilon numerico. Il riepilogo conta danno effettivo, DPS, danno subito, critici e abilità più usata; aggiunge classe/build, risorsa generata/usata, Sanguinamento per Cacciatore e mitigazione/blocchi per Custode. «Danno mitigato / bloccato» confronta il danno base dell'attacco con quello ridotto da debuff, armatura, mitigazione e blocco; non include le schivate.
 
-Sanguinamento: 6 s, tick ogni 1 s, danno base ×0,12 prima della mitigazione, nessun critico e massimo 1 stack per sorgente. Il refresh conserva il prossimo tick e non riduce potenza o scadenza già applicate. Le istanze tengono durata, stack, origine (attore/abilità/oggetto), tick e scadenza. La Faretra delle Spine viene risolta attraverso l'ID `thorn-bleed`: ogni attacco a distanza ha il 30% di probabilità di applicare/rinnovare Sanguinamento con danno dei tick ×1,35 e durata +2 s. Non si controlla il nome visualizzato dell'oggetto.
+Sanguinamento: tick ogni secondo, base ×0,12 prima della mitigazione, durata 6 s, nessun critico, 1 stack per sorgente. Il refresh conserva la cadenza e il massimo di potenza/scadenza. Faretra delle Spine: ogni `rangedHit` ha probabilità 30% di applicare/rinnovare il bleed con tick ×1,35 e +2 s. I modificatori Laceratore si combinano: tick ×1,45×1,35 e durata 10 s sul proc. Origine attore/abilità/oggetto viene mantenuta; gli altri effetti degli oggetti restano descrittivi.
 
-Il motore usa passi fissi di 50 ms e un RNG con seed. Le azioni sono selezionate in ordine: prima abilità con cooldown pronto e condizione soddisfatta. Le condizioni HP sono strettamente `<`, non `<=`. AUTO usa il preset; PERSONALIZZATA conserva cinque abilità distinte e permette riordino ↑/↓ e sei famiglie di condizioni. Le modifiche alla strategia valgono dalla prossima azione.
+Guardiano invariato: 1050 HP, Armatura 35, attacco ogni 2,4 s, primo colpo a 1,2 s; danno 44, speciale 72 con CD 8 s. Il tempo avanza in passi fissi 50 ms con RNG a seed interno. Un solo RAF gestisce 1×/2×/4×. Il background mette in pausa senza simulazione offline. Log massimo 60 eventi.
 
-### Preferenze e limiti
+Misure ripetibili (seed 1, equipaggiamento iniziale più kit richiesto): Cacciatore/Predatore vince in **19,95 s**, **52,6 DPS**, **252 danni subiti**; Custode/Baluardo vince in **36,3 s**, **28,9 DPS**, **238 danni subiti**, **9 blocchi**. Danni subiti al secondo circa **12,6 contro 6,6**. Eliminando gli altri slot, Cacciatore perde con seed 1 e Custode perde con seed 3. Strategie che non attaccano/ignorano i difensivi possono perdere: non esiste una vittoria garantita. Sono esempi, non un bilanciamento definitivo.
 
-`nymeria.combat.v1` salva modalità, ordine, condizioni e velocità. Nessun combattimento in corso viene salvato. **Reset** azzera solo lo scontro, non le preferenze né l'equipaggiamento; **Combatti di nuovo** crea un incontro nuovo. Un tab browser in background mette lo scontro in pausa: nessuna simulazione offline o recupero del tempo trascorso. Il log conserva al massimo 60 eventi, mostrati dal più recente, e il risultato include durata, danni effettivi, DPS medio, danni subiti, critici e abilità più usata.
+### Gear Advisor provvisorio
 
-Bilanciamento provvisorio, singolo kit e nemico, nessuna IA avanzata o animazione complessa. Non sono implementati ruoli, aggro, party, talenti, dungeon, loot, XP, backend o multiplayer. Il personaggio usa il manichino esistente, il nemico un semplice placeholder SVG.
+`scoreItemForBuild(item, classId, buildId)` è centralizzata; restituisce `null` per arma/supporto incompatibile con la classe. `scoreBreakdown` distingue statistiche, effetti riconosciuti e sinergie; `registerScoreHook` offre l'estensione per effetti/set contestuali futuri. Nessun punteggio basato sul solo item level.
 
-### Test aggiuntivi
+```text
+Score = Σ (statistica oggetto × peso classe/tendenza)
+        + peso effetti riconosciuti + contributi hook sinergie
+↑ Miglioramento: candidato non equipaggiato, equipaggiabile nello slot,
+                score − score attuale > max(2 punti, 5% del valore attuale)
+★ Migliore posseduto: score massimo tra gli oggetti posseduti compatibili
+                     con quello slot/classe/build e requisito livello (pari merito inclusi)
+```
 
-Con server attivo:
+| Tendenza | Forza | Agilità | Vigor | Spirito | Critico | Velocità | Armatura |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Baluardo | 1,2 | 0,4 | 3,5 | 0,4 | 0,5 | 0,8 | 3,5 |
+| Ritorsione | 3 | 0,6 | 2,4 | 0,4 | 1,4 | 1 | 2,2 |
+| Comando | 1,5 | 0,5 | 2,8 | 1 | 0,6 | 2 | 2,8 |
+| Predatore | 1 | 3 | 1 | 0,3 | 4 | 2 | 0,5 |
+| Laceratore | 1,2 | 3,5 | 1 | 0,4 | 1,8 | 2,4 | 0,5 |
+| Esploratore | 0,8 | 2,5 | 1,2 | 0,4 | 2 | 4 | 0,6 |
+
+Laceratore attribuisce inoltre **18 punti** all'effetto `thorn-bleed`. Altri effetti non ancora implementati non ricevono bonus inventati. I pesi sono dichiaratamente provvisori: il consiglio valuta lo slot, non ottimizza tutto il kit o simula il DPS. Il migliore posseduto può essere già equipaggiato; gli slot doppi non duplicano oggetti e il consiglio non promuove lo spostamento di un oggetto già equipaggiato altrove. Il confronto esistente resta la fonte per il delta reale dell'intero equipaggiamento. Inventario conserva anche gli oggetti incompatibili; nessun filtro/cancellazione imposti dalla classe. Non viene usata l'etichetta BIS nell'interfaccia.
+
+### Persistenza, regressioni e limiti
+
+- `nymeria.classes.v1`: classe scelta e tendenza conservata per ciascuna classe.
+- `nymeria.combat.v2`: modalità, regole e velocità per ciascuna classe. Importa le preferenze `nymeria.combat.v1` nel Cacciatore. Nessuno scontro viene salvato.
+- Equipment e aspetto mantengono le chiavi e normalizzazione precedenti. Reset demo ripristina l'equipaggiamento/aspetto, non classe o strategie; Reset combat azzera solo l'incontro.
+- In caso di storage negato/dati non validi si usano default e messaggi discreti, senza bloccare tab o gameplay. Gli asset condividono `?v=class-build-0.1` per evitare versioni cache miste.
 
 ```sh
+node tests/class-build-engine.cjs
+node tests/class-build-browser.cjs
 node tests/combat-engine.cjs
 node tests/combat-browser.cjs
-node tests/navigation.cjs
 node tests/browser.cjs
+node tests/navigation.cjs
 ```
 
-I 12 controlli del motore usano statistiche ottenute dall'Equipment System reale, non un secondo set fittizio. Verificano vittoria (seed 1) e sconfitta (seed 2) con lo stesso equipaggiamento, critici, cooldown, DoT/refresh/scadenza, buff, condizioni e priorità, pausa, determinismo indipendente dalla suddivisione del tempo, modifiche alla build, hook Faretra delle Spine, limite del log e validazione.
+M4 verifica entrambe le classi, sei tendenze, risorse/costi/eventi/rigenerazione/perdita, requisiti kit, statistiche reali, passive/modificatori effettivi, AUTO e strategie per classe, otto condizioni, Faretra delle Spine, score/confronti/indicatori, risultati, vittorie/sconfitte, determinismo e persistenza/migrazione. Browser touch: 320/390/430 px, errori JS e overflow, classi/build, pausa/riprendi/reset, risultati e advisor. Combat e Equipment/Inventory mantengono le suite di regressione; i test del browser Combat sono aggiornati per l'AUTO Predatore, la risorsa e i nuovi campi risultato. I 12 test legacy del motore rimangono validi senza profilo.
 
-Le prove Chromium touch a 320/390/430 px verificano l'intero flusso dal requisito dell'equipaggiamento ai risultati, le impostazioni reali della UI, pausa/ripresa, velocità 1×/2×/4× su un unico clock, replay/reset, persistenza, cambi equipaggiamento, errori JS e overflow. Il clock del browser è controllato per rendere i test temporali ripetibili; il runtime normale usa tempo reale. Safari/iPhone fisico non viene emulato da Chromium.
+UI mantenuta provvisoria; nessun asset definitivo, creazione personaggio completa, set bonus attivo, composizione di più tendenze o Gear Advisor globale. Nessun party, aggro multiplayer, healer, loot, quest, dungeon, raid, crafting, professioni, PvP, backend o monetizzazione. Chromium mobile non sostituisce Safari/iPhone fisico.
+
+### Roadmap — M5 / Progressione
+
+**TODO — Character Progression: XP, barra esperienza, level-up e curve di livello.** Non implementati in M4; nessuna barra XP finta. Il Liv. 1 esistente resta il valore demo usato dal sistema equipaggiamento.

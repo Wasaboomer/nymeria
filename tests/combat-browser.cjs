@@ -71,14 +71,14 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         await page
           .locator(".priority-row")
           .evaluateAll((rows) => rows.map((r) => r.dataset.priorityId)),
-        ["lacerating", "final", "power", "wind", "rapid"],
+        ["final", "power", "lacerating", "wind", "rapid"],
       );
       // Start via the actual UI button; then verify one clock and pause/resume.
       await page.locator("#combat-start").tap();
       assert.equal((await state()).status, "running");
-      await page.clock.runFor(1100);
+      await page.clock.runFor(2100);
       const t1 = (await state()).time;
-      assert.ok(t1 >= 1 && t1 <= 1.15);
+      assert.ok(t1 >= 2 && t1 <= 2.15);
       assert.ok((await state()).metrics.damage > 0);
       assert.ok(
         await page
@@ -124,6 +124,8 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         "rapid",
       );
       for (const type of [
+        "resourceAbove",
+        "resourceBelow",
         "ready",
         "debuffAbsent",
         "buffAbsent",
@@ -147,8 +149,10 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       );
       const savedSettings = await config();
       assert.deepEqual(
-        await page.evaluate(() =>
-          JSON.parse(localStorage.getItem(CombatUI.STORAGE_KEY)),
+        await page.evaluate(
+          () =>
+            JSON.parse(localStorage.getItem(CombatUI.STORAGE_KEY)).classes
+              .hunter,
         ),
         savedSettings,
       );
@@ -167,7 +171,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         await page.locator("#combat-result-heading").innerText(),
         "VITTORIA",
       );
-      assert.equal(await page.locator("#combat-result-stats div").count(), 6);
+      assert.equal(await page.locator("#combat-result-stats div").count(), 11);
       assert.ok((await state()).result.criticals > 0);
       const finished = await state();
       await page.clock.runFor(1000);
@@ -180,7 +184,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       assert.equal((await state()).time, 0);
       assert.equal((await state()).player.hp, (await state()).player.maxHp);
       assert.ok(!(await page.locator("#combat-result").isVisible()));
-      await page.evaluate(() => CombatUI.start({ seed: 2 }));
+      await page.evaluate(() => CombatUI.start({ seed: 5 }));
       await page.clock.runFor(9000);
       assert.equal((await state()).result.outcome, "defeat");
       assert.equal(

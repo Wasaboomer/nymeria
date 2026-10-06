@@ -22,22 +22,48 @@ const CombatEngine = (() => {
       seed,
       playerName = "Iria",
       enemyId = "guardian",
+      profile = null,
     }) {
       this.random = seededRng(
         seed === undefined ? Math.floor(Math.random() * 4294967296) : seed,
       );
-      this.rules = data.normalizeRules(rules);
+      this.profile = profile
+        ? data.copy(profile)
+        : {
+            abilities: data.abilities,
+            defaultRules: data.defaultRules,
+            effects: data.effects,
+            modifiers: {},
+            abilityModifiers: {},
+            effectModifiers: {},
+            kitValid: true,
+          };
+      this.abilities = this.profile.abilities;
+      this.rules = data.normalizeRules(
+        profile && rules === data.defaultRules
+          ? this.profile.defaultRules
+          : rules,
+        this.profile,
+      );
       this.player = {
         id: "player",
         name: playerName,
         stats: { ...stats },
-        maxHp: data.formulas.maxHp(stats),
+        maxHp: Math.round(
+          data.formulas.maxHp(stats) *
+            (this.profile.modifiers.hpMultiplier || 1),
+        ),
         effects: [],
         cooldowns: {},
         nextActionAt: 0,
         lastAbility: null,
       };
       this.player.hp = this.player.maxHp;
+      if (this.profile.resource)
+        this.player.resource = {
+          ...data.copy(this.profile.resource),
+          current: this.profile.resource.initial,
+        };
       const template = data.enemies[enemyId];
       this.enemy = {
         ...data.copy(template),
@@ -63,11 +89,17 @@ const CombatEngine = (() => {
         dodges: 0,
         uses: {},
         itemProcs: 0,
+        blocked: 0,
+        mitigated: 0,
+        bleedingDamage: 0,
+        resourceGenerated: 0,
+        resourceUsed: 0,
       };
       this.result = null;
     }
     start() {
-      if (this.status === "idle") this.status = "running";
+      if (this.status === "idle" && this.profile.kitValid !== false)
+        this.status = "running";
     }
     pause() {
       if (this.status === "running") this.status = "paused";
@@ -76,7 +108,7 @@ const CombatEngine = (() => {
       if (this.status === "paused") this.status = "running";
     }
     setRules(rules) {
-      this.rules = data.normalizeRules(rules);
+      this.rules = data.normalizeRules(rules, this.profile);
     }
     emit(event) {
       this.logVersion++;
@@ -85,7 +117,15 @@ const CombatEngine = (() => {
     }
     effectiveStats(actor) {
       const stats = { ...actor.stats },
-        modifiers = { dodge: 0 };
+        modifiers = {
+          dodge: 0,
+          ...(actor === this.player ? this.profile.modifiers : {}),
+        };
+      if (actor === this.player) {
+        for (const key of Object.keys(stats))
+          stats[key] += Number(this.profile.modifiers[key]) || 0;
+        stats.armor *= this.profile.modifiers.armorMultiplier || 1;
+      }
       for (const effect of actor.effects)
         for (const [key, value] of Object.entries(effect.modifiers || {})) {
           if (key in stats) stats[key] += value * effect.stacks;
@@ -113,6 +153,10 @@ const CombatEngine = (() => {
           return (
             (this.player.hp / this.player.maxHp) * 100 < condition.threshold
           );
+        case "resourceAbove":
+          return (this.player.resource?.current || 0) > condition.threshold;
+        case "resourceBelow":
+          return (this.player.resource?.current || 0) < condition.threshold;
         case "ready":
           return this.ready(abilityId);
         default:
@@ -123,20 +167,26 @@ const CombatEngine = (() => {
       for (const rule of this.rules)
         if (
           this.ready(rule.abilityId) &&
+          this.canAfford(rule.abilityId) &&
           this.conditionMet(rule.condition, rule.abilityId)
         )
-          return data.abilities.find((a) => a.id === rule.abilityId);
+          return this.abilities.find((a) => a.id === rule.abilityId);
       return null;
     }
     applyEffect(target, id, origin, options = {}) {
-      const template = data.effects[id];
+      const template = this.profile.effects[id];
       if (!template) return;
-      const duration = template.duration + (options.extraDuration || 0);
+      const tuning = this.profile.effectModifiers[id] || {};
+      const duration =
+        template.duration +
+        (options.extraDuration || 0) +
+        (tuning.extraDuration || 0);
       const sourceStats = this.effectiveStats(this.player).stats;
       const tickDamage = template.damageCoefficient
-        ? data.formulas.damage(sourceStats) *
+        ? this.baseDamage(sourceStats) *
           template.damageCoefficient *
-          (options.tickMultiplier || 1)
+          (options.tickMultiplier || 1) *
+          (tuning.tickMultiplier || 1)
         : 0;
       const current = target.effects.find(
         (e) => e.id === id && e.origin.actorId === origin.actorId,
@@ -156,6 +206,17 @@ const CombatEngine = (() => {
       } else {
         target.effects.push({
           ...data.copy(template),
+          modifiers: Object.fromEntries(
+            [
+              ...new Set([
+                ...Object.keys(template.modifiers || {}),
+                ...Object.keys(tuning.modifiers || {}),
+              ]),
+            ].map((key) => [
+              key,
+              (template.modifiers?.[key] || 0) + (tuning.modifiers?.[key] || 0),
+            ]),
+          ),
           stacks: 1,
           expiresAt: this.time + duration,
           nextTickAt: template.tickInterval
@@ -175,8 +236,11 @@ const CombatEngine = (() => {
     damage(target, amount, event) {
       const dealt = Math.min(target.hp, Math.max(1, Math.round(amount)));
       target.hp = Math.max(0, target.hp - dealt);
-      if (target === this.enemy) this.metrics.damage += dealt;
-      else this.metrics.damageTaken += dealt;
+      if (target === this.enemy) {
+        this.metrics.damage += dealt;
+        if (event.effectId === "bleeding" && event.type === "dot")
+          this.metrics.bleedingDamage += dealt;
+      } else this.metrics.damageTaken += dealt;
       this.emit({ ...event, damage: dealt, targetId: target.id });
     }
     tickEffects(actor) {
@@ -215,7 +279,47 @@ const CombatEngine = (() => {
         return false;
       });
     }
+    baseDamage(stats) {
+      const weights = this.profile.modifiers.damageWeights;
+      return weights
+        ? 8 +
+            Object.entries(weights).reduce(
+              (sum, [key, weight]) => sum + stats[key] * weight,
+              0,
+            )
+        : data.formulas.damage(stats);
+    }
+    canAfford(id) {
+      const skill = this.abilities.find((a) => a.id === id);
+      return (
+        !!skill &&
+        (!this.player.resource ||
+          this.player.resource.current + epsilon >= (skill.cost || 0))
+      );
+    }
+    gainResource(amount) {
+      const resource = this.player.resource;
+      if (!resource || amount <= 0) return;
+      const gain = Math.min(resource.max - resource.current, amount);
+      resource.current += gain;
+      this.metrics.resourceGenerated += gain;
+    }
+    resourceEvent(id) {
+      this.gainResource(
+        (this.player.resource?.events[id] || 0) *
+          (this.profile.modifiers.resourceGainMultiplier || 1),
+      );
+    }
     playerAction(ability) {
+      if (!this.ready(ability.id) || !this.canAfford(ability.id)) return false;
+      const cost = this.player.resource ? ability.cost || 0 : 0;
+      if (this.player.resource)
+        this.player.resource.current = Math.max(
+          0,
+          this.player.resource.current - cost,
+        );
+      this.metrics.resourceUsed += cost;
+      this.gainResource(ability.resourceGain || 0);
       const stats = this.effectiveStats(this.player).stats;
       this.player.lastAbility = ability.id;
       this.player.cooldowns[ability.id] = this.time + ability.cooldown;
@@ -227,14 +331,24 @@ const CombatEngine = (() => {
         });
       else {
         let raw =
-          data.formulas.damage(stats) * ability.coefficient +
-          ability.flatDamage;
+          this.baseDamage(stats) * ability.coefficient +
+          ability.flatDamage +
+          cost * (ability.damagePerResource || 0);
+        raw *=
+          (this.profile.modifiers.damageMultiplier || 1) *
+          (this.profile.abilityModifiers[ability.id]?.damageMultiplier || 1);
         if (
           ability.executeBelow &&
           this.enemy.hp / this.enemy.maxHp < ability.executeBelow
         )
           raw *= ability.executeMultiplier;
-        const critical = this.random() < data.formulas.criticalChance(stats);
+        const critical =
+          this.random() <
+          Math.min(
+            0.6,
+            data.formulas.criticalChance(stats) +
+              (this.profile.modifiers.criticalBonus || 0),
+          );
         if (critical) {
           raw *= data.formulas.criticalMultiplier;
           this.metrics.criticals++;
@@ -306,12 +420,35 @@ const CombatEngine = (() => {
           abilityId: attack.id,
           targetId: "player",
         });
-      } else
-        this.damage(
-          this.player,
-          data.formulas.mitigated(attack.damage, effective.stats.armor),
-          { type: "enemyAction", actorId: "enemy", abilityId: attack.id },
+      } else {
+        const reduction = this.enemy.effects.reduce(
+          (sum, effect) => sum + (effect.modifiers?.outgoingReduction || 0),
+          0,
         );
+        const raw = attack.damage * (1 - Math.min(0.8, reduction));
+        let incoming =
+          data.formulas.mitigated(raw, effective.stats.armor) *
+          (1 - Math.min(0.8, effective.modifiers.mitigation || 0));
+        const blockChance = Math.min(0.8, effective.modifiers.blockChance || 0);
+        const blocked = blockChance > 0 && this.random() < blockChance;
+        if (blocked) {
+          incoming *=
+            1 - Math.min(0.9, effective.modifiers.blockReduction || 0.5);
+          this.metrics.blocked++;
+          this.resourceEvent("block");
+        }
+        this.metrics.mitigated += Math.max(
+          0,
+          attack.damage - Math.round(incoming),
+        );
+        this.damage(this.player, incoming, {
+          type: "enemyAction",
+          actorId: "enemy",
+          abilityId: attack.id,
+          blocked,
+        });
+        this.resourceEvent("damageTaken");
+      }
       this.enemy.nextActionAt = this.time + this.enemy.attackInterval;
     }
     finishIfDead() {
@@ -323,6 +460,10 @@ const CombatEngine = (() => {
       this.result = {
         outcome: this.enemy.hp <= 0 ? "victory" : "defeat",
         duration: this.time,
+        classId: this.profile.classId || null,
+        className: this.profile.className || null,
+        buildId: this.profile.buildId || null,
+        buildName: this.profile.buildName || null,
         ...data.copy(this.metrics),
         dps: this.time > 0 ? this.metrics.damage / this.time : 0,
         mostUsed: mostUsed
@@ -335,6 +476,17 @@ const CombatEngine = (() => {
     step() {
       this.ticks++;
       this.time = this.ticks * data.step;
+      if (this.player.resource) {
+        this.gainResource(
+          this.player.resource.regeneration *
+            data.step *
+            (this.profile.modifiers.resourceRegenMultiplier || 1),
+        );
+        this.player.resource.current = Math.max(
+          0,
+          this.player.resource.current - this.player.resource.decay * data.step,
+        );
+      }
       this.tickEffects(this.player);
       this.tickEffects(this.enemy);
       if (this.finishIfDead()) return;

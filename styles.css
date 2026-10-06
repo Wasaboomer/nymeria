@@ -1372,3 +1372,92 @@ body:not([data-screen="character"]) .app {
     font-size: 8px;
   }
 }
+/* M4 system panel; existing character/equipment layouts stay intact. */
+.screen-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+#panel-class {
+  padding: 18px;
+  background: var(--panel, #14232d);
+  border: 1px solid #33444b;
+  border-radius: 12px;
+}
+.class-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.class-choices button,
+#build-choices button {
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid #3d5158;
+  background: #152630;
+  border-radius: 8px;
+  text-align: left;
+  color: #deded0;
+}
+.class-choices small,
+#build-choices small {
+  display: block;
+  margin-top: 6px;
+  color: #a5b5b6;
+  line-height: 1.5;
+}
+.class-choices [aria-pressed="true"],
+#build-choices [aria-pressed="true"] {
+  border-color: #c2a675;
+  background: #25353b;
+}
+#class-info {
+  font-size: 13px;
+  line-height: 1.6;
+}
+#class-info dl div {
+  margin-bottom: 8px;
+}
+#class-info dt {
+  color: #a9bbbb;
+}
+#class-info dd {
+  margin: 0;
+}
+#class-info ul {
+  padding-left: 18px;
+}
+#class-info li {
+  margin-bottom: 10px;
+}
+#class-info small {
+  display: block;
+  color: #b5c3c3;
+}
+#build-choices {
+  display: grid;
+  gap: 8px;
+}
+#combat-kit-label {
+  overflow-wrap: anywhere;
+  text-align: right;
+  max-width: 48%;
+}
+.resource-value {
+  font-size: 11px;
+  color: #bfd1db;
+  margin: 8px 0 4px;
+}
+.resource-bar span {
+  background: #7b9eae;
+}
+.gear-advice {
+  display: grid;
+  gap: 3px;
+  color: #c6ba86;
+  font-size: 10px;
+}
+.gear-advice:empty {
+  display: none;
+}
+.advisor-score {
+  line-height: 1.5;
+}

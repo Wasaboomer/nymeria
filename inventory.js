@@ -50,6 +50,14 @@ const InventoryUI = (() => {
             a.id.localeCompare(b.id),
       );
   }
+  function advisorMarkup(item, slot) {
+    const cls = ClassSystem.selected(),
+      build = ClassSystem.build();
+    const advice = BuildSystem.advise(item, slot, cls.id, build.id, Equipment);
+    return advice
+      ? `<span class="gear-advice">${advice.improvement ? "<span>↑ Miglioramento</span>" : ""}${advice.bestOwned ? "<span>★ Migliore posseduto</span>" : ""}</span>`
+      : "";
+  }
   function renderInventory() {
     const rows = visibleItems(),
       owned = Equipment.state.inventory;
@@ -67,7 +75,7 @@ const InventoryUI = (() => {
       ? rows
           .map(
             (item) =>
-              `<button class="inventory-item ${rarityClass(item)}" data-item-id="${item.id}"><span class="inventory-icon">${GearData.icon(item)}</span><span class="inventory-name">${item.name}</span><span class="rarity-text">${rarityLabel(item)}</span><small>iLv ${item.itemLevel} · Lv ${item.requiredLevel}</small><span class="item-location">${item.equipped ? `● ${slotLabel(equippedSlot(item.id))}` : "In sacca"}</span></button>`,
+              `<button class="inventory-item ${rarityClass(item)}" data-item-id="${item.id}"><span class="inventory-icon">${GearData.icon(item)}</span><span class="inventory-name">${item.name}</span>${advisorMarkup(item, slotFilter || Equipment.compatibleSlots(item)[0])}<span class="rarity-text">${rarityLabel(item)}</span><small>iLv ${item.itemLevel} · Lv ${item.requiredLevel}</small><span class="item-location">${item.equipped ? `● ${slotLabel(equippedSlot(item.id))}` : "In sacca"}</span></button>`,
           )
           .join("")
       : '<p class="hint">Nessun oggetto per questo filtro.</p>';
@@ -79,6 +87,13 @@ const InventoryUI = (() => {
     if (!item) return;
     const slots = Equipment.compatibleSlots(item);
     if (!slots.includes(target)) target = slots[0];
+    const advice = BuildSystem.advise(
+      item,
+      target,
+      ClassSystem.state.classId,
+      ClassSystem.build().id,
+      Equipment,
+    );
     const comparison = Equipment.comparison(item.id, target),
       error = Equipment.canEquip(item.id, target),
       ownSlot = equippedSlot(item.id);
@@ -93,7 +108,7 @@ const InventoryUI = (() => {
         )
         .join(
           "",
-        )}</dl>${item.effects.length ? `<div class="effect"><span>${typeof CombatData !== "undefined" && item.effects.some((effect) => CombatData.itemHooks[effect.id]) ? "EFFETTO SPECIALE · ATTIVO NEL KIT ARCIERE" : "EFFETTO SPECIALE · NON ATTIVO IN COMBATTIMENTO"}</span>${item.effects.map((e) => `<p>${e.description}</p>`).join("")}</div>` : ""}${slots.length > 1 ? `<fieldset class="target-picker"><legend>Destinazione e confronto</legend>${slots.map((s) => `<button data-target="${s}" aria-pressed="${s === target}">${slotLabel(s)}<small>${Equipment.equipped(s)?.name || "Vuoto"}</small></button>`).join("")}</fieldset>` : `<p class="option-label">${slotLabel(target)}</p>`}<div class="comparison"><h3>Rispetto a: ${comparison.current?.name || "slot vuoto"}</h3><p class="hint">Variazione totale dopo equipaggiamento${comparison.supportRemoved ? " · include la rimozione del supporto incompatibile" : ""}.</p><dl>${
+        )}</dl>${item.effects.length ? `<div class="effect"><span>${typeof CombatData !== "undefined" && item.effects.some((effect) => CombatData.itemHooks[effect.id]) ? "EFFETTO SPECIALE · ATTIVO NEL KIT CACCIATORE" : "EFFETTO SPECIALE · NON ATTIVO IN COMBATTIMENTO"}</span>${item.effects.map((e) => `<p>${e.description}</p>`).join("")}</div>` : ""}${slots.length > 1 ? `<fieldset class="target-picker"><legend>Destinazione e confronto</legend>${slots.map((s) => `<button data-target="${s}" aria-pressed="${s === target}">${slotLabel(s)}<small>${Equipment.equipped(s)?.name || "Vuoto"}</small></button>`).join("")}</fieldset>` : `<p class="option-label">${slotLabel(target)}</p>`}${advisorMarkup(item, target)}<p class="hint advisor-score">${advice ? `Score provvisorio ${ClassSystem.selected().name} / ${ClassSystem.build().name}: ${advice.score.toFixed(1)} · equipaggiato ${advice.currentScore.toFixed(1)} · Δ ${advice.delta > 0 ? "+" : ""}${advice.delta.toFixed(1)}. Pesi statistici ed effetti supportati; non è una graduatoria globale.` : "Nessun consiglio per il kit della classe selezionata."}</p><div class="comparison"><h3>Rispetto a: ${comparison.current?.name || "slot vuoto"}</h3><p class="hint">Variazione totale dopo equipaggiamento${comparison.supportRemoved ? " · include la rimozione del supporto incompatibile" : ""}.</p><dl>${
         Object.entries(comparison.delta)
           .filter(([, v]) => v !== 0)
           .map(
@@ -202,6 +217,7 @@ const InventoryUI = (() => {
     renderInventory();
     if (dialog.open) renderDetail();
   }
+  ClassSystem.subscribe(render);
   return {
     render,
     filterForSlot,

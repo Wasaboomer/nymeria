@@ -12,6 +12,10 @@ const modules = [
   "combat-data.js",
   "combat-engine.js",
   "combat-ui.js",
+  "classes-data.js",
+  "build-system.js",
+  "class-system.js",
+  "class-ui.js",
 ];
 
 (async () => {
@@ -43,7 +47,13 @@ const modules = [
         const tab = page.locator("#tab-" + screen);
         if (touch) await tab.tap();
         else await tab.click();
-        for (const other of ["character", "equipment", "inventory", "combat"]) {
+        for (const other of [
+          "character",
+          "equipment",
+          "inventory",
+          "combat",
+          "class",
+        ]) {
           const panel = page.locator("#panel-" + other);
           assert.equal(
             await panel.isVisible(),
@@ -70,6 +80,7 @@ const modules = [
       await activate("inventory");
       await activate("equipment");
       await activate("combat");
+      await activate("class");
       await activate("character");
       if (!configure) {
         assert.deepEqual(errors, []);
@@ -83,9 +94,9 @@ const modules = [
         );
       }
       const assets = requests.filter((url) => /\.(js|css)$/.test(url.pathname));
-      assert.equal(assets.length, 11);
+      assert.equal(assets.length, 15);
       assert.ok(
-        assets.every((url) => url.searchParams.get("v") === "combat-0.1"),
+        assets.every((url) => url.searchParams.get("v") === "class-build-0.1"),
       );
       console.log(
         `PASS ${name}: panel visibility + hidden + aria-selected; versioned assets`,

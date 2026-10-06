@@ -88,6 +88,8 @@ const CombatData = (() => {
     },
   ];
   const conditions = [
+    { id: "resourceAbove", label: "Risorsa > X" },
+    { id: "resourceBelow", label: "Risorsa < X" },
     { id: "always", label: "Sempre" },
     { id: "debuffAbsent", label: "Se debuff assente" },
     { id: "buffAbsent", label: "Se buff assente" },
@@ -141,14 +143,14 @@ const CombatData = (() => {
     },
   };
   const copy = (value) => JSON.parse(JSON.stringify(value));
-  function normalizeRules(raw) {
+  function normalizeRules(raw, kit = { abilities, defaultRules }) {
     const result = [],
       used = new Set();
     if (Array.isArray(raw))
       for (const row of raw) {
         if (
           !row ||
-          !abilities.some((a) => a.id === row.abilityId) ||
+          !kit.abilities.some((a) => a.id === row.abilityId) ||
           used.has(row.abilityId)
         )
           continue;
@@ -158,23 +160,48 @@ const CombatData = (() => {
           ? condition.type
           : "always";
         const normalized = { type };
-        if (type === "enemyHpBelow" || type === "playerHpBelow")
+        if (
+          [
+            "enemyHpBelow",
+            "playerHpBelow",
+            "resourceAbove",
+            "resourceBelow",
+          ].includes(type)
+        )
           normalized.threshold = Number.isFinite(Number(condition.threshold))
-            ? clamp(Number(condition.threshold), 1, 99)
+            ? clamp(
+                Number(condition.threshold),
+                type.startsWith("resource") ? 0 : 1,
+                type.startsWith("resource") ? 100 : 99,
+              )
             : 25;
-        if (type === "debuffAbsent") normalized.effectId = "bleeding";
-        if (type === "buffAbsent") normalized.effectId = "wind";
+        const skill = kit.abilities.find((a) => a.id === row.abilityId);
+        if (type === "debuffAbsent" || type === "buffAbsent") {
+          const effectsForCondition = kit.abilities
+            .filter(
+              (a) =>
+                a.effectId &&
+                (type === "buffAbsent" ? a.kind === "buff" : a.kind !== "buff"),
+            )
+            .map((a) => a.effectId);
+          normalized.effectId = effectsForCondition.includes(condition.effectId)
+            ? condition.effectId
+            : skill.effectId && effectsForCondition.includes(skill.effectId)
+              ? skill.effectId
+              : effectsForCondition[0];
+          if (!normalized.effectId) normalized.type = "always";
+        }
         result.push({ abilityId: row.abilityId, condition: normalized });
       }
-    for (const rule of defaultRules)
+    for (const rule of kit.defaultRules)
       if (!used.has(rule.abilityId)) result.push(copy(rule));
     return result;
   }
-  function normalizeSettings(raw) {
+  function normalizeSettings(raw, kit) {
     return {
       mode: raw?.mode === "custom" ? "custom" : "auto",
       speed: [1, 2, 4].includes(raw?.speed) ? raw.speed : 1,
-      rules: normalizeRules(raw?.rules),
+      rules: normalizeRules(raw?.rules, kit),
     };
   }
   function kitRequirement(main, support) {

@@ -1,15 +1,24 @@
 /* UI adapter: one animation-frame clock, immutable equipment snapshot per fight. */
 const CombatUI = (() => {
-  const STORAGE_KEY = "nymeria.combat.v1";
-  let settings = CombatData.normalizeSettings(null),
-    storageError = false;
+  const STORAGE_KEY = "nymeria.combat.v2";
+  const profile = () => ClassSystem.combatProfile();
+  let stored = {},
+    storageError = false,
+    activeClass = ClassSystem.state.classId;
   try {
-    settings = CombatData.normalizeSettings(
-      JSON.parse(localStorage.getItem(STORAGE_KEY)),
-    );
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    stored =
+      raw?.classes &&
+      typeof raw.classes === "object" &&
+      !Array.isArray(raw.classes)
+        ? raw.classes
+        : {};
+    if (!stored.hunter)
+      stored.hunter = JSON.parse(localStorage.getItem("nymeria.combat.v1"));
   } catch {
     storageError = true;
   }
+  let settings = CombatData.normalizeSettings(stored[activeClass], profile());
   let engine = null,
     frameId = null,
     lastWallTime = null,
@@ -18,7 +27,7 @@ const CombatUI = (() => {
   let gearKey = "",
     lookKey = "";
   const node = (id) => document.getElementById(id);
-  const ability = (id) => CombatData.abilities.find((a) => a.id === id);
+  const ability = (id) => profile().abilities.find((a) => a.id === id);
   const formatTime = (seconds) =>
     `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
   const text = (id, value) => {
@@ -36,15 +45,16 @@ const CombatUI = (() => {
     }, []);
   }
   const rules = () =>
-    settings.mode === "auto" ? CombatData.defaultRules : settings.rules;
+    settings.mode === "auto" ? profile().defaultRules : settings.rules;
   const kitReady = () =>
-    CombatData.kitRequirement(
+    ClassSystem.kitRequirement(
       Equipment.equipped("mainHand"),
       Equipment.equipped("support"),
     );
   function saveSettings() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      stored[activeClass] = CombatData.copy(settings);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ classes: stored }));
       storageError = false;
     } catch {
       storageError = true;
@@ -84,13 +94,37 @@ const CombatUI = (() => {
       .map((rule, index) => {
         const condition = rule.condition,
           skill = ability(rule.abilityId);
-        return `<article class="priority-row" data-priority-id="${rule.abilityId}"><div class="priority-heading"><span class="priority-number">${index + 1}</span><div><strong>${skill.name}</strong><small>${skill.description}</small></div><div class="priority-order"><button data-move="-1" data-rule="${rule.abilityId}" aria-label="Sposta ${skill.name} in alto" ${!custom || index === 0 ? "disabled" : ""}>↑</button><button data-move="1" data-rule="${rule.abilityId}" aria-label="Sposta ${skill.name} in basso" ${!custom || index === list.length - 1 ? "disabled" : ""}>↓</button></div></div><label>Condizione<select data-condition="${rule.abilityId}" ${!custom ? "disabled" : ""}>${CombatData.conditions.map((c) => `<option value="${c.id}" ${c.id === condition.type ? "selected" : ""}>${c.label}</option>`).join("")}</select></label>${condition.type === "enemyHpBelow" || condition.type === "playerHpBelow" ? `<label class="threshold">Soglia HP <input type="number" min="1" max="99" inputmode="numeric" data-threshold="${rule.abilityId}" value="${condition.threshold}" ${!custom ? "disabled" : ""}> %</label>` : condition.type === "debuffAbsent" || condition.type === "buffAbsent" ? `<p class="condition-effect">${CombatData.effects[condition.effectId].name} assente</p>` : ""}</article>`;
+        return `<article class="priority-row" data-priority-id="${rule.abilityId}"><div class="priority-heading"><span class="priority-number">${index + 1}</span><div><strong>${skill.name}</strong><small>${skill.description} · Costo ${skill.cost} · CD ${skill.cooldown}s</small></div><div class="priority-order"><button data-move="-1" data-rule="${rule.abilityId}" aria-label="Sposta ${skill.name} in alto" ${!custom || index === 0 ? "disabled" : ""}>↑</button><button data-move="1" data-rule="${rule.abilityId}" aria-label="Sposta ${skill.name} in basso" ${!custom || index === list.length - 1 ? "disabled" : ""}>↓</button></div></div><label>Condizione<select data-condition="${rule.abilityId}" ${!custom ? "disabled" : ""}>${CombatData.conditions.map((c) => `<option value="${c.id}" ${c.id === condition.type ? "selected" : ""}>${c.label}</option>`).join("")}</select></label>${
+          [
+            "enemyHpBelow",
+            "playerHpBelow",
+            "resourceAbove",
+            "resourceBelow",
+          ].includes(condition.type)
+            ? `<label class="threshold">Soglia ${condition.type.startsWith("resource") ? "risorsa" : "HP"} <input type="number" min="${condition.type.startsWith("resource") ? 0 : 1}" max="${condition.type.startsWith("resource") ? 100 : 99}" inputmode="numeric" data-threshold="${rule.abilityId}" value="${condition.threshold}" ${!custom ? "disabled" : ""}> ${condition.type.startsWith("resource") ? "punti" : "%"}</label>`
+            : condition.type === "debuffAbsent" ||
+                condition.type === "buffAbsent"
+              ? `<label>Effetto assente<select data-effect="${rule.abilityId}" ${!custom ? "disabled" : ""}>${profile()
+                  .abilities.filter(
+                    (a) =>
+                      a.effectId &&
+                      (condition.type === "buffAbsent"
+                        ? a.kind === "buff"
+                        : a.kind !== "buff"),
+                  )
+                  .map(
+                    (a) =>
+                      `<option value="${a.effectId}" ${a.effectId === condition.effectId ? "selected" : ""}>${profile().effects[a.effectId].name}</option>`,
+                  )
+                  .join("")}</select></label>`
+              : ""
+        }</article>`;
       })
       .join("");
     if (engine) engine.setRules(rules());
   }
   function updateConfiguration() {
-    settings = CombatData.normalizeSettings(settings);
+    settings = CombatData.normalizeSettings(settings, profile());
     saveSettings();
     renderSettings();
   }
@@ -119,6 +153,10 @@ const CombatUI = (() => {
   }
   function makeEngine(seed) {
     return CombatEngine.create({
+      profile: ClassSystem.combatProfile(undefined, undefined, {
+        main: Equipment.equipped("mainHand"),
+        support: Equipment.equipped("support"),
+      }),
       stats: { ...Equipment.state.resultingStats },
       effects: equippedEffects(),
       rules: rules(),
@@ -154,7 +192,10 @@ const CombatUI = (() => {
   }
   function start(options = {}) {
     if (!kitReady()) {
-      text("combat-status", "Equipaggia Arco + Faretra per iniziare");
+      text(
+        "combat-status",
+        `Equipaggia ${ClassSystem.selected().requirement} per iniziare`,
+      );
       return false;
     }
     stopClock();
@@ -188,17 +229,17 @@ const CombatUI = (() => {
     if (event.type === "playerAction")
       return `${event.critical ? "CRITICO! " : ""}${playerName} usa ${ability(event.abilityId).name} — ${event.damage} danni`;
     if (event.type === "enemyAction")
-      return `${enemyName} usa ${CombatData.enemies.guardian.attacks.find((a) => a.id === event.abilityId).name} — ${event.damage} danni`;
+      return `${enemyName} usa ${CombatData.enemies.guardian.attacks.find((a) => a.id === event.abilityId).name} — ${event.damage} danni${event.blocked ? " · BLOCCO" : ""}`;
     if (event.type === "dodge")
       return `${playerName} schiva il colpo del Guardiano`;
     if (event.type === "dot")
-      return `${CombatData.effects[event.effectId].name} — ${event.damage} danni`;
+      return `${profile().effects[event.effectId].name} — ${event.damage} danni`;
     if (event.type === "itemProc")
       return `${Equipment.state.inventory.find((i) => i.id === event.itemId)?.name || "Oggetto"} attiva Sanguinamento potenziato`;
     if (event.type === "effectApply" || event.type === "effectRefresh")
-      return `${CombatData.effects[event.effectId].name} ${event.type === "effectRefresh" ? "rinnovato" : "applicato"}${event.origin?.abilityId ? ` · ${ability(event.origin.abilityId).name}` : ""}`;
+      return `${profile().effects[event.effectId].name} ${event.type === "effectRefresh" ? "rinnovato" : "applicato"}${event.origin?.abilityId ? ` · ${ability(event.origin.abilityId).name}` : ""}`;
     if (event.type === "effectExpire")
-      return `${CombatData.effects[event.effectId].name} terminato`;
+      return `${profile().effects[event.effectId].name} terminato`;
     if (event.type === "result")
       return event.outcome === "victory" ? "VITTORIA" : "SCONFITTA";
     return "";
@@ -227,6 +268,18 @@ const CombatUI = (() => {
   }
   function renderBattle() {
     const snapshot = engine.snapshot();
+    const resource = snapshot.player.resource;
+    if (resource) {
+      text(
+        "combat-resource-value",
+        `${resource.name}: ${resource.current.toFixed(1)} / ${resource.max}`,
+      );
+      const bar = node("combat-resource-bar");
+      bar.setAttribute("aria-valuemax", resource.max);
+      bar.setAttribute("aria-valuenow", resource.current.toFixed(1));
+      bar.setAttribute("aria-label", resource.name);
+      bar.firstElementChild.style.width = `${(100 * resource.current) / resource.max}%`;
+    }
     for (const side of ["player", "enemy"]) {
       const actor = snapshot[side];
       text(`combat-${side}-hp`, `${actor.hp} / ${actor.maxHp} HP`);
@@ -278,13 +331,13 @@ const CombatUI = (() => {
     );
     node("combat-pause").textContent =
       snapshot.status === "paused" ? "Riprendi" : "Pausa";
-    node("combat-cooldowns").innerHTML = CombatData.abilities
-      .map((skill) => {
+    node("combat-cooldowns").innerHTML = profile()
+      .abilities.map((skill) => {
         const remaining = Math.max(
           0,
           (snapshot.player.cooldowns[skill.id] || 0) - snapshot.time,
         );
-        return `<div data-cooldown="${skill.id}"><span>${skill.name}</span><strong>${remaining > 0 ? `${remaining.toFixed(1)}s` : "Pronta"}</strong></div>`;
+        return `<div data-cooldown="${skill.id}"><span>${skill.name}</span><strong>${remaining > 0 ? `${remaining.toFixed(1)}s` : engine.canAfford(skill.id) ? "Pronta" : "Risorsa insufficiente"}</strong></div>`;
       })
       .join("");
     if (lastLogVersion !== snapshot.logVersion) {
@@ -307,6 +360,8 @@ const CombatUI = (() => {
       );
       const result = snapshot.result;
       node("combat-result-stats").innerHTML = [
+        ["Classe", result.className],
+        ["Tendenza", result.buildName],
         ["Durata", `${result.duration.toFixed(1)}s`],
         ["Danno totale", result.damage],
         ["DPS medio", result.dps.toFixed(1)],
@@ -318,6 +373,12 @@ const CombatUI = (() => {
             ? `${ability(result.mostUsed.abilityId).name} ×${result.mostUsed.count}`
             : "Nessuna",
         ],
+        ...engine.profile.resultMetrics.map((field) => [
+          field.label,
+          Math.round(result[field.key]),
+        ]),
+        [`${resource.name} generata`, result.resourceGenerated.toFixed(1)],
+        [`${resource.name} usata`, result.resourceUsed.toFixed(1)],
       ]
         .map(
           ([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`,
@@ -326,7 +387,16 @@ const CombatUI = (() => {
     }
   }
   function equipmentChanged() {
+    text(
+      "combat-kit-label",
+      `${ClassSystem.selected().name.toUpperCase()} · ${ClassSystem.build().name.toUpperCase()} · 1 VS 1`,
+    );
+    text(
+      "combat-kit-hint",
+      `Per ${ClassSystem.selected().name} serve ${ClassSystem.selected().requirement}. Arma: ${Equipment.equipped("mainHand")?.name || "mancante"}; supporto: ${Equipment.equipped("support")?.name || "mancante"}.`,
+    );
     const fingerprint = JSON.stringify({
+      selection: ClassSystem.state,
       stats: Equipment.state.resultingStats,
       equipment: Object.values(Equipment.state.equipment).map(
         (entry) => entry.equippedItem,
@@ -350,7 +420,7 @@ const CombatUI = (() => {
     if (hadFight)
       text(
         "combat-status",
-        "Equipaggiamento aggiornato: avvia un nuovo scontro",
+        "Configurazione aggiornata: avvia un nuovo scontro",
       );
   }
   node("combat-start").addEventListener("click", () => start());
@@ -392,11 +462,14 @@ const CombatUI = (() => {
     const row = settings.rules.find(
       (rule) =>
         rule.abilityId ===
-        (element.dataset.condition || element.dataset.threshold),
+        (element.dataset.condition ||
+          element.dataset.threshold ||
+          element.dataset.effect),
     );
     if (!row) return;
     if (element.dataset.condition)
       row.condition = { type: element.value, threshold: 25 };
+    if (element.dataset.effect) row.condition.effectId = element.value;
     if (element.dataset.threshold)
       row.condition.threshold = Number(element.value);
     updateConfiguration();
@@ -407,6 +480,16 @@ const CombatUI = (() => {
       stopClock();
       renderBattle();
     }
+  });
+  ClassSystem.subscribe(() => {
+    if (activeClass !== ClassSystem.state.classId) {
+      stored[activeClass] = CombatData.copy(settings);
+      activeClass = ClassSystem.state.classId;
+      settings = CombatData.normalizeSettings(stored[activeClass], profile());
+    }
+    equipmentChanged();
+    renderSettings();
+    saveSettings();
   });
   Equipment.subscribe(equipmentChanged);
   equipmentChanged();
