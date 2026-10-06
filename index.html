@@ -1,219 +1,118 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
-<meta name="theme-color" content="#101419"/>
-<title>Nymeria — Character Lab</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07101a">
+<title>Nymeria — Character Creator V2</title>
 <style>
-:root{
- --bg:#0d1116;--panel:#151b21;--panel2:#1b232a;--line:#344047;--text:#f1eadb;--muted:#aab0ae;
- --gold:#c5a96a;--green:#91b56d;--blue:#769eb9;--purple:#aa86c7;--red:#b66f69;
-}
+:root{--gold:#e4b75e;--gold2:#8e632c;--ink:#08111a;--panel:rgba(7,15,23,.91);--line:rgba(232,194,112,.25);--txt:#f0eadc;--muted:#a9b0b6}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:radial-gradient(circle at 50% -10%,#263039 0,#11171c 35%,#090d11 80%);color:var(--text);font-family:ui-rounded,"Avenir Next",system-ui,sans-serif;min-height:100%}
-button{font:inherit;color:inherit}
-.app{max-width:480px;margin:auto;min-height:100vh;padding:env(safe-area-inset-top) 12px calc(84px + env(safe-area-inset-bottom))}
-.top{display:flex;align-items:center;justify-content:space-between;padding:14px 4px 8px}
-.brand{letter-spacing:.28em;font-weight:800;font-size:17px}.sub{font-size:10px;color:var(--muted);letter-spacing:.18em;margin-top:2px}
-.level{font-size:12px;border:1px solid var(--line);padding:7px 10px;border-radius:99px;background:#11171c}
-.card{background:linear-gradient(180deg,rgba(28,36,43,.96),rgba(18,24,29,.97));border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 35px #0008;overflow:hidden}
-.stage{height:420px;position:relative;margin-top:6px;background:radial-gradient(circle at 50% 28%,#36444b 0,#202a30 36%,#11171c 73%);overflow:hidden}
-.stage:after{content:"";position:absolute;left:15%;right:15%;bottom:25px;height:22px;border-radius:50%;background:#0008;filter:blur(8px)}
-.avatar{position:absolute;inset:12px 15px 20px;animation:breathe 3.4s ease-in-out infinite;transform-origin:50% 85%;z-index:2}
-@keyframes breathe{0%,100%{transform:translateY(2px) scaleY(1)}50%{transform:translateY(-2px) scaleY(1.008)}}
-svg{width:100%;height:100%;overflow:visible}
-.eyeBlink{transform-origin:center;animation:blink 5.3s infinite}
-@keyframes blink{0%,45%,48%,100%{transform:scaleY(1)}46%,47%{transform:scaleY(.08)}}
-.hairFloat{transform-origin:50% 20%;animation:hair 3.4s ease-in-out infinite}
-@keyframes hair{0%,100%{transform:rotate(-.5deg)}50%{transform:rotate(.7deg)}}
-.glow{filter:drop-shadow(0 0 8px rgba(151,192,214,.35))}
-.nameplate{position:absolute;left:14px;right:14px;bottom:12px;z-index:4;display:flex;justify-content:space-between;align-items:end}
-.nm{font-size:20px;font-weight:800}.role{font-size:11px;color:#d6c28d;margin-top:2px}.gearscore{font-size:11px;color:var(--muted);text-align:right}
-.gearscore b{font-size:18px;color:var(--text)}
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 0}
-.tab{border:1px solid var(--line);background:#141a20;border-radius:12px;padding:10px 3px;font-size:11px}
-.tab.on{background:#d8c291;color:#15181b;border-color:#e8d5a9;font-weight:800}
-.section{padding:15px}.title{font-size:13px;font-weight:800;letter-spacing:.08em;margin-bottom:12px}.muted{color:var(--muted);font-size:11px}
-.choices{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.choice{min-height:58px;border:1px solid var(--line);background:#10161b;border-radius:12px;padding:7px;font-size:10px}
-.choice.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);background:#24231f}
-.swatch{height:28px;border-radius:8px;margin-bottom:5px;border:1px solid #ffffff25}
-.equipgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.item{border:1px solid var(--line);background:#10161b;border-radius:13px;padding:8px;text-align:left;min-height:86px}
-.item.on{border-color:var(--purple);box-shadow:inset 0 0 0 1px var(--purple)}
-.ico{font-size:24px}.item b{display:block;font-size:10px;margin-top:6px}.item small{color:var(--muted);font-size:9px}
-.compare{margin-top:10px;border:1px solid #5e5269;background:#18151c;border-radius:14px;padding:12px;font-size:11px;line-height:1.65}
-.cta{width:100%;border:0;background:linear-gradient(90deg,#b99c61,#e1c98f);color:#171717;border-radius:12px;padding:13px;font-weight:900;margin-top:10px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{padding:10px;background:#10161b;border:1px solid var(--line);border-radius:11px;font-size:10px}.stat b{float:right;font-size:12px}
-.skill{display:flex;gap:10px;align-items:center;padding:10px;border-bottom:1px solid #ffffff12}.skill:last-child{border:0}.orb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#91b56d,#2d4c31);border:1px solid #a8cf86}.skill b{font-size:11px}.skill small{display:block;color:var(--muted);font-size:9px;margin-top:2px}.points{margin-left:auto;background:#0e1418;border:1px solid var(--line);border-radius:9px;padding:5px 8px;font-size:10px}
-.bottom{position:fixed;bottom:0;left:0;right:0;z-index:10;background:#0c1116ee;backdrop-filter:blur(15px);border-top:1px solid #39434a;padding:8px max(12px,calc((100vw - 480px)/2 + 12px)) calc(8px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.nav{border:0;background:transparent;color:#8f999e;font-size:10px;padding:5px}.nav span{display:block;font-size:20px;margin-bottom:2px}.nav.on{color:#e2ca92}
-.hidden{display:none!important}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:92px;background:#e5d1a2;color:#15191b;padding:10px 16px;border-radius:99px;font-size:11px;font-weight:800;opacity:0;pointer-events:none;transition:.25s;z-index:20}.toast.show{opacity:1;bottom:102px}
+html,body{margin:0;background:#050a10;color:var(--txt);font-family:Georgia,"Times New Roman",serif;min-height:100%;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;background:linear-gradient(rgba(2,8,13,.18),rgba(2,8,13,.82)),url("nymeria-art.png") center 18%/cover no-repeat;filter:saturate(.9);z-index:-2}
+body:after{content:"";position:fixed;inset:0;background:radial-gradient(circle at 50% 28%,transparent 0 20%,rgba(2,6,10,.18) 48%,rgba(2,6,10,.8) 100%);z-index:-1;pointer-events:none}
+.app{min-height:100dvh;max-width:520px;margin:auto;padding:env(safe-area-inset-top) 12px calc(88px + env(safe-area-inset-bottom))}
+.top{padding:12px 5px 5px;display:flex;align-items:flex-end;justify-content:space-between;text-shadow:0 2px 12px #000}
+.logo{font-size:30px;letter-spacing:3px;font-weight:700}.logo small{display:block;font-size:9px;letter-spacing:5px;color:#d7c8a6;margin-top:-3px}
+.step{font:11px Arial,sans-serif;color:#d6c6a5;letter-spacing:1.4px}
+.stage{position:relative;height:54dvh;min-height:420px;max-height:610px;margin-top:4px;border:1px solid rgba(225,184,96,.24);border-radius:18px;overflow:hidden;box-shadow:0 16px 55px #000;background:#111}
+.hero{position:absolute;inset:0;background:url("nymeria-art.png") 49% 29%/235% auto no-repeat;transition:.25s ease;filter:saturate(.98) contrast(1.03)}
+.stage[data-hair="auburn"] .hero{filter:sepia(.15) saturate(1.1) hue-rotate(330deg)}
+.stage[data-hair="silver"] .hero{filter:grayscale(.28) brightness(1.12)}
+.stage[data-hair="blue"] .hero{filter:hue-rotate(155deg) saturate(.82)}
+.vignette{position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,8,13,.65),transparent 27% 72%,rgba(3,8,13,.65)),linear-gradient(0deg,rgba(3,8,13,.85),transparent 30% 80%,rgba(3,8,13,.35))}
+.badge{position:absolute;top:14px;right:12px;background:rgba(5,12,18,.84);border:1px solid var(--line);padding:10px 12px;border-radius:10px;backdrop-filter:blur(8px);width:150px}
+.badge b{display:block;color:var(--gold);font-size:11px;letter-spacing:1px}.badge strong{font-size:19px}.badge span{font:11px Arial,sans-serif;color:#c4c8ca}
+.slots{position:absolute;left:8px;top:72px;display:grid;gap:8px}.slot{width:48px;height:48px;border:1px solid rgba(231,190,104,.5);border-radius:9px;background:rgba(5,11,17,.83);display:grid;place-items:center;font-size:22px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.03)}.slot.active{outline:2px solid var(--gold);box-shadow:0 0 20px rgba(228,183,94,.25)}
+.stats{position:absolute;right:8px;bottom:12px;width:135px;padding:9px;background:rgba(4,10,16,.84);border:1px solid var(--line);border-radius:9px;backdrop-filter:blur(8px);font:11px Arial,sans-serif}.stats h4{font:12px Georgia,serif;color:var(--gold);margin:0 0 6px}.stat{display:flex;justify-content:space-between;padding:2px 0}.stat em{font-style:normal;color:#fff}
+.rotate{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:12px}.round{width:40px;height:40px;border-radius:50%;border:1px solid rgba(232,194,112,.35);background:rgba(4,10,16,.7);color:white;font-size:20px}
+.sheet{margin-top:-1px;background:linear-gradient(180deg,rgba(7,15,23,.96),rgba(5,10,16,.98));border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 -8px 30px rgba(0,0,0,.35)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.tab{border:1px solid rgba(255,255,255,.07);background:#101b25;color:#aeb4b8;border-radius:9px;padding:10px 4px;font:11px Arial,sans-serif}.tab.active{color:#fff;border-color:#9b7438;background:linear-gradient(#6c4c23,#3d2c18);box-shadow:inset 0 0 15px rgba(255,210,116,.12)}
+.panel{padding-top:12px}.label{font:10px Arial,sans-serif;letter-spacing:1.2px;color:#a9afb3;margin:8px 0}
+.choices{display:flex;gap:8px;overflow:auto;padding:2px 2px 8px;scrollbar-width:none}.choices::-webkit-scrollbar{display:none}
+.choice{flex:0 0 62px;height:62px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:linear-gradient(145deg,#192733,#0b1219);display:grid;place-items:center;font-size:25px;color:#d9d9d4}.choice.sel{border-color:var(--gold);box-shadow:0 0 0 2px rgba(228,183,94,.18),0 0 18px rgba(228,183,94,.2)}
+.colors{display:flex;gap:11px;overflow:auto;padding:4px 2px 8px}.swatch{flex:0 0 37px;height:37px;border-radius:50%;border:2px solid #1b2228;outline:1px solid rgba(255,255,255,.22)}.swatch.sel{outline:2px solid #f2c66e;box-shadow:0 0 15px rgba(240,192,100,.4)}
+.info{font:12px Arial,sans-serif;color:#c2c7ca;line-height:1.4}.geargrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gear{background:#0d1821;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;font:12px Arial,sans-serif}.gear b{font-family:Georgia,serif;color:#e5c37e;display:block;margin-bottom:4px}.gear.sel{border-color:var(--gold)}
+.bottom{position:fixed;z-index:5;left:50%;bottom:0;transform:translateX(-50%);width:min(520px,100%);padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(0deg,#050a10 65%,transparent);display:flex;justify-content:space-between;gap:12px}
+.btn{border:1px solid rgba(255,255,255,.15);background:#101922;color:#e7e7e5;border-radius:11px;padding:13px 18px;font:13px Georgia,serif;letter-spacing:.7px}.btn.gold{margin-left:auto;color:#1a1309;font-weight:700;border-color:#f0ca78;background:linear-gradient(#f0c86f,#b47b2f);min-width:145px}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);opacity:0;background:#111c25;border:1px solid var(--line);padding:10px 14px;border-radius:10px;font:12px Arial,sans-serif;transition:.2s;z-index:8}.toast.show{opacity:1;transform:translateX(-50%)}
+.hidden{display:none}
+@media(max-height:720px){.stage{height:48dvh;min-height:340px}.logo{font-size:25px}}
 </style>
 </head>
 <body>
 <div class="app">
- <header class="top"><div><div class="brand">NYMERIA</div><div class="sub">CHARACTER LAB · PROTOTIPO</div></div><div class="level">LV 38</div></header>
+  <header class="top"><div class="logo">NYMERIA<small>DOVE LE STORIE RESTANO</small></div><div class="step">CREA · ASPETTO</div></header>
+  <section class="stage" id="stage" data-hair="black">
+    <div class="hero" id="hero"></div><div class="vignette"></div>
+    <div class="badge"><b>RAZZA</b><strong>HAYON</strong><span>Sentinella · Liv. 1</span></div>
+    <div class="slots">
+      <button class="slot active" data-slot="Mantello">🧣</button><button class="slot" data-slot="Corazza">🛡️</button>
+      <button class="slot" data-slot="Guanti">🥊</button><button class="slot" data-slot="Gambali">🥋</button><button class="slot" data-slot="Stivali">🥾</button>
+    </div>
+    <div class="stats"><h4>STATISTICHE</h4><div class="stat">Forza <em id="str">12</em></div><div class="stat">Destrezza <em id="dex">18</em></div><div class="stat">Resistenza <em id="vit">14</em></div><div class="stat">Spirito <em id="spi">16</em></div><div class="stat">Potere <em id="pow">60</em></div></div>
+    <div class="rotate"><button class="round" id="left">‹</button><button class="round" id="right">›</button></div>
+  </section>
 
- <div class="card stage">
-   <div class="avatar">
-   <svg viewBox="0 0 320 390" aria-label="Avatar modulare">
-    <defs>
-      <linearGradient id="armorG" x1="0" x2="1"><stop id="a1" stop-color="#4f5960"/><stop id="a2" offset="1" stop-color="#20282d"/></linearGradient>
-      <linearGradient id="clothG" x1="0" x2="1"><stop id="c1" stop-color="#3f5360"/><stop id="c2" offset="1" stop-color="#18242b"/></linearGradient>
-    </defs>
-    <!-- cloak/back hair -->
-    <path id="cloak" d="M101 147 Q67 208 80 347 L160 365 240 347 Q252 211 219 147Z" fill="#26333a" stroke="#75858a" stroke-width="2"/>
-    <g class="hairFloat" id="backHair"><path d="M113 79 Q86 105 102 189 Q121 171 129 132 L190 132 Q196 174 220 191 Q231 107 205 78Z" fill="#d6d0c4"/></g>
-    <!-- body -->
-    <path d="M130 132 Q160 121 190 132 L206 198 196 284 124 284 114 198Z" fill="#b88970"/>
-    <path d="M129 279 L114 354 142 358 160 294 178 358 207 354 191 279Z" fill="#252c31"/>
-    <!-- boots -->
-    <g id="boots"><path d="M114 340 L143 342 140 379 100 379 Q101 363 114 354Z" fill="#34383a" stroke="#8a7455" stroke-width="2"/><path d="M177 342 L207 340 220 379 180 379Z" fill="#34383a" stroke="#8a7455" stroke-width="2"/></g>
-    <!-- torso armor -->
-    <g id="torso" class="glow"><path d="M119 146 L137 130 160 141 184 130 202 147 196 248 160 269 124 248Z" fill="url(#armorG)" stroke="#b89a62" stroke-width="3"/><path d="M137 132 L160 188 184 132 174 223 160 247 146 223Z" fill="url(#clothG)" opacity=".9"/><circle cx="160" cy="194" r="8" fill="#a9c9d7"/></g>
-    <!-- belt -->
-    <g id="belt"><rect x="121" y="239" width="78" height="14" rx="4" fill="#4c3527"/><rect x="151" y="238" width="18" height="16" rx="3" fill="#b08e4d"/></g>
-    <!-- shoulders -->
-    <g id="shoulders"><path d="M116 143 Q89 145 82 166 L119 179 136 148Z" fill="url(#armorG)" stroke="#b89a62" stroke-width="3"/><path d="M204 143 Q231 145 238 166 L201 179 184 148Z" fill="url(#armorG)" stroke="#b89a62" stroke-width="3"/></g>
-    <!-- arms/gloves -->
-    <path d="M106 166 Q88 207 95 265 L113 265 129 179Z" fill="#b88970"/><path d="M214 166 Q232 207 225 265 L207 265 191 179Z" fill="#b88970"/>
-    <g id="gloves"><path d="M94 229 L116 228 113 278 91 274Z" fill="#30383c" stroke="#9b8152" stroke-width="2"/><path d="M204 228 L226 229 229 274 207 278Z" fill="#30383c" stroke="#9b8152" stroke-width="2"/></g>
-    <!-- neck/head -->
-    <rect x="147" y="113" width="26" height="28" rx="9" fill="#b88970"/>
-    <path d="M112 68 Q113 22 160 20 Q207 22 208 68 L200 111 Q186 136 160 137 Q134 136 120 111Z" fill="#c9977d" stroke="#2a2e31" stroke-width="2"/>
-    <!-- ears -->
-    <path d="M116 76 L83 61 115 94Z" fill="#c9977d"/><path d="M204 76 L237 61 205 94Z" fill="#c9977d"/>
-    <!-- eyes -->
-    <g class="eyeBlink"><path d="M127 78 Q138 68 149 78 Q138 87 127 78Z" fill="#f4efe5"/><circle class="iris" cx="138" cy="78" r="5" fill="#79a9b2"/><path d="M171 78 Q182 68 193 78 Q182 87 171 78Z" fill="#f4efe5"/><circle class="iris" cx="182" cy="78" r="5" fill="#79a9b2"/></g>
-    <path d="M151 105 Q160 110 169 105" fill="none" stroke="#815d52" stroke-width="2"/>
-    <!-- front hair -->
-    <g class="hairFloat" id="hair"><path d="M109 68 Q112 13 161 11 Q211 13 212 68 Q194 44 176 41 Q150 66 111 84Z" fill="#d6d0c4"/><path d="M176 41 Q201 62 199 117 Q219 91 210 53Z" fill="#d6d0c4"/></g>
-    <!-- tattoo -->
-    <path id="tattoo" d="M187 88 q12 8 0 17 q-8-9 0-17 M192 106 l8 10" fill="none" stroke="#2f5360" stroke-width="2" opacity="0"/>
-    <!-- weapon -->
-    <g id="weapon"><path d="M237 134 L247 331" stroke="#8c6d40" stroke-width="7"/><path d="M229 119 L241 89 253 119 241 144Z" fill="#95b9c8" stroke="#d3bd7d" stroke-width="3"/></g>
-   </svg>
-   </div>
-   <div class="nameplate"><div><div class="nm" id="heroName">Kaelith</div><div class="role">Velhiri · Custode Selvatico</div></div><div class="gearscore">POTERE<br><b id="gs">412</b></div></div>
- </div>
+  <section class="sheet">
+    <div class="tabs">
+      <button class="tab active" data-tab="appearance">ASPETTO</button><button class="tab" data-tab="eyes">OCCHI</button>
+      <button class="tab" data-tab="tattoo">TATUAGGI</button><button class="tab" data-tab="gear">EQUIP.</button>
+    </div>
 
- <div class="tabs">
-   <button class="tab on" data-page="aspetto">ASPETTO</button>
-   <button class="tab" data-page="equip">EQUIP.</button>
-   <button class="tab" data-page="build">BUILD</button>
-   <button class="tab" data-page="stats">STAT.</button>
- </div>
+    <div class="panel" id="appearance">
+      <div class="label">ACCONCIATURA</div>
+      <div class="choices">
+        <button class="choice">◢</button><button class="choice">♟</button><button class="choice sel">♛</button><button class="choice">❧</button><button class="choice">♞</button><button class="choice">✦</button>
+      </div>
+      <div class="label">COLORE CAPELLI</div>
+      <div class="colors">
+        <button class="swatch sel" data-hair="black" style="background:#17191d"></button>
+        <button class="swatch" data-hair="auburn" style="background:#66372d"></button>
+        <button class="swatch" data-hair="silver" style="background:#d7d3c9"></button>
+        <button class="swatch" data-hair="blue" style="background:#314d72"></button>
+      </div>
+      <div class="info">La V2 usa una direzione illustrata più vicina allo storyboard. In questa slice stiamo validando interazione, gerarchia dell'interfaccia e sensazione del personaggio prima di produrre tutti gli asset modulari definitivi.</div>
+    </div>
 
- <section class="card section page" id="aspetto">
-  <div class="title">PERSONALIZZAZIONE LIVE</div>
-  <div class="muted">Tocca una scelta: l'avatar cambia immediatamente.</div><br/>
-  <div class="title">OCCHI</div><div class="choices" id="eyes"></div><br/>
-  <div class="title">CAPELLI</div><div class="choices" id="hairs"></div><br/>
-  <div class="title">SEGNI</div><div class="choices" id="marks"></div>
-  <button class="cta" id="save">SALVA PERSONAGGIO</button>
- </section>
+    <div class="panel hidden" id="eyes">
+      <div class="label">COLORE OCCHI</div>
+      <div class="colors">
+        <button class="swatch eye sel" data-eye="ambra" style="background:#c69042"></button><button class="swatch eye" data-eye="verde" style="background:#5d8467"></button>
+        <button class="swatch eye" data-eye="ghiaccio" style="background:#91c7d7"></button><button class="swatch eye" data-eye="viola" style="background:#8a6ca8"></button>
+      </div><div class="info" id="eyeText">Occhi: Ambra. Nella build definitiva il cambio agirà sul layer degli occhi del volto, senza rigenerare l'intero personaggio.</div>
+    </div>
 
- <section class="card section page hidden" id="equip">
-  <div class="title">EQUIPAGGIAMENTO MODULARE</div>
-  <div class="muted">Ogni slot modifica separatamente l'avatar.</div><br/>
-  <div class="equipgrid" id="items"></div>
-  <div class="compare" id="compare">Seleziona un oggetto per vedere statistiche e anteprima.</div>
- </section>
+    <div class="panel hidden" id="tattoo">
+      <div class="label">SEGNI E TATUAGGI</div>
+      <div class="choices"><button class="choice tattoo sel" data-name="Nessuno">—</button><button class="choice tattoo" data-name="Runa del vento">⌁</button><button class="choice tattoo" data-name="Sigillo spezzato">✣</button><button class="choice tattoo" data-name="Tre lune">☾</button></div>
+      <div class="info" id="tattooText">Nessun tatuaggio selezionato.</div>
+    </div>
 
- <section class="card section page hidden" id="build">
-  <div class="title">CUSTODE SELVATICO · 7 PUNTI</div>
-  <div class="muted">La classe resta healer, ma la build può cambiare radicalmente.</div><br/>
-  <div id="skills"></div>
- </section>
-
- <section class="card section page hidden" id="stats">
-  <div class="title">STATISTICHE PERSONAGGIO</div>
-  <div class="stats">
-   <div class="stat">Salute <b id="hp">32450</b></div><div class="stat">Mana <b>18200</b></div>
-   <div class="stat">Spirito <b id="spirit">170</b></div><div class="stat">Rapidità <b id="haste">12.8%</b></div>
-   <div class="stat">Critico <b id="crit">9.4%</b></div><div class="stat">Armatura <b id="armor">1240</b></div>
-  </div>
- </section>
+    <div class="panel hidden" id="gear">
+      <div class="label">SET EQUIPAGGIAMENTO</div>
+      <div class="geargrid">
+        <button class="gear sel" data-power="60"><b>Viandante Rosso</b>Leggero · Destrezza +4</button>
+        <button class="gear" data-power="67"><b>Guardia di Veyra</b>Medio · Resistenza +5</button>
+        <button class="gear" data-power="72"><b>Ombra delle Isole</b>Leggero · Spirito +6</button>
+        <button class="gear" data-power="78"><b>Reliquia del Cielo</b>Raro · Potere +18</button>
+      </div>
+    </div>
+  </section>
 </div>
-
-<nav class="bottom">
- <button class="nav on" data-goto="aspetto"><span>◈</span>Personaggio</button>
- <button class="nav" data-goto="equip"><span>◇</span>Inventario</button>
- <button class="nav" data-goto="build"><span>✦</span>Abilità</button>
- <button class="nav" id="future"><span>☷</span>MMO</button>
-</nav>
+<div class="bottom"><button class="btn" id="back">‹ INDIETRO</button><button class="btn gold" id="next">AVANTI ›</button></div>
 <div class="toast" id="toast"></div>
-
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const toast=t=>{let x=$('#toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1400)}
-const state=JSON.parse(localStorage.getItem('nymeriaChar')||'null')||{eye:'#79a9b2',hair:'#d6d0c4',mark:false,gear:{torso:0,shoulders:0,boots:0,weapon:0},skills:{0:2,1:1,2:0}};
-function show(id){
- $$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==id));
- $$('.tab').forEach(x=>x.classList.toggle('on',x.dataset.page===id));
- $$('.nav').forEach(x=>x.classList.toggle('on',x.dataset.goto===id));
-}
-$$('.tab').forEach(b=>b.onclick=()=>show(b.dataset.page));
-$$('.nav[data-goto]').forEach(b=>b.onclick=()=>show(b.dataset.goto));
-$('#future').onclick=()=>toast('Prossima build: missioni · gilda · raid');
-
-const eyes=[['Ghiaccio','#79a9b2'],['Smeraldo','#6fa36e'],['Ambra','#b88645'],['Viola','#8b6aa8']];
-$('#eyes').innerHTML=eyes.map(([n,c])=>`<button class="choice eye" data-c="${c}"><div class="swatch" style="background:${c}"></div>${n}</button>`).join('');
-function setEye(c){state.eye=c;$$('.iris').forEach(x=>x.setAttribute('fill',c));$$('.eye').forEach(x=>x.classList.toggle('on',x.dataset.c===c))}
-$$('.eye').forEach(b=>b.onclick=()=>setEye(b.dataset.c));
-
-const hairs=[['Argento','#d6d0c4'],['Ebano','#27282a'],['Rame','#9c6048'],['Blu notte','#39475f']];
-$('#hairs').innerHTML=hairs.map(([n,c])=>`<button class="choice hair" data-c="${c}"><div class="swatch" style="background:${c}"></div>${n}</button>`).join('');
-function setHair(c){state.hair=c;$('#hair path').setAttribute('fill',c);$('#backHair path').setAttribute('fill',c);$$('.hair').forEach(x=>x.classList.toggle('on',x.dataset.c===c))}
-$$('.hair').forEach(b=>b.onclick=()=>setHair(b.dataset.c));
-
-$('#marks').innerHTML=`<button class="choice mark" data-v="0">Nessuno</button><button class="choice mark" data-v="1">Sigillo astrale</button>`;
-function setMark(v){state.mark=!!v;$('#tattoo').style.opacity=v?1:0;$$('.mark').forEach(x=>x.classList.toggle('on',+x.dataset.v===+v))}
-$$('.mark').forEach(b=>b.onclick=()=>setMark(+b.dataset.v));
-
-const gear=[
- {slot:'torso',name:'Veste del Viandante',icon:'◩',p:0,colors:['#4f5960','#20282d','#3f5360','#18242b'],stat:'+85 Difesa'},
- {slot:'torso',name:'Corazza Tempestaria',icon:'◩',p:38,colors:['#536c7d','#202c38','#314e62','#132631'],stat:'+142 Difesa · +18 Spirito'},
- {slot:'torso',name:'Manto delle Radici',icon:'◩',p:24,colors:['#566249','#283125','#4e6038','#24321d'],stat:'+96 Difesa · +28 Spirito'},
- {slot:'shoulders',name:'Spallacci Runici',icon:'⌁',p:22,color:'#697984',stat:'+44 Armatura · +2% Critico'},
- {slot:'boots',name:'Passi del Bosco',icon:'♢',p:18,color:'#4c5a45',stat:'+36 Armatura · +3% Rapidità'},
- {slot:'weapon',name:'Bastone del Velo',icon:'†',p:44,color:'#9b78b4',stat:'+41 Spirito · Effetto: Germoglio +12%'}
-];
-$('#items').innerHTML=gear.map((g,i)=>`<button class="item" data-i="${i}"><span class="ico">${g.icon}</span><b>${g.name}</b><small>${g.stat}</small></button>`).join('');
-function applyGear(i){
- const g=gear[i]; state.gear[g.slot]=i;
- if(g.slot==='torso'){['a1','a2','c1','c2'].forEach((id,k)=>$('#'+id).setAttribute('stop-color',g.colors[k]));}
- if(g.slot==='shoulders') $('#shoulders').style.filter=`drop-shadow(0 0 7px ${g.color})`;
- if(g.slot==='boots') $$('#boots path').forEach(x=>x.setAttribute('fill',g.color));
- if(g.slot==='weapon') $('#weapon path:nth-child(2)').setAttribute('fill',g.color);
- $('#compare').innerHTML=`<b>${g.name}</b><br>${g.stat}<br><span style="color:#aa86c7">Potere oggetto +${g.p}</span><button class="cta" onclick="toast('Equipaggiato')">EQUIPAGGIATO</button>`;
- updateStats(); highlightGear();
-}
-$$('.item').forEach(b=>b.onclick=()=>applyGear(+b.dataset.i));
-function highlightGear(){
- $$('.item').forEach((b,i)=>{let g=gear[i];b.classList.toggle('on',state.gear[g.slot]===i)});
-}
-function updateStats(){
- let p=350; Object.values(state.gear).forEach(i=>p+=(gear[i]?.p||0));
- $('#gs').textContent=p; $('#armor').textContent=1240+Math.max(0,p-350)*3;
- $('#spirit').textContent=170+Math.max(0,p-350);
-}
-
-const skills=[
- ['Germoglio Persistente','Le cure periodiche durano più a lungo.','🌿'],
- ['Pioggia di Linfa','Aumenta le cure ad area.','✦'],
- ['Simbiosi','Una parte delle tue cure protegge il bersaglio.','◉']
-];
-$('#skills').innerHTML=skills.map((s,i)=>`<div class="skill"><div class="orb">${s[2]}</div><div><b>${s[0]}</b><small>${s[1]}</small></div><button class="points" data-s="${i}">${state.skills[i]||0}/5 ＋</button></div>`).join('');
-$$('.points').forEach(b=>b.onclick=()=>{let i=b.dataset.s;if(state.skills[i]<5){state.skills[i]++;b.textContent=state.skills[i]+'/5 ＋';toast('Talento potenziato')}});
-$('#save').onclick=()=>{localStorage.setItem('nymeriaChar',JSON.stringify(state));toast('Personaggio salvato sul dispositivo')};
-
-setEye(state.eye);setHair(state.hair);setMark(state.mark?1:0);
-Object.values(state.gear).forEach(i=>{if(gear[i]) applyGear(i)});
-highlightGear();updateStats();
+const toast=t=>{let x=$("#toast");x.textContent=t;x.classList.add("show");setTimeout(()=>x.classList.remove("show"),1400)}
+$$(".tab").forEach(b=>b.onclick=()=>{$$(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");$$(".panel").forEach(x=>x.classList.add("hidden"));$("#"+b.dataset.tab).classList.remove("hidden")});
+$$(".choice:not(.tattoo)").forEach(b=>b.onclick=()=>{b.parentElement.querySelectorAll(".choice").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");toast("Acconciatura applicata")});
+$$("[data-hair]").forEach(b=>b.onclick=()=>{$$("[data-hair]").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");$("#stage").dataset.hair=b.dataset.hair;toast("Colore capelli aggiornato")});
+$$(".eye").forEach(b=>b.onclick=()=>{$$(".eye").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");$("#eyeText").textContent="Occhi: "+b.dataset.eye[0].toUpperCase()+b.dataset.eye.slice(1)+". Il layer occhi è pronto per essere sostituito dagli asset definitivi.";toast("Occhi: "+b.dataset.eye)});
+$$(".tattoo").forEach(b=>b.onclick=()=>{$$(".tattoo").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");$("#tattooText").textContent=b.dataset.name==="Nessuno"?"Nessun tatuaggio selezionato.":b.dataset.name+" applicato al volto.";toast(b.dataset.name)});
+$$(".gear").forEach((b,i)=>b.onclick=()=>{$$(".gear").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");$("#pow").textContent=b.dataset.power;$("#vit").textContent=14+i*2;$("#dex").textContent=18+(i===0?0:i);toast(b.querySelector("b").textContent+" equipaggiato")});
+$$(".slot").forEach(b=>b.onclick=()=>{$$(".slot").forEach(x=>x.classList.remove("active"));b.classList.add("active");toast("Slot: "+b.dataset.slot)});
+let pos=49; const move=d=>{pos=Math.max(44,Math.min(54,pos+d));$("#hero").style.backgroundPosition=pos+"% 29%";toast(d<0?"Vista sinistra":"Vista destra")};$("#left").onclick=()=>move(-2);$("#right").onclick=()=>move(2);
+$("#next").onclick=()=>toast("Prossimo step: Classe");$("#back").onclick=()=>toast("Torna alla scelta della razza");
 </script>
-</body>
-</html>
+</body></html>
