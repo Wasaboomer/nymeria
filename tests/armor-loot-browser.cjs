@@ -1,5 +1,6 @@
 /* Mobile touch regression for proficiency, Advisor, class switches and personal loot. */
 const assert = require("node:assert/strict");
+const dismissNotifications = require("./notifications-fixture.cjs");
 const { chromium } = require("playwright");
 const base = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
 (async () => {
@@ -48,6 +49,7 @@ const base = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         );
         if (!(await page.locator("#equip-item").isDisabled()))
           await page.locator("#equip-item").tap();
+        await dismissNotifications(page);
         await page.locator("#close-detail").tap();
       };
       const choose = async (id) => {
@@ -129,7 +131,8 @@ const base = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
             await page.evaluate(() => JSON.stringify(Equipment.state)),
             before,
           );
-          await page.locator("#close-detail").tap();
+          await dismissNotifications(page);
+        await page.locator("#close-detail").tap();
           await overflow();
         }
         for (const id of kit) await equip(id);

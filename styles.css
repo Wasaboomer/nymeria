@@ -1607,3 +1607,132 @@ body:not([data-screen="character"]) .app {
   background: transparent;
   font: inherit;
 }
+/* M6: place-led exploration, compact journal and a shared-engine encounter adapter. */
+.screen-tabs #tab-world { grid-column: 1 / -1; min-height: 38px; letter-spacing: .08em; }
+#panel-world { font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+#panel-world button, #panel-world select {
+  min-height: 44px; border: 1px solid var(--line); border-radius: 8px;
+  background: #20343c; color: var(--ink); padding: 10px 12px;
+  font: inherit; cursor: pointer; max-width: 100%; white-space: normal;
+}
+#panel-world button:disabled { opacity: .5; cursor: default; }
+#panel-world h3 { font-size: 19px; margin: 6px 0 10px; line-height: 1.3; }
+#panel-world h4 { font-size: 14px; margin: 8px 0; }
+#panel-world small { color: var(--muted); font-size: 11px; display: block; }
+.world-intro { display: block; background: linear-gradient(145deg, #21343a, #10242b); padding: 20px; border: 1px solid #5b5e4d; border-radius: 12px; }
+.world-intro h3 { color: #dec795; }
+.world-intro p { color: #b0bdbd; font-size: 12px; }
+.world-eyebrow { display: block; color: #c7ae79; font-size: 9px; letter-spacing: .12em; }
+.world-summary { display: flex; gap: 8px 16px; flex-wrap: wrap; font-size: 11px; margin-top: 15px; }
+.world-summary small { flex-basis: 100%; }
+.world-views { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 16px 0; }
+#panel-world .world-views [aria-pressed="true"] { background: #b8a16b; color: #11232c; border-color: #b8a16b; }
+.world-message { padding: 10px 12px; border-left: 2px solid #b8a16b; color: #ded1b2; background: #1b2a2e; }
+.world-message:empty, #world-storage:empty { display: none; }
+.world-locations { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 14px 0; }
+#panel-world .world-node { text-align: left; padding: 12px 10px; position: relative; background: #14252d; min-height: 130px; }
+.world-node strong { display: block; font-size: 12px; line-height: 1.35; padding-right: 8px; }
+.world-node small { font-size: 9px !important; margin-top: 5px; }
+.world-node b { position: absolute; right: 10px; top: 12px; color: #9f996d; }
+#panel-world .world-node-current { border-color: #b8a16b; background: #293b3d; }
+.world-mark { width: 40px; height: 40px; color: #c4ab79; display: block; margin-bottom: 8px; }
+.world-location-detail, .quest-tracker, .world-battle, .world-result, .discovery-card {
+  margin: 14px 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: #152630;
+}
+.world-place-heading { display: flex; gap: 14px; align-items: center; }
+.world-place-heading .world-mark { width: 54px; height: 54px; flex-shrink: 0; }
+.world-place-heading h3 { font-size: 18px !important; }
+.world-npc { padding: 14px 0; border-top: 1px solid var(--line); }
+.npc-heading { display: flex; align-items: center; gap: 10px; }
+.npc-heading > div { flex: 1; min-width: 0; }
+.npc-heading h4 { margin: 0 !important; }
+.npc-heading button { flex-shrink: 0; }
+.npc-seal { display: grid; place-items: center; width: 32px; height: 38px; border: 1px solid #7b765c; border-radius: 15px 15px 4px 4px; color: #dec795; flex-shrink: 0; font-family: Georgia, serif; }
+.world-npc p { color: #aab8b9; font-size: 12px; font-style: italic; }
+.npc-offer { padding: 12px; margin: 8px 0; background: #20333b; border-radius: 7px; }
+.npc-offer button { width: 100%; margin-top: 8px; }
+#panel-world .world-point { width: 100%; display: block; text-align: left; margin: 8px 0; }
+.world-enemy { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid #31434a; }
+.world-enemy > div { flex: 1; min-width: 0; }
+.world-enemy h4 { margin: 4px 0 !important; }
+.world-enemy p { font-size: 11px; color: #b1c2bf; margin: 5px 0; }
+.enemy-miniboss { border-left: 2px solid #ad986b; padding-left: 10px; }
+.enemy-boss { border-left: 2px solid #b88c8c; padding-left: 10px; background: #302c34; }
+.quest-tracker { border-color: #867b59; background: #263438; font-size: 11px; }
+.quest-tracker > strong { display: block; font-size: 14px; margin: 5px 0; }
+.quest-tracker ul, .quest-objectives { list-style: none; padding: 0; }
+.quest-tracker li, .quest-objectives li { display: flex; gap: 10px; justify-content: space-between; margin: 7px 0; }
+.quest-tracker li b, .quest-objectives li b { flex-shrink: 0; color: #c7ae79; }
+.journal-group { margin: 18px 0; }
+.journal-group > h4 { text-transform: uppercase; letter-spacing: .12em; color: #c7ae79; font-size: 10px !important; }
+.quest-card { border: 1px solid var(--line); border-radius: 9px; background: #152630; padding: 13px; margin: 10px 0; }
+.quest-card summary { display: flex; gap: 8px; align-items: center; cursor: pointer; min-height: 44px; }
+.quest-card summary span { flex: 1; }
+.quest-card summary strong { display: block; font-size: 14px; }
+.quest-card summary b { font-size: 9px; color: #c7ae79; }
+.quest-card p { font-size: 12px; }
+.quest-card.quest-completed { border-color: #b8a16b; }
+.quest-locked, .quest-claimed { opacity: .7; }
+.quest-actions { margin-top: 10px; }
+.quest-actions button { width: 100%; }
+#panel-world .quest-primary { background: #b8a16b; color: #142630; }
+.quest-rewards { color: #d1bb8e; border-top: 1px solid var(--line); padding-top: 10px; }
+.objective-done span { color: #82b4a5; }
+.discovery-card { border-color: #686e60; }
+.discovery-card strong { color: #d0bb8f; }
+.world-fighters { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.world-fighters strong { display: block; min-height: 40px; font-size: 12px; }
+.world-fighters p { font-size: 11px; }
+#world-enemy-bar { background: #a26f71; }
+.world-battle-controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+.world-battle-controls button { flex: 1; }
+#world-battle-log { list-style: none; padding: 0; font-size: 11px; color: #a9babc; }
+#world-battle-log li { padding: 5px 0; border-bottom: 1px solid #31434a66; }
+#world-debug label { display: block; font-size: 11px; margin: 12px 0; }
+#world-debug select { display: block; width: 100%; margin-top: 6px; }
+#world-debug > button { margin: 5px 0; }
+@media (max-width: 350px) {
+  .world-intro, .world-location-detail, .quest-card, .quest-tracker { padding: 12px; }
+  #panel-world .world-node { padding: 10px 8px; }
+  .world-enemy { flex-wrap: wrap; }
+  .world-enemy > button { width: 100%; }
+}
+/* M6.1 feedback floats above every tab, without changing navigation or game state. */
+#global-notifications {
+  position: fixed; top: max(14px, env(safe-area-inset-top)); left: 50%;
+  transform: translateX(-50%); width: min(430px, calc(100% - 24px));
+  z-index: 30; max-height: calc(100dvh - 40px); overflow-y: auto;
+}
+.notification-card {
+  display: flex; gap: 12px; align-items: flex-start; padding: 16px;
+  color: #e9e6da; background: #1b3037; border: 1px solid #b8a16b;
+  border-radius: 12px; box-shadow: 0 10px 36px #0009;
+  animation: notification-arrive .2s ease-out;
+}
+.notification-sigil { color: #d9bf83; width: 30px; flex-shrink: 0; }
+.notification-sigil svg { display: block; width: 100%; }
+.notification-copy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.notification-label { font-size: 10px; letter-spacing: .08em; color: #e0c98e; margin: 0 0 6px; font-weight: 700; }
+.notification-copy h2 { font: 600 17px/1.3 Georgia, serif; margin: 0 0 8px; }
+.notification-copy ul { list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.7; }
+.notification-copy small { display: block; margin-top: 8px; color: #bdcac9; font-size: 10px; }
+.notification-card button {
+  min-width: 44px; min-height: 44px; padding: 0; border: 1px solid #6b7770;
+  border-radius: 8px; background: #203941; color: #f0e4c9; font: 24px/1 sans-serif;
+  flex-shrink: 0; cursor: pointer;
+}
+.notification-major .notification-card { padding: 20px 16px; background: linear-gradient(135deg,#384540,#172e37); border: 2px solid #d6bd80; }
+.notification-major .notification-sigil { width: 36px; }
+.notification-major .notification-copy h2 { font-size: 25px; color: #f2deb0; }
+.notification-major .notification-label { font-size: 12px; }
+.notification-major .notification-copy ul { font-size: 15px; }
+.notification-card button:focus-visible { outline: 2px solid #f2deb0; outline-offset: 3px; }
+@keyframes notification-arrive { from { opacity: 0; translate: 0 -8px; } to { opacity: 1; translate: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .notification-card { animation: none; } }
+@media (max-width: 350px) {
+  .notification-card { gap: 8px; padding: 12px; }
+  .notification-major .notification-card { padding: 16px 12px; }
+  .notification-major .notification-sigil { width: 26px; }
+  .notification-major .notification-label { font-size: 10px; }
+  .notification-major .notification-copy h2 { font-size: 22px; }
+}

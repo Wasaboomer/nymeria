@@ -1,4 +1,4 @@
-/* Only expedition personalLoot uses this policy. World/shared/trade ownership is unrestricted. */
+/* Personal expedition/quest rewards use this policy. World/shared/trade ownership is unrestricted. */
 const PersonalLoot = (() => {
   const node = typeof module !== "undefined" && module.exports;
   const gear = node ? require("./equipment-data.js") : GearData;
@@ -9,7 +9,7 @@ const PersonalLoot = (() => {
     const cls =
       classes.classes[profile?.classId] ||
       Object.values(classes.classes).find((c) => c.name === profile?.className);
-    if (!cls) throw new Error("Unknown saved expedition class");
+    if (!cls) throw new Error("Unknown saved personal-loot class");
     return {
       version: 1,
       kind: "personalLoot",

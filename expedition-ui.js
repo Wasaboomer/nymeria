@@ -50,9 +50,9 @@ const ExpeditionUI = (() => {
       bar.setAttribute("aria-valuenow", state.requiredXP ? state.currentXP : 1);
       bar.firstElementChild.style.width = `${state.requiredXP ? (state.currentXP / state.requiredXP) * 100 : 100}%`;
     }
-    node("progression-level-up").textContent = state.lastClaim?.levelUps?.length
-      ? ProgressionData.levelUpSummary(state.lastClaim)
-      : "";
+    node("progression-level-up").textContent = ProgressionData.levelUpSummary(
+      ProgressionData.latestLevelUp(state),
+    );
     const wealth = `<span><strong>${state.crowns}</strong> Corone</span>${Object.entries(
       ProgressionData.materialNames,
     )

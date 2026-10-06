@@ -1,5 +1,6 @@
 /* Cold loads, full browser close/return, real touch and same-origin concurrent claims. */
 const assert = require("node:assert/strict");
+const dismissNotifications = require("./notifications-fixture.cjs");
 const fs = require("node:fs"),
   path = require("node:path"),
   os = require("node:os");
@@ -45,6 +46,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
           `${width}px overflow`,
         );
       async function tab(id) {
+        await dismissNotifications(page);
         await page.locator("#tab-" + id).tap();
         await overflow();
       }
@@ -55,6 +57,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
         await overflow();
         if (!(await page.locator("#equip-item").isDisabled()))
           await page.locator("#equip-item").tap();
+        await dismissNotifications(page);
         await page.locator("#close-detail").tap();
       }
       const initialGear = await page.evaluate(() => Equipment.state.equipment);

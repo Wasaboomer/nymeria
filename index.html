@@ -7,31 +7,41 @@
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
     <meta name="theme-color" content="#101c24" />
-    <title>Nymeria Character Progression &amp; First Idle Loop 0.1</title>
+    <title>Nymeria Frontiera del Vespro &amp; Quest System 0.1</title>
     <!-- Bump this shared asset version together on releases to avoid mixed cached scripts. -->
-    <link rel="stylesheet" href="styles.css?v=m5-stat-growth-0.1" />
-    <script src="navigation.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="progression-data.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="expedition-data.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="combat-data.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="classes-data.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="armor-rules.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="build-system.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="class-system.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="items.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="equipment-data.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="personal-loot.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="progression-store.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="equipment.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="character.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="inventory.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="app.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="combat-engine.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="combat-ui.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="class-ui.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="expedition-engine.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="progression-system.js?v=m5-stat-growth-0.1" defer></script>
-    <script src="expedition-ui.js?v=m5-stat-growth-0.1" defer></script>
+    <link rel="stylesheet" href="styles.css?v=m6-feedback-0.1" />
+    <script src="navigation.js?v=m6-feedback-0.1" defer></script>
+    <script src="progression-data.js?v=m6-feedback-0.1" defer></script>
+    <script src="expedition-data.js?v=m6-feedback-0.1" defer></script>
+    <script src="combat-data.js?v=m6-feedback-0.1" defer></script>
+    <script src="classes-data.js?v=m6-feedback-0.1" defer></script>
+    <script src="armor-rules.js?v=m6-feedback-0.1" defer></script>
+    <script src="build-system.js?v=m6-feedback-0.1" defer></script>
+    <script src="class-system.js?v=m6-feedback-0.1" defer></script>
+    <script src="items.js?v=m6-feedback-0.1" defer></script>
+    <script src="equipment-data.js?v=m6-feedback-0.1" defer></script>
+    <script src="personal-loot.js?v=m6-feedback-0.1" defer></script>
+    <script src="world-data.js?v=m6-feedback-0.1" defer></script>
+    <script src="quest-data.js?v=m6-feedback-0.1" defer></script>
+    <script src="quest-events.js?v=m6-feedback-0.1" defer></script>
+    <script src="quest-system.js?v=m6-feedback-0.1" defer></script>
+    <script src="progression-events.js?v=m6-feedback-0.1" defer></script>
+    <script src="progression-store.js?v=m6-feedback-0.1" defer></script>
+    <script src="equipment.js?v=m6-feedback-0.1" defer></script>
+    <script src="character.js?v=m6-feedback-0.1" defer></script>
+    <script src="inventory.js?v=m6-feedback-0.1" defer></script>
+    <script src="app.js?v=m6-feedback-0.1" defer></script>
+    <script src="combat-engine.js?v=m6-feedback-0.1" defer></script>
+    <script src="combat-ui.js?v=m6-feedback-0.1" defer></script>
+    <script src="class-ui.js?v=m6-feedback-0.1" defer></script>
+    <script src="expedition-engine.js?v=m6-feedback-0.1" defer></script>
+    <script src="progression-system.js?v=m6-feedback-0.1" defer></script>
+    <script src="expedition-ui.js?v=m6-feedback-0.1" defer></script>
+    <script src="world-system.js?v=m6-feedback-0.1" defer></script>
+    <script src="quest-ui.js?v=m6-feedback-0.1" defer></script>
+    <script src="world-ui.js?v=m6-feedback-0.1" defer></script>
+    <script src="notification-system.js?v=m6-feedback-0.1" defer></script>
+    <script src="notification-ui.js?v=m6-feedback-0.1" defer></script>
   </head>
   <body>
     <main class="app">
@@ -110,6 +120,7 @@
         >
           Spedizioni
         </button>
+        <button id="tab-world" role="tab" aria-selected="false" aria-controls="panel-world" data-screen="world" tabindex="-1">Mondo</button>
       </nav>
       <section
         id="panel-class"
@@ -511,8 +522,42 @@
           <button id="expedition-debug-complete">Completa ora · TEST</button>
         </section>
       </section>
+      <section id="panel-world" role="tabpanel" aria-labelledby="tab-world" hidden>
+        <div class="section-title"><h2>Mondo</h2><span>M6 / 01</span></div>
+        <header class="world-intro"><span class="world-eyebrow">PRIMA FRONTIERA</span><h3 id="world-zone-name"></h3><p id="world-zone-story"></p><div id="world-summary" class="world-summary"></div></header>
+        <nav class="world-views" aria-label="Sezioni del mondo">
+          <button data-world-view="places" aria-pressed="true">Luoghi</button>
+          <button data-world-view="journal" aria-pressed="false">Diario</button>
+          <button data-world-view="discoveries" aria-pressed="false">Scoperte</button>
+        </nav>
+        <p id="world-message" class="world-message" role="status" aria-live="polite"></p>
+        <p id="world-storage" class="compatibility" role="status"></p>
+        <aside id="world-tracked" class="quest-tracker" hidden></aside>
+        <section id="world-places">
+          <div id="world-locations" class="world-locations"></div>
+          <section id="world-location-detail" class="world-location-detail"></section>
+        </section>
+        <section id="world-journal" hidden><h3>Diario della Frontiera</h3><p class="hint">Gli obiettivi avanzano dopo l'accettazione. Le ricompense si riscuotono una sola volta.</p><div id="quest-journal"></div></section>
+        <section id="world-discoveries" hidden><h3>Scoperte</h3><div id="world-discovery-list"></div><h3>Riconoscimenti</h3><div id="world-achievements"></div></section>
+        <section id="world-battle" class="world-battle" hidden aria-label="Incontro nel mondo">
+          <div class="section-title"><h3 id="world-battle-name"></h3><span id="world-battle-clock"></span></div>
+          <p id="world-battle-profile" class="hint"></p>
+          <div class="world-fighters"><div><strong id="world-player-name"></strong><p id="world-player-hp"></p><div class="xp-bar"><span id="world-player-bar"></span></div></div><div><strong id="world-enemy-name"></strong><p id="world-enemy-hp"></p><div class="xp-bar"><span id="world-enemy-bar"></span></div></div></div>
+          <div class="world-battle-controls"><button id="world-battle-resume">Riprendi incontro</button><button id="world-battle-pause">Pausa</button><button id="world-battle-abandon">Torna a Veyra</button></div>
+          <p class="hint">Preparazione e strategia salvate all'inizio. Il refresh permette di riprendere lo stesso incontro.</p>
+          <ol id="world-battle-log" aria-label="Azioni recenti"></ol>
+        </section>
+        <section id="world-result" class="world-result" hidden aria-live="polite"></section>
+        <section id="world-quest-reward" class="world-result" hidden></section>
+        <section id="world-debug" class="expedition-debug" hidden>
+          <h3>DEBUG · M6 · TEST MODE</h3><p class="hint">Solo ?test=1. Questi comandi modificano il salvataggio locale reale. Le missioni riscosse restano protette dal doppio pagamento.</p>
+          <label>Missione<select id="world-debug-quest"></select></label><div class="world-battle-controls"><button data-quest-debug="complete">Completa obiettivi</button><button data-quest-debug="reset">Reset obiettivi</button></div>
+          <label>Luogo<select id="world-debug-location"></select></label><button id="world-debug-unlock">Sblocca luogo · DEBUG</button>
+          <button id="world-debug-xp">+500 XP · DEBUG</button><button id="world-debug-boss">Avvia boss · DEBUG</button>
+        </section>
+      </section>
       <footer>
-        <p>Nymeria Character Progression &amp; First Idle Loop 0.1</p>
+        <p>Nymeria Frontiera del Vespro &amp; Quest System 0.1</p>
         <span>Asset SVG esplorativi · sistema modulare</span
         ><button id="reset-demo" hidden>
           DEBUG · Reset equipaggiamento demo
@@ -526,6 +571,7 @@
       <button id="random">↻ <span>Casuale</span></button
       ><button id="save">Crea personaggio <span>→</span></button>
     </div>
+    <aside id="global-notifications" role="status" aria-live="polite" aria-atomic="true" hidden></aside>
     <div id="notice" role="status" aria-live="polite"></div>
     <dialog id="item-dialog" aria-labelledby="detail-heading">
       <div class="detail-header">

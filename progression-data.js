@@ -59,6 +59,9 @@ const ProgressionData = (() => {
     return [`LIVELLO ${receipt.resultingLevel} RAGGIUNTO`, ...gains].join(" · ");
   }
   return {
+    latestLevelUp: (state) => [state.lastClaim, state.lastCombatReward,
+      state.frontier?.lastQuestClaim, state.frontier?.lastEncounter]
+      .filter(Boolean).sort((a, b) => (b.claimedAt || b.awardedAt || 0) - (a.claimedAt || a.awardedAt || 0))[0],
     statKeys: ["force", "agility", "vigor", "spirit", "critical", "speed", "armor"],
     statGains,
     levelUpSummary,

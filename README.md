@@ -489,3 +489,152 @@ Valori provvisori da bilanciare. La crescita è ricostruita dal livello: base L1
 Le ricevute dei level-up conservano classe e aumenti totali effettivi (anche per livelli multipli); i report mostrano gli aumenti con Critico in punti percentuali. Ricevute precedenti senza questi dati restano leggibili; non vengono inventati aumenti retroattivi. Nessuna migrazione distruttiva: i salvataggi esistenti ricalcolano automaticamente le statistiche usando livello e classe salvati.
 
 Test dedicati: `node tests/stat-growth-engine.cjs` (12 verifiche integrate, livelli 1/2/10/20 per entrambe le classi, HP, ricalcolo, persistenza, cambio classe, ricevute Combat/Spedizioni, livelli multipli e classi future) e `node tests/stat-growth-browser.cjs` (320/390/430 px, refresh, touch, nessun errore/overflow). Le regressioni dei premi manuali ora verificano anche il testo completo degli aumenti per entrambe le classi. Gli asset usano `?v=m5-stat-growth-0.1` per evitare script della versione precedente rimasti in cache.
+
+## M6 — Frontiera del Vespro & Quest System 0.1
+
+Base: `5243cf09423fd8b4a60a8c381027c5d80eff558b`. M5 conserva curva XP, crescita per classe, bilanciamento Combat, spedizioni e premi del Guardiano (35 XP / 4 Corone). M6 collega luoghi, NPC, missioni, incontri, ricompense e sblocchi senza dipendenze runtime nuove. Il tab **Mondo** contiene **Luoghi**, **Diario** e **Scoperte**; i nodi sono schede esplorabili, senza mappa complessa o movimento libero.
+
+### Moduli e flusso
+
+| Modulo | Responsabilità |
+| --- | --- |
+| `world-data.js` | Zona, sei luoghi, punti d'interesse, cinque NPC/dialoghi, nove template nemici, scoperte e titoli. Nomi e lore modificabili qui. |
+| `quest-data.js` | Definizioni delle sei main quest e quattro secondarie: ID, tipo, testo, committente/luogo, prerequisiti, livello, obiettivi, premi, missione successiva e sblocchi. |
+| `quest-events.js` | Dispatcher puro `dispatch(state, {type, target, quantity})`. Avanza soltanto obiettivi corrispondenti di missioni attive, limita il progresso al conteggio richiesto e rileva il completamento. |
+| `quest-system.js` | Schema/versioning Frontiera, normalizzazione/migrazione additiva, macchina degli stati, accettazione, tracking, claim, DEBUG. |
+| `world-system.js` | Visita, dialogo, esplorazione, incontri persistenti, simulazione deterministica con `CombatEngine`, eventi e premi tramite M5. |
+| `quest-ui.js` | Diario Principale/Secondarie, offerte NPC, obiettivi, ricompense, stati e missione tracciata. |
+| `world-ui.js` | Interazione touch, luoghi, dialoghi, scoperte, report e clock di presentazione degli incontri. |
+| `progression-system.js` | API condivisa `grantRewards(state, reward)` e policy Personal Loot; bridge generico per kill manuali e spedizioni riscosse. |
+| `progression-store.js` | Una transazione salva insieme progresso quest, XP, Corone, materiali, inventario canonico, stato incontro e claim. Web Locks sincronizza i tab nei browser supportati. |
+
+Gli eventi non contengono ID di missioni. Combat/Expedition non conoscono MQ01–MQ06. Il tipo quest è un dato libero: future profession/guild/faction quest possono usare la stessa macchina degli stati. Un test inserisce una definizione futura e ne verifica il dispatcher senza cambiare i sistemi sorgente.
+
+### Frontiera e progressione
+
+| Luogo | Livello indicativo | Accesso / attività |
+| --- | --- | --- |
+| Avamposto di Veyra | 1 | Iniziale; Serah, Mira e Bram. Preparazione e ritorno dopo sconfitta. |
+| Sentiero Spezzato | 1 | Iniziale; Oren, predoni e carro abbandonato. |
+| Bosco delle Lanterne Spente | 2 | Claim MQ02; segugi, ragni, Cervo, lanterna e campioni di erbe. |
+| Rovine di Elar | 3 | Claim MQ03; Ilyen, sentinelle, frammenti, finestra e Tavoletta. |
+| Guado del Vespro | 4 | Claim MQ04; razziatori, comandante e riva opposta (accessibile dopo il comandante). |
+| Torre Silente | 7–8 | Claim MQ05; Ombre e Custode del Silenzio. |
+
+Gli sblocchi sono ID `world:<locationId>` dentro `unlockedContent`, affiancati agli sblocchi M5 derivati dal livello. Le transazioni preservano questi ID; la normalizzazione ricostruisce anche gli sblocchi delle quest riscosse. I luoghi hanno progressione narrativa, gli incontri non hanno un blocco rigido di livello. Le missioni hanno livelli minimi 1/1/2/3/4/5. La valutazione **Facile / Adeguato / Difficile / Pericoloso** usa tre simulazioni seed fissi, kit/build/statistiche correnti e salute finale, con le stesse soglie concettuali delle spedizioni. I nemici non sono scalati automaticamente al personaggio.
+
+### Catena principale
+
+| Quest | Obiettivi | Premi | Sblocco |
+| --- | --- | --- | --- |
+| MQ01 — Oltre il confine | Parla con Serah, visita il Sentiero | 40 XP, 6 Corone | MQ02 |
+| MQ02 — Nessuno è tornato | 3 predoni, 3 Distintivi della Pattuglia | 100 XP, 12 Corone, 2 Ferro | Bosco / MQ03 |
+| MQ03 — Luci senza fiamma | 2 segugi, 3 campioni, lanterna, Cervo del Crepuscolo | 240 XP, 20 Corone, 3 Fibra | Rovine / MQ04 |
+| MQ04 — Pietre che ricordano | Visita Elar, 3 frammenti, 3 sentinelle | 420 XP, 28 Corone, 3 Etere, arma personale Epica | Guado / MQ05 |
+| MQ05 — Il Guado | 3 razziatori, comandante, riva opposta | 700 XP, 40 Corone, 4 Ferro, corazza personale Epica | Torre / MQ06 |
+| MQ06 — La Torre Silente | Visita Torre, sconfiggi Custode del Silenzio | 1100 XP, 80 Corone, 8 Etere, corazza personale superiore Epica, titolo | Conquistatore della Frontiera |
+
+La causa rimane misteriosa: gli animali sembrano seguire una memoria proveniente da Elar. L'epilogo dopo il boss e nel riconoscimento suggerisce una risposta oltre la Frontiera; non spiega la causa. Prima del boss possono servire livelli, quest secondarie, spedizioni o incontri ripetuti e un kit migliore. Le ricompense MQ04/MQ05 sono realmente equipaggiabili e rendono concreta la preparazione. Il test engine percorre la storia e si prepara fino a L7 combattendo Ombre reali, senza assegnare XP artificialmente; i test browser impostano L8 soltanto come fixture per velocizzare la verifica UI.
+
+### Secondarie e NPC
+
+- **Erbe nella nebbia** (Mira): 3 campioni di erbe al punto esplorativo nel Bosco, dialogo; 100 XP, 10 Corone, 3 Fibra. Introduzione narrativa alle professioni, senza professione/raccolta professionale implementata.
+- **Un debito non pagato** (Bram): 2 predoni; 65 XP, 25 Corone.
+- **Il mercante smarrito** (Oren): carro, predone, una Pattuglia delle Rovine completata con successo e riscossa; 140 XP, 20 Corone, 2 Ferro, Anello della Frontiera universale. Richiama il mercante dei guadi degli eventi M5; non richiede un evento casuale specifico.
+- **Una luce alla finestra** (Ilyen): finestra e dialogo, senza combattimento obbligatorio; 180 XP, 15 Corone, 2 Etere.
+
+NPC: **Capitana Serah Venn** (comandante, Veyra), **Oren Vale** (esploratore, Sentiero), **Mira Thalen** (guaritrice/studiosa, Veyra), **Bram** (mercante, Veyra), **Ilyen** (conoscenze antiche, Elar). Brevi dialoghi cambiano dopo claim definiti nei dati. Nessun albero di dialogo.
+
+### Bestiario e incontri
+
+| Nemico | Liv. | HP | Danno base | Armatura | Velocità | XP / Corone |
+| --- | --- | --- | --- | --- | --- | --- |
+| Predone del Vespro | 1 | 240 | 16 | 8 | 0,9 | 16 / 2 |
+| Segugio Corrotto | 2 | 330 | 22 | 5 | 1,25 | 24 / 3 |
+| Ragno delle Lanterne | 2 | 290 | 20 | 15 | 1,4 | 22 / 3 |
+| Sentinella di Elar | 3 | 550 | 28 | 42 | 0,8 | 36 / 4 |
+| Razziatore del Guado | 4 | 630 | 32 | 24 | 1,05 | 44 / 5 |
+| Ombra Silente | 6 | 850 | 43 | 12 | 1,45 | 65 / 7 |
+| Cervo del Crepuscolo · miniboss | 3 | 780 | 30 | 20 | 1,15 | 70 / 8 |
+| Comandante del Guado · miniboss | 5 | 1120 | 40 | 38 | 0,95 | 110 / 12 |
+| Custode del Silenzio · boss | 8 | 1800 | 50 | 45 | 1,05 | 180 / 20 |
+
+Attacco ogni `2.8 / speed` secondi, speciale ×1,55 ogni 9 s (primo dopo 5 s). Il Combat Engine esistente riceve `enemyTemplate`: stessi cooldown, risorse, build, effetti oggetti, critici e fixed step. AUTO/PERSONALIZZATA e velocità vengono dalla preparazione Combat esistente; le regole sono congelate nell'incontro. Il mondo ha un adapter UI compatto per HP/log/pausa, senza secondo motore. Il tab Combattimento M5 resta disponibile con il Guardiano originale.
+
+All'avvio vengono salvati ID univoco, seed, luogo, template e snapshot del personaggio. Al risultato, il motore ricostruisce deterministicamente l'incontro prima della transazione di premio/progresso. Un refresh non paga né annulla: offre **Riprendi incontro**, rigiocando la stessa preparazione/seed dall'inizio. Massimo 180 secondi simulati; un timeout è una sconfitta. L'app si mette in pausa quando la pagina viene nascosta. Vittoria: XP/Corone del template, kill, eventuale defeatBoss e drop di missione. Sconfitta/ritirata: ritorno a Veyra, nessuna perdita di equipaggiamento/livello, nessuna penalità permanente, 0 XP/Corone. Nessuna durability.
+
+### Quest, eventi e ricompense
+
+Stati: `locked → available → active → completed → claimed`. Disponibilità da prerequisiti riscossi e livello minimo. Si accetta nel luogo del committente; il luogo corrente produce un evento visit all'accettazione (utile per Elar). Una sola quest tracciata, salvata e visibile compatta anche durante l'esplorazione. Dopo il claim non si può riaccettare/reset in normale esperienza.
+
+Obiettivi supportati: `kill`, `collect`, `visit`, `talk`, `completeExpedition`, `defeatBoss`. L'accettazione non retrodata uccisioni/raccolte/dialoghi. Un evento può avanzare più missioni attive. I distintivi/campioni/frammenti vengono dai nemici indicati; il punto Erbe consente di trovare campioni ripetutamente, senza sistema professionale. Gli oggetti di missione sono conteggi in `frontier.supplies`, separati dall'inventario Equipment. Solo una spedizione riuscita e riscossa emette `completeExpedition`; report non riscossi, fallimenti, doppio claim non avanzano l'obiettivo.
+
+`grantRewards` riusa il percorso XP M5, compresi level-up multipli, crescita specifica della classe e cap. Le missioni possono pagare XP, Corone, materiali, `items`, `personalLoot`, content unlock e riconoscimenti. Claim quest e risultato incontro sono idempotenti: stato missione/ticket e premi vengono salvati nello stesso record; un errore di scrittura non applica nulla e permette retry. Duplicati di un ID di loot si convertono in 2 Ferro come in M5.
+
+**Personal Loot**: policy della classe salvata all'accettazione della missione, conservata dopo refresh/cambio classe. MQ04 paga Spada/Arco, MQ05 Plate/Mail, MQ06 `silence-plate` / `silence-mail`, sempre secondo la preparazione salvata. Un cambio classe successivo può rendere il premio inutilizzabile dalla classe corrente: resta posseduto, Armor Proficiency/Advisor lo trattano normalmente. `items` universali come l'anello non richiedono policy. Questo filtro riguarda ricompense personali; non introduce vincoli globali per futuro world/shared/trade loot.
+
+Le due corazze del Silenzio sono Epiche iLv20, requisito L5: Plate Forza8/Vigor15/Armatura26, Mail Agilità15/Vigor8/Critico4/Armatura18. Sono inventario canonico M5, visibili nel Gear Advisor, senza auto-equip. Asset SVG modulari condivisi e provvisori; M6 non aggiunge un catalogo di illustrazioni definitive. Il campo legacy `expeditionOnly` significa escluso dalla proprietà iniziale/demo: viene riutilizzato anche per loot di quest, senza attribuire la provenienza alla sola spedizione.
+
+### Scoperte, sblocchi e migrazione
+
+`frontier` è un'estensione additiva del record `nymeria.progression.v1`, con `version`, `zoneVersion`, `questVersion`, `discoveryVersion`, `achievementVersion` a 1. Contiene luogo, stati/progressi quest, policy personali, tracking, conteggi oggetti quest, nemici sconfitti, scoperte, riconoscimenti, incontro attivo e ultimi report. Versioni future non supportate bloccano la scrittura, senza sovrascrivere il record. Vecchi M5 senza `frontier` ricevono Veyra/Sentiero e MQ01 disponibile; tutti i campi M5 vengono conservati. Nessun reset di Equipment/Class/Creator/Combat/Spedizioni.
+
+La scoperta `tablet_of_elar` si registra esaminando la Tavoletta a Elar. **Non decifrata · Richiede Archeologia 10**. Nessuna Archeologia, abilità professionale o meccanica di decifrazione. La scoperta non è un obiettivo bloccante della main quest. Il formato dati permette segreti, lore, ricette e profession discoveries future. `frontier-conqueror` è un title data entry persistente mostrato in Riconoscimenti dopo il claim finale.
+
+### Test Mode e verifica M6
+
+Solo **`?test=1`** espone il pannello DEBUG e abilita le API di sviluppo: completamento/reset degli obiettivi di quest accettate, sblocco di un luogo, +500 XP, avvio boss. Queste operazioni modificano esplicitamente lo stesso salvataggio locale; non esistono nella UI normale. Il reset di missioni già riscosse è vietato anche in Test Mode, per preservare il pagamento unico. Per iniziare una nuova partita di test usare un profilo browser separato. Gli strumenti DEBUG esistenti di M5 restano disponibili.
+
+```sh
+node tests/world-engine.cjs
+NYMERIA_TEST_URL=http://127.0.0.1:8002 node tests/world-browser.cjs
+NYMERIA_TEST_URL=http://127.0.0.1:8002 node tests/world-side-browser.cjs
+```
+
+Il server deve servire la radice repository (es. `python3 -m http.server 8002`). `tests/world-fixture.cjs` integra i veri moduli Equipment/Class/Combat/Progression/Expedition. Le 18 verifiche engine integrate verificano dati/bestiario, migrazione M5 con spedizione attiva, tutti gli obiettivi, entrambe le catene principali con combattimenti veri, quattro secondarie per classe, bridge spedizioni, policy loot, Armor Proficiency/Advisor, tracking, scoperta/titolo, dialoghi, persistenza, sconfitta, concorrenza, doppio claim, scrittura fallita/retry e protezione versioni future.
+
+I test Chromium touch attraversano MQ01–MQ06 per Custode/Cacciatore a 320/390/430 px, inclusi pausa/refresh/ripresa dello stesso incontro, claim, ricompense/Advisor, barre XP Personaggio/Spedizioni, Diario, Scoperte, titolo, riapertura pagina e assenza di errori JS/overflow. La suite secondarie verifica tutte e quattro via touch a 320/390/430 px, inclusa la riscossione reale di una spedizione M5. Un'altra verifica carica da zero il record M5 e usa due tab reali/Web Locks per un solo pagamento, oltre a errore di scrittura/retry e tutti gli strumenti DEBUG. Screenshot solo in `/tmp`, nessun output generato nel repository. Le suite M2/M3/M4/M5 rimangono regressioni obbligatorie. Navigazione verifica anche il settimo tab e guasti isolati dei nuovi moduli; 30 asset relativi con versione condivisa `m6-frontier-0.1`, adatti a GitHub Pages `/nymeria/`.
+
+### Limiti della slice
+
+Bilanciamento e testi provvisori; le due classi hanno preparazione e difficoltà diverse. Nessuna vera mappa, movimento libero, professione, crafting, party, multiplayer, gilda, fazione, trading, backend, stamina, monetizzazione o cinematica. Gli incontri usano HP/log e template differenti, senza nuovi asset definitivi dei nemici. La ricostruzione al refresh riparte dall'inizio dello stesso scontro; non salva ogni tick. Gli eventi registrano progressi dopo l'accettazione, senza ricostruire azioni storiche. Nei browser senza Web Locks rimane il limite M5 di concorrenza fra tab: usare un tab di gioco per i claim. Tutti i dati risiedono in localStorage; nessun account/cloud save.
+
+## M6.1 — Global Notification System & Level-Up Feedback
+
+Il feedback globale è separato dal salvataggio di gioco. **`progression-store.js`** confronta lo stato prima/dopo ogni transazione riuscita, dopo la scrittura duratura e la ricostruzione del livello. **`progression-events.js`** produce eventi semantici; **`notification-system.js`** gestisce la coda in memoria; **`notification-ui.js`** decide testi, priorità visiva, durata e accessibilità. Nessun trigger level-up in Combat/Expedition/Quest, nessun nuovo percorso XP, nessuna dipendenza circolare.
+
+### API e categorie
+
+- `ProgressionStore.subscribeEvents(listener)` riceve `{ type, payload }` solo dalle transazioni confermate. Restituisce una funzione di unsubscribe.
+- `Notifications.notify(type, payload, { key? })` accoda feedback; una chiave opzionale deduplica eventi UI nella sessione.
+- `Notifications.dismiss(id?)` rimuove soltanto la notifica corrente, con controllo ID contro timer/dismiss obsoleti.
+- `NotificationSystem.create()` è testabile senza DOM/storage.
+
+Categorie data-driven della presentazione: `levelUp`, `areaUnlocked`, `questAvailable`, `importantItem`, `discovery`, `achievement`, `featureUnlocked`. M6.1 emette automaticamente le prime quattro necessarie alla slice: level-up, nuove aree, scoperte e riconoscimenti. Le altre categorie sono disponibili tramite API per i futuri sistemi, senza notificare oggi ogni offerta quest/drop e senza spam di piccoli eventi. Una transazione con più aumenti emette un solo level-up aggregato.
+
+### Level-up globale
+
+Il livello deriva sempre dall'XP totale M5. Un passaggio L2→L3 mostra **LIVELLO AUMENTATO! · Livello 3**. Un salto L3→L5 mostra **LIVELLI AUMENTATI! · Livello 3 → 5** con aumenti complessivi delle due crescite. `statGrowthPerLevel` della classe corrente è l'unica fonte: `ProgressionData.statGains` moltiplica la crescita per i livelli realmente guadagnati. La UI formatta soltanto gli incrementi e il Critico in punti percentuali, senza duplicare valori di crescita.
+
+Custode: +2 Forza, +3 Vigor, +1 Spirito per livello. Cacciatore: +3 Agilità, +1 Vigor, +0,5% Critico. Al raggiungimento L20 vengono mostrati solo i livelli effettivi fino al cap, più **Livello massimo raggiunto**. XP aggiuntiva al cap continua a persistere secondo M5 ma non produce un finto L21 o un altro level-up. Qualsiasi fonte futura che modifica XP tramite la transazione centrale riceve lo stesso feedback, anche senza una ricevuta Combat/Quest/Expedition specifica.
+
+### Presentazione e queue
+
+Un solo banner alla volta, sopra ogni tab. Il level-up ha riquadro più grande, bordo/simbolo evidente e testo esplicito; resta per 9 secondi o fino al dismiss tramite pulsante touch da 44px. Le notifiche normali durano 5–6,5 secondi. Un level-up precede i banner in attesa, senza cancellare quello già mostrato. Nessun blocco del gameplay o focus rubato. I timer si fermano con pagina nascosta, focus nel banner o hover mouse, così il feedback non scade mentre non è leggibile. Il touch non usa hover persistente che bloccherebbe la queue. Il banner resta utilizzabile anche con un dialogo Equipment aperto: viene collocato nel dialogo attivo e torna nel body alla chiusura.
+
+`role=status`, `aria-live=polite`, `aria-atomic=true`, etichette testuali e dismiss accessibile. Informazioni mai affidate al solo colore. `prefers-reduced-motion` elimina l'animazione d'ingresso. Layout verificato a 320/390/430 px, con safe area mobile e testo degli incrementi leggibile.
+
+### Integrità e duplicati
+
+XP/Corone, quest, scoperte, achievement e sblocchi sono confermati prima di emettere feedback. Il modulo produttore è opzionale all’avvio: se non viene caricato, Progression continua a funzionare. Errori nel produttore o nei listener di notifiche non annullano un premio già salvato né consentono un secondo claim. Transazioni fallite, operazioni unchanged e doppi claim non emettono notifiche. La queue non legge/scrive localStorage e il dismiss non modifica gioco, inventario o premi.
+
+Nessun replay al caricamento, refresh, migrazione M5/M6 o evento `storage`: vengono notificati solo i cambiamenti della transazione effettivamente confermata da quel tab. Un altro tab sincronizza i dati come prima, senza duplicare il feedback. Dopo refresh/chiusura possono andare persi banner ancora in attesa: è feedback temporaneo, non stato di gioco. Nessuna migrazione nuova o flag di notifica persistente necessario. Gli eventi di aree/scoperte/titoli derivano da nuovi ID rispetto allo stato precedente e non vengono ripetuti per una visita o claim già registrati.
+
+### Test M6.1
+
+```sh
+node tests/notifications-engine.cjs
+NYMERIA_TEST_URL=http://127.0.0.1:8002 node tests/notifications-browser.cjs
+```
+
+15 verifiche engine/integrate: entrambe le classi da Combat/Spedizioni/Quest, crescita e fonte futura, salto multiplo, cap, aree/Tavoletta/titolo (anche tramite claim M6 reali), refresh/migrazione/rilettura tra istanze, fallimento/retry/duplicati, listener UI fallito, queue/priorità/dismiss/keyed dedup e categorie future. La suite browser esercita gli stessi feedback su tab differenti a tutte e tre le larghezze, testi/growth, multi-level/cap, queue, timeout/dismiss, area/scoperta/titolo, refresh/persistenza, dialogo aperto, touch e reduced motion, senza errori JS/overflow. La suite verifica anche il caricamento con lo script feedback non disponibile: premi e persistenza restano funzionanti. Le regressioni M2–M6 chiudono i banner tramite tocchi reali quando usano un clock congelato (`tests/notifications-fixture.cjs`), senza disattivare il sistema o rimuovere le verifiche. Gli asset condividono la versione `m6-feedback-0.1` (33 riferimenti relativi) per GitHub Pages `/nymeria/`.

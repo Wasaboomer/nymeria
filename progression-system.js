@@ -20,6 +20,8 @@ const ProgressionLifecycle = (() => {
     typeof module !== "undefined" && module.exports
       ? require("./combat-data.js")
       : CombatData;
+  const questEvents = typeof module !== "undefined" && module.exports
+    ? require("./quest-events.js") : QuestEvents;
   const copy = (value) => JSON.parse(JSON.stringify(value));
   function create({
     store,
@@ -221,8 +223,28 @@ const ProgressionLifecycle = (() => {
           (ticket) => ticket.id !== id,
         );
         state.lastCombatReward = receipt;
+        if (outcome === "victory") questEvents.dispatch(state, { type: "kill", target: ticket.enemyId });
         return { ok: true, receipt: copy(receipt), ...progress };
       });
+    }
+    function grantLoot(state, reward) {
+      const loot = [];
+      for (const itemId of reward.lootIds || []) {
+        const item = catalogue.find(
+          (item) => item.id === itemId && item.expeditionOnly,
+        );
+        if (!item) continue;
+        const duplicate = state.ownedLootIds.includes(itemId);
+        if (duplicate)
+          state.materials.iron = data.amount(state.materials.iron + 2);
+        else state.ownedLootIds.push(itemId);
+        loot.push({ itemId, duplicate });
+      }
+      return loot;
+    }
+    // Shared transactional reward API; callers must enforce their own once-only claim.
+    function grantRewards(state, reward) {
+      return { ...applyRewards(state, reward), loot: grantLoot(state, reward) };
     }
     function claim(id) {
       return store.transact((state) => {
@@ -234,18 +256,8 @@ const ProgressionLifecycle = (() => {
           };
         const reward = report.rewards;
         const progress = applyRewards(state, reward);
-        const loot = [];
-        for (const itemId of reward.lootIds) {
-          const item = catalogue.find(
-            (item) => item.id === itemId && item.expeditionOnly,
-          );
-          if (!item) continue;
-          const duplicate = state.ownedLootIds.includes(itemId);
-          if (duplicate)
-            state.materials.iron = data.amount(state.materials.iron + 2);
-          else state.ownedLootIds.push(itemId);
-          loot.push({ itemId, duplicate });
-        }
+        const loot = grantLoot(state, reward);
+        if (report.success) questEvents.dispatch(state, { type: "completeExpedition", target: report.activityId });
         const { previousLevel, resultingLevel, levelUps } = progress;
         state.lastClaim = {
           ...report,
@@ -269,6 +281,9 @@ const ProgressionLifecycle = (() => {
     }
     return {
       snapshot,
+      grantRewards,
+      personalPreparation: () => personal.preparation(classes.combatProfile()),
+      personalItems: (ids, policy) => ids.map(id => personal.counterpart(id, policy)).filter(Boolean),
       beginManualCombat,
       awardManualCombat,
       start,

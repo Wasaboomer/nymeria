@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const dismissNotifications = require('./notifications-fixture.cjs');
 const { chromium } = require('playwright');
 (async () => {
  const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox'] });
@@ -31,6 +32,7 @@ const { chromium } = require('playwright');
     return ProgressionData.levelUpSummary(result.receipt);
    });
    assert.ok(summary.includes('+3 Agilità') && summary.includes('+1 Vigor') && summary.includes('+0,5% Critico'));
+   await dismissNotifications(page);
    for(const id of ['inventory','equipment','character']) {
     await page.locator(`.screen-tabs [data-screen="${id}"]`).tap();
     assert.ok(await page.locator(`#panel-${id}`).isVisible());

@@ -24,6 +24,16 @@ const modules = [
   "expedition-data.js",
   "expedition-engine.js",
   "expedition-ui.js",
+  "world-data.js",
+  "quest-data.js",
+  "quest-events.js",
+  "quest-system.js",
+  "world-system.js",
+  "quest-ui.js",
+  "world-ui.js",
+  "progression-events.js",
+  "notification-system.js",
+  "notification-ui.js",
 ];
 
 (async () => {
@@ -62,6 +72,7 @@ const modules = [
           "combat",
           "class",
           "expeditions",
+          "world",
         ]) {
           const panel = page.locator("#panel-" + other);
           assert.equal(
@@ -91,6 +102,7 @@ const modules = [
       await activate("combat");
       await activate("class");
       await activate("expeditions");
+      await activate("world");
       await activate("character");
       if (!configure) {
         assert.deepEqual(errors, []);
@@ -104,9 +116,9 @@ const modules = [
         );
       }
       const assets = requests.filter((url) => /\.(js|css)$/.test(url.pathname));
-      assert.equal(assets.length, 23);
+      assert.equal(assets.length, 33);
       assert.ok(
-        assets.every((url) => url.searchParams.get("v") === "m5-stat-growth-0.1"),
+        assets.every((url) => url.searchParams.get("v") === "m6-feedback-0.1"),
       );
       console.log(
         `PASS ${name}: panel visibility + hidden + aria-selected; versioned assets`,

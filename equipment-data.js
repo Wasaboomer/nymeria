@@ -780,7 +780,14 @@ const GearData = (() => {
       },
     ],
   ];
-  const personalLootVariants = {};
+  // M6 superior personal quest rewards reuse modular torso assets.
+  for (const [id, name, armorType, stats, asset] of [
+    ["silence-plate", "Corazza del Silenzio", "plate", { force: 8, vigor: 15, armor: 26 }, "warden"],
+    ["silence-mail", "Maglia del Silenzio", "mail", { agility: 15, vigor: 8, critical: 4, armor: 18 }, "chain"],
+  ]) item(id, name, "torso", armorType === "plate" ? "Corazza a piastre" : "Usbergo di maglia", "Epico", 20, stats,
+    "Ricordo della Torre Silente. Asset modulare provvisorio.",
+    { armorType, requiredLevel: 5, expeditionOnly: true, appearance: { layer: "torso", asset: asset === "chain" ? "warden" : asset } });
+  const personalLootVariants = { "silence-plate": ["silence-plate", "silence-mail"] };
   for (const [source, id, name, changes] of counterparts) {
     items.push({
       ...JSON.parse(JSON.stringify(items.find((i) => i.id === source))),

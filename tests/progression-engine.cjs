@@ -373,7 +373,7 @@ async function check(name, test) {
         [8, ["patrol", "broken-trail", "recon", "vigil"]],
       ]) {
         await f.level(lvl);
-        assert.deepEqual(f.store.state.unlockedContent, expected);
+        assert.deepEqual(f.store.state.unlockedContent.filter(id => !id.startsWith("world:")), expected);
         assert.equal(f.equipment.state.character.level, lvl);
       }
     },

@@ -12,6 +12,15 @@ const ProgressionStorage = (() => {
     typeof module !== "undefined" && module.exports
       ? require("./personal-loot.js")
       : PersonalLoot;
+  const quests = typeof module !== "undefined" && module.exports
+    ? require("./quest-system.js") : QuestEngine;
+  let events = null;
+  try {
+    events = typeof module !== "undefined" && module.exports
+      ? require("./progression-events.js") : ProgressionEvents;
+  } catch { /* Optional feedback must not prevent the gameplay ledger from starting. */ }
+  const classData = typeof module !== "undefined" && module.exports
+    ? require("./classes-data.js") : ClassesData;
   const KEY = "nymeria.progression.v1";
   const copy = (value) => JSON.parse(JSON.stringify(value));
   function initial() {
@@ -28,6 +37,7 @@ const ProgressionStorage = (() => {
       activeExpedition: null,
       pendingExpeditionResult: null,
       lastClaim: null,
+      frontier: quests.normalize(),
     };
   }
   const isObject = (value) =>
@@ -255,7 +265,8 @@ const ProgressionStorage = (() => {
   }
   function normalize(raw) {
     const state = initial();
-    if (!raw || raw.version !== data.schemaVersion) return state;
+    if (!raw || raw.version !== data.schemaVersion) { quests.reconcile(state); return state; }
+    state.frontier = quests.normalize(raw.frontier);
     Object.assign(state, data.fromTotal(raw.totalXP));
     state.crowns = data.amount(raw.crowns);
     for (const key of Object.keys(state.materials))
@@ -263,6 +274,9 @@ const ProgressionStorage = (() => {
     state.unlockedContent = activities.activities
       .filter((a) => a.requiredLevel <= state.level)
       .map((a) => a.id);
+    if (Array.isArray(raw.unlockedContent))
+      state.unlockedContent.push(...raw.unlockedContent.filter(id =>
+        typeof id === "string" && id.startsWith("world:") && id.length < 80));
     state.ownedLootIds = Array.isArray(raw.ownedLootIds)
       ? [
           ...new Set(
@@ -321,13 +335,26 @@ const ProgressionStorage = (() => {
       state.lastClaim = copy(raw.lastClaim);
     if (state.pendingExpeditionResult?.id === state.lastClaim?.id)
       state.pendingExpeditionResult = null;
+    quests.reconcile(state);
     return state;
   }
-  function create({ storage, exclusive = (run) => run() }) {
+  function create({ storage, exclusive = (run) => run(), classDefinition = () => {
+    try {
+      const saved = JSON.parse(storage.getItem("nymeria.classes.v1"));
+      return classData.classes[saved?.classId] || classData.classes.hunter;
+    } catch { return classData.classes.hunter; }
+  } }) {
     let state = initial(),
       error = "",
       unsupported = false;
-    const listeners = new Set();
+    const listeners = new Set(), eventListeners = new Set();
+    // UI failures must never turn a persisted operation into an apparent failed claim.
+    function publishEvents(batch) {
+      for (const event of batch)
+        for (const listener of eventListeners) {
+          try { listener(copy(event)); } catch { /* Feedback cannot alter game state. */ }
+        }
+    }
     function read() {
       unsupported = false;
       try {
@@ -338,7 +365,7 @@ const ProgressionStorage = (() => {
         } catch {
           /* Recover only this corrupt key, never touch other systems. */
         }
-        if (raw?.version > data.schemaVersion) {
+        if (raw?.version > data.schemaVersion || quests.unsupported(raw?.frontier)) {
           unsupported = true;
           error = "Versione del salvataggio progressione non supportata.";
           return false;
@@ -361,13 +388,16 @@ const ProgressionStorage = (() => {
         const previous = JSON.stringify(state);
         if (!read() || unsupported) return { ok: false, message: error };
         if (JSON.stringify(state) !== previous) notify();
+        const committedBefore = copy(state);
         const next = copy(state);
         const result = mutator(next);
         if (!result?.ok || result.unchanged) return result;
         Object.assign(next, data.fromTotal(next.totalXP));
+        const worldUnlocks = next.unlockedContent.filter(id => id.startsWith("world:"));
         next.unlockedContent = activities.activities
           .filter((a) => a.requiredLevel <= next.level)
-          .map((a) => a.id);
+          .map((a) => a.id).concat(worldUnlocks);
+        quests.reconcile(next);
         try {
           storage.setItem(KEY, JSON.stringify(next));
         } catch {
@@ -378,6 +408,11 @@ const ProgressionStorage = (() => {
         }
         state = next;
         error = "";
+        let batch = [];
+        try { batch = events.changes(committedBefore, next, classDefinition()); }
+        catch { /* A feedback producer failure must not invalidate persisted rewards. */ }
+        // Commit and semantic emission are independent of any presentation subscriber.
+        publishEvents(batch);
         notify();
         return result;
       });
@@ -395,6 +430,10 @@ const ProgressionStorage = (() => {
         notify();
       },
       subscribe: (fn) => listeners.add(fn),
+      subscribeEvents(fn) {
+        eventListeners.add(fn);
+        return () => eventListeners.delete(fn);
+      },
     };
   }
   return { KEY, initial, normalize, create };
@@ -408,6 +447,7 @@ const ProgressionStore =
           getItem: (key) => localStorage.getItem(key),
           setItem: (key, value) => localStorage.setItem(key, value),
         },
+        classDefinition: () => ClassSystem.selected(),
         exclusive: (run) =>
           navigator.locks
             ? navigator.locks.request("nymeria-progression", run)
