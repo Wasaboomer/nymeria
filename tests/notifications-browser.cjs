@@ -1,3 +1,4 @@
+const navigate = require('./mobile-navigation-fixture.cjs');
 /* Feedback in different tabs, real source adapters, queue, expiry, touch and reduced motion. */
 const assert=require('node:assert/strict'),{chromium}=require('playwright');
 const base=process.env.NYMERIA_TEST_URL||'http://127.0.0.1:8000';
@@ -20,7 +21,7 @@ const base=process.env.NYMERIA_TEST_URL||'http://127.0.0.1:8000';
   for(const cls of ['warden','hunter'])for(const source of ['combat','expedition','quest']){
    // Fresh page prevents prior quest claims and guarantees no notification replay.
    await page.evaluate(()=>localStorage.clear());await page.reload();await setup(cls);
-   await page.locator(source==='combat'?'#tab-inventory':source==='expedition'?'#tab-equipment':'#tab-world').tap();
+   await navigate(page, source==='combat'?'inventory':source==='expedition'?'equipment':'world');
    await page.evaluate(async source=>{
     if(source==='combat'){
      // Actual Combat UI runs the unchanged engine/settlement, while Inventory stays selected.
@@ -46,7 +47,7 @@ const base=process.env.NYMERIA_TEST_URL||'http://127.0.0.1:8000';
    assert.equal(await page.evaluate(()=>ProgressionStore.state.totalXP),saved.totalXP);assert.equal(await page.evaluate(()=>Notifications.pending.length),0);
    if(source==='quest')assert.equal(await page.evaluate(()=>ProgressionStore.state.frontier.quests.mq01.status),'claimed');
   }
-  await setup('hunter',await page.evaluate(()=>ProgressionData.thresholds[2]));await page.locator('#tab-class').tap();
+  await setup('hunter',await page.evaluate(()=>ProgressionData.thresholds[2]));await navigate(page, "class");
   await page.evaluate(async()=>{await ProgressionStore.transact(s=>{s.totalXP=ProgressionData.thresholds[4];return {ok:true};});});
   assert.match(await host.innerText(),/LIVELLI AUMENTATI!/);assert.match(await host.innerText(),/Livello 3 → 5/);
   assert.match(await host.innerText(),/\+6 Agilità.*\+2 Vigor.*\+1% Critico/s);
@@ -55,7 +56,7 @@ const base=process.env.NYMERIA_TEST_URL||'http://127.0.0.1:8000';
   await page.evaluate(async()=>{await ProgressionStore.transact(s=>{s.totalXP=ProgressionData.thresholds[19]+100;return {ok:true};});});
   assert.match(await host.innerText(),/Livello 20/);assert.match(await host.innerText(),/Livello massimo raggiunto/);assert.match(await host.innerText(),/\+3 Vigor/);
   await drain();await page.evaluate(async()=>{await ProgressionStore.transact(s=>{s.totalXP+=100;return {ok:true};});});assert.ok(await host.isHidden());
-  await page.locator('#tab-world').tap();
+  await navigate(page, "world");
   await page.evaluate(async()=>{
    await WorldSystem.debug('unlock','elar-ruins');await WorldSystem.enter('elar-ruins');await WorldSystem.explore('tablet_of_elar');
    await ProgressionStore.transact(s=>{s.frontier.achievements.push('frontier-conqueror');return {ok:true};});
@@ -75,7 +76,7 @@ const base=process.env.NYMERIA_TEST_URL||'http://127.0.0.1:8000';
   await page.evaluate(()=>{document.activeElement?.blur();Notifications.notify('featureUnlocked',{name:'Temporanea'});Notifications.notify('importantItem',{name:'Successiva'});});
   await page.mouse.move(0,840);await page.clock.runFor(5200);assert.equal(await host.getAttribute('data-type'),'importantItem');await page.clock.runFor(5200);assert.ok(await host.isHidden());
   // An open inventory modal cannot obscure feedback or make its dismiss button inert.
-  await page.locator('#tab-inventory').tap();await page.locator('[data-item-id="sword"]').tap();
+  await navigate(page, "inventory");await page.locator('[data-item-id="sword"]').tap();
   await page.evaluate(()=>Notifications.notify('levelUp',{previousLevel:2,resultingLevel:3,levelCap:20,statGains:{force:2,vigor:3,spirit:1}}));
   assert.ok(await page.locator('#item-dialog #global-notifications').isVisible());await page.locator('[data-dismiss-notification]').tap();assert.ok(await host.isHidden());await page.locator('#close-detail').tap();
   assert.deepEqual(errors,[]);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

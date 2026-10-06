@@ -36,7 +36,7 @@ const InventoryUI = (() => {
       .filter(
         (i) =>
           (filter === "all" || group(i) === filter) &&
-          (!slotFilter || Equipment.compatibleSlots(i).includes(slotFilter)),
+          (!slotFilter || (Equipment.compatibleSlots(i).includes(slotFilter) && !ArmorRules.unavailableLabel(i, ClassSystem.selected()) && BuildSystem.compatible(i, ClassSystem.state.classId))),
       )
       .sort((a, b) =>
         order === "rarity"
@@ -137,16 +137,8 @@ const InventoryUI = (() => {
     dialog.scrollTop = 0;
   }
   function openSlot(slot) {
-    const item = Equipment.equipped(slot);
-    if (item) openItem(item.id, slot);
-    else {
-      slotFilter = slot;
-      filter = "all";
-      renderInventory();
-      document.dispatchEvent(
-        new CustomEvent("nymeria:screen", { detail: "inventory" }),
-      );
-    }
+    filterForSlot(slot);
+    NymeriaNavigation.open("inventory", { slot });
   }
   function filterForSlot(slot) {
     slotFilter = slot;
@@ -199,7 +191,10 @@ const InventoryUI = (() => {
       document.dispatchEvent(
         new CustomEvent("nymeria:notice", { detail: result.message }),
       );
-      if (result.ok) renderDetail();
+      if (result.ok) {
+        if (NymeriaNavigation.route.slot) { dialog.close(); NymeriaNavigation.back(); }
+        else renderDetail();
+      }
     }
     if (b.dataset.remove) {
       const result = Equipment.unequip(b.dataset.remove);
@@ -220,6 +215,10 @@ const InventoryUI = (() => {
     renderInventory();
     if (dialog.open) renderDetail();
   }
+  document.addEventListener("nymeria:navigation", event => {
+    if (event.detail.screen !== "inventory") return;
+    slotFilter = event.detail.slot || null; filter = "all"; renderInventory();
+  });
   ClassSystem.subscribe(render);
   return {
     render,

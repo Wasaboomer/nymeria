@@ -1,3 +1,4 @@
+const navigate = require('./mobile-navigation-fixture.cjs');
 /* Real creator confirmation, locked UI, legacy M5 migration and process restart. */
 const assert = require("node:assert/strict");
 const fs = require("node:fs"),
@@ -29,6 +30,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
       }
       await prepare(page);
       await page.goto(base);
+      await navigate(page, "character");
       const model = () =>
         page.evaluate(() => JSON.parse(JSON.stringify(Equipment.state)));
       const progress = () => page.evaluate(() => ProgressionStore.state);
@@ -40,7 +42,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
           `${width}px overflow`,
         );
       const tab = async (id) => {
-        await page.locator("#tab-" + id).tap();
+        await navigate(page, id);
         assert.ok(await page.locator("#panel-" + id).isVisible());
         await overflow();
       };
@@ -72,6 +74,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
       await page.locator('[data-key="hairColor"][data-id="copper"]').tap();
       await page.locator('[data-key="eyes"][data-id="sage"]').tap();
       await page.reload();
+      await navigate(page, "character");
       assert.equal((await model()).characterCreated, false);
       assert.ok(await page.locator("#character-creator").isVisible());
       assert.equal((await model()).character.hair, "crest");
@@ -104,16 +107,18 @@ const frozen = new Date("2026-10-06T12:00:00Z");
         false,
       );
       await page.reload();
+      await navigate(page, "character");
       await assertLocked();
       assert.deepEqual(await model(), created);
       await page.close();
       page = await context.newPage();
       await prepare(page);
       await page.goto(base);
+      await navigate(page, "character");
       await assertLocked();
       assert.deepEqual(await model(), created);
       // Equipment tint/slots continue to function with the personal creator locked.
-      await page.locator('#categories [data-category="dye"]').tap();
+      await navigate(page, "equipment");
       await page.locator('[data-equipment-dye="wine"]').tap();
       assert.equal((await model()).equipmentAppearance.dye, "wine");
       assert.deepEqual((await model()).character, created.character);
@@ -173,9 +178,12 @@ const frozen = new Date("2026-10-06T12:00:00Z");
       // Reopening is DEBUG only and never persists an uncreated marker for an existing character.
       const beforeDebug = await progress();
       await page.goto(base + "/?test=1");
+      await navigate(page, "character");
       await assertLocked();
+      await navigate(page, "debug");
       assert.ok(await page.locator("#creator-debug").isVisible());
       assert.match(await page.locator("#creator-debug").innerText(), /DEBUG/);
+      await navigate(page, "debug");
       await page.locator("#creator-debug").tap();
       assert.ok(await page.locator("#character-creator").isVisible());
       assert.match(await page.locator("#creator-heading").innerText(), /DEBUG/);
@@ -191,6 +199,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
       );
       assert.deepEqual(await progress(), beforeDebug);
       await page.goto(base);
+      await navigate(page, "character");
       await assertLocked();
       assert.equal((await model()).character.hair, "veil");
       assert.ok(await page.locator("#creator-debug").isHidden());
@@ -199,10 +208,13 @@ const frozen = new Date("2026-10-06T12:00:00Z");
         false,
       );
       await page.goto(base + "/?test=1");
+      await navigate(page, "character");
+      await navigate(page, "debug");
       await page.locator("#creator-debug").tap();
       await page.locator("#save").tap();
       await assertLocked();
       const personal = (await model()).character;
+      await navigate(page, "debug");
       await page.locator("#reset-demo").tap();
       await assertLocked();
       assert.deepEqual((await model()).character, personal);
@@ -222,6 +234,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
       await m.clock.install({ time: frozen });
       await m.clock.pauseAt(new Date(frozen.getTime() + 1000));
       await m.goto(base);
+      await navigate(m, "character");
       const old = await m.evaluate(async () => {
         ClassSystem.selectClass("hunter");
         ClassSystem.selectBuild("explorer");
@@ -285,6 +298,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
     const failures = [];
     p.on("pageerror", (e) => failures.push(e.message));
     await p.goto(base);
+      await navigate(p, "character");
     await p.locator('[data-key="hair"][data-id="crest"]').click();
     await p.evaluate(() => {
       window.creatorStorageWrite = Storage.prototype.setItem;
@@ -319,7 +333,9 @@ const frozen = new Date("2026-10-06T12:00:00Z");
     const first = await shared.newPage(),
       stale = await shared.newPage();
     await first.goto(base);
+      await navigate(first, "character");
     await stale.goto(base);
+      await navigate(stale, "character");
     await first.locator('[data-key="hair"][data-id="crest"]').click();
     await first.locator("#save").click();
     await stale.waitForFunction(
@@ -364,6 +380,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
     });
     let p = await persistent.newPage();
     await p.goto(base);
+      await navigate(p, "character");
     await p.locator('[data-key="hair"][data-id="crest"]').click();
     await p.locator("#save").click();
     await p.evaluate(async () => {
@@ -387,6 +404,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
     const errors = [];
     p.on("pageerror", (e) => errors.push(e.message));
     await p.goto(base);
+      await navigate(p, "character");
     assert.ok(await p.locator("#character-creator").isHidden());
     assert.ok(await p.locator("#creator-actions").isHidden());
     assert.deepEqual(

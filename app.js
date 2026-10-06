@@ -159,7 +159,6 @@
   Equipment.save();
   Equipment.subscribe(refresh);
   refresh();
-  window.NymeriaNavigation.showScreen("character");
   if (Equipment.storageIssue)
     notify(
       "Dati locali non leggibili. Demo caricata; verifica il salvataggio.",

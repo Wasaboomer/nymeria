@@ -638,3 +638,70 @@ NYMERIA_TEST_URL=http://127.0.0.1:8002 node tests/notifications-browser.cjs
 ```
 
 15 verifiche engine/integrate: entrambe le classi da Combat/Spedizioni/Quest, crescita e fonte futura, salto multiplo, cap, aree/Tavoletta/titolo (anche tramite claim M6 reali), refresh/migrazione/rilettura tra istanze, fallimento/retry/duplicati, listener UI fallito, queue/priorità/dismiss/keyed dedup e categorie future. La suite browser esercita gli stessi feedback su tab differenti a tutte e tre le larghezze, testi/growth, multi-level/cap, queue, timeout/dismiss, area/scoperta/titolo, refresh/persistenza, dialogo aperto, touch e reduced motion, senza errori JS/overflow. La suite verifica anche il caricamento con lo script feedback non disponibile: premi e persistenza restano funzionanti. Le regressioni M2–M6 chiudono i banner tramite tocchi reali quando usano un clock congelato (`tests/notifications-fixture.cjs`), senza disattivare il sistema o rimuovere le verifiche. Gli asset condividono la versione `m6-feedback-0.1` (33 riferimenti relativi) per GitHub Pages `/nymeria/`.
+
+## M6.2 — Mobile UX Architecture Rework
+
+La Home è **Mondo**, nel luogo persistente del personaggio. L'interfaccia non è più una griglia di sette moduli: la bottom navigation offre **Personaggio / Mondo / Attività / Menu**, con quattro target da almeno 44 px, stato attivo con sottolineatura e testo marcato, frecce/Home/End da tastiera, padding `env(safe-area-inset-bottom)` e spazio riservato nei contenuti. Il top bar è compatto. Palette e asset modulari rimangono quelli del prototipo; nessun art pass M6.5 o cambiamento al bilanciamento.
+
+### Luoghi e missioni nel contesto
+
+- Il Mondo presenta nome/atmosfera del luogo, missione tracciata, obiettivi ancora incompleti e contatori, NPC, esplorazioni, incontri e destinazioni adiacenti. Gli obiettivi indicano il luogo pertinente, oppure Attività per una spedizione. Le azioni pertinenti hanno un segnale visivo e una descrizione accessibile. Gli incontri richiesti dalla missione vengono presentati prima delle esplorazioni opzionali, per rendere più raggiungibile la CTA corrente.
+- `WorldData.connections` è il grafo data-driven di presentazione dei sei nodi. Le destinazioni bloccate mostrano il requisito esistente. Il viaggio continua a utilizzare `WorldSystem.enter`, persistenza e dispatcher `visit` originali: nessuna regola di progressione nuova. La panoramica **Mappa dei luoghi** è un accesso secondario ai luoghi sbloccati.
+- Il **Diario** è secondario: lista Principale/Secondarie → dettaglio missione → Back al Diario → Back al luogo. Il dettaglio mantiene progressi, tracking, stati, anteprima e riscossione delle ricompense. Il tracking può aprire direttamente il dettaglio, senza imporre il passaggio dal Diario.
+- **Menu → Scoperte** conserva Tavoletta di Elar, requisito Archeologia e titoli. Non sono state aggiunte destinazioni fittizie al Menu.
+
+### Hub e flussi contestuali
+
+**Personaggio** contiene identità, livello, classe/build, XP, manichino SVG e statistiche essenziali. Da qui si aprono Equipaggiamento, Inventario e Classe/Build. Il Creator resta disponibile soltanto prima della creazione; lock e migrazioni precedenti non cambiano. Le vecchie scorciatoie sul manichino aprono slot reali. Character Appearance rimane separata dall'aspetto dell'equipaggiamento: la tintura è in Equipaggiamento.
+
+**Equipaggiamento → slot → Inventario filtrato → dettaglio → Equipaggia**. Il filtro contestuale include il tipo di slot, Armor Proficiency e famiglia arma/supporto della classe; gli oggetti di altra classe restano nell'inventario completo. Un equip riuscito chiude il dettaglio e torna alla schermata Equipaggiamento. Confronti, Gear Advisor, slot duplici, unequip e tutti i 16 slot restano gestiti dai moduli originali. Oggetti compatibili ma con requisito di livello troppo alto possono essere consultati; il controllo di equipaggiamento continua a impedirne l'uso.
+
+**Incontro dal luogo → Combat UI → risultato → Continua → luogo d'origine**. La UI dell'incontro è una schermata secondaria, utilizza lo stesso Combat Engine e lo stesso ticket/reward ledger. Strategia AUTO/PERSONALIZZATA è configurabile in Personaggio → Classe/Build; le regole vengono fissate alla partenza come prima. Pausa, ripresa dopo refresh e abbandono restano disponibili. Un incontro ancora attivo ha un comando Riprendi dal luogo. Il risultato già concluso non viene ripagato o riaperto al refresh. In caso di sconfitta il sistema continua a registrare il ritorno a Veyra, senza premi: premendo Continua la UI permette di ritornare al luogo iniziale tramite il normale viaggio; abbandonare continua a riportare a Veyra.
+
+**Attività** presenta direttamente Spedizioni: preparazione, stato/tempo della spedizione attiva, report/claim, elenco e risorse. Offline progress, durate, XP e Personal Loot restano invariati. Il badge **Riscatta** deriva da `pendingExpeditionResult`; il badge Mondo conta soltanto missioni completate e non riscosse. Non ci sono badge simulati.
+
+In `?test=1`, **Menu → DEBUG** raccoglie i controlli M6, completamento anticipato delle spedizioni, reset demo e riapertura Creator. L'incontro dimostrativo del Guardiano è raggiungibile solo da questa schermata. Le funzioni interne restano testabili dagli engine test, ma la navigazione normale non offre una destinazione Combat/debug. Riavviare un editor DEBUG non cambia il flag di creazione permanente.
+
+### Navigation/context stack e salvataggi
+
+`navigation.js` è un bootstrap piccolo e indipendente dagli altri moduli. `NymeriaNavigation.root(destination)` cambia destinazione principale e azzera il percorso secondario; `open(screen, options)` salva contesto/scroll/focus; `back()` chiude prima un dialogo aperto o ripristina la schermata precedente. Escape equivale a Back nelle schermate secondarie; le normali semantiche Escape dei dialoghi rimangono attive. Non è un router SPA e non modifica la history del browser: il controllo Indietro interno è il riferimento per il percorso UI.
+
+La route contiene `screen`, destinazione `root`, eventuale vista Mondo, ID missione o filtro slot. Lo stack è **solo in memoria**. `frontier.location` è il currentLocation di gioco già persistente: non è duplicato nello stack né rinominato. Refresh ricostruisce Mondo nel luogo salvato, oppure l'incontro attivo riprendibile. Non persiste una schermata di inventario/Diario/modalità aperta. **Nessuna nuova versione/schema o migrazione è necessaria**: i salvataggi M6 vengono letti senza perdita; le migrazioni additive M2–M6 restano in funzione.
+
+M6.1 non cambia: il ledger centrale emette gli eventi, il sistema globale presenta level-up/aree/scoperte/titoli su ogni route. La coda non dipende dalla bottom navigation; il banner ha z-index superiore, supporta i dialoghi e rispetta reduced motion. Nessuna ricompensa deriva da una notifica.
+
+I 34 riferimenti CSS/JS sono relativi e condividono `?v=m6-mobile-0.2`, per GitHub Pages `/nymeria/` e per evitare cache miste.
+
+### Rapporto UX: numero indicativo di tocchi
+
+Confronto con M6 al commit `8da975a`, partendo dal luogo corrente e con un oggetto posseduto/non ancora equipaggiato. Lo scroll viene indicato separatamente: non è contato come tap. Sono esclusi creazione, prima preparazione del kit e dismiss di feedback globali.
+
+| Flusso | M6 | M6.2 | Effetto |
+| --- | --- | --- | --- |
+| Mondo → parla con NPC nel luogo della quest | 1, spesso dopo scroll oltre intro/lista luoghi | 1 | NPC nel contesto; per un altro luogo il tragitto dipende dal grafo, con mappa secondaria disponibile |
+| Luogo corrente → avvia incontro | 1, spesso dopo scroll | 1 | CTA contestuale senza destinazione Combat globale |
+| Risultato → luogo | 0 tap, scroll verso il dettaglio precedente | 1 Continua | Ritorno esplicito, senza attraversare report/arena nella schermata del luogo |
+| Controlla quest tracciata | 0, eventuale scroll | 0 | Obiettivo e destinazione immediatamente nel luogo |
+| Diario → luogo precedente | 2 | 2 | Nessun salto di luogo, con dettaglio e Back coerenti |
+| Personaggio → equipaggia → schermata Equipaggiamento | 5 via Inventario, dettaglio, equip, chiudi, tab Equipaggiamento; 6 se si parte dal dettaglio di uno slot occupato | 4: hub, slot, oggetto, equip | Filtro compatibile diretto e ritorno automatico |
+| Mondo → controlla spedizione / riscuoti | 1 / 2 | 1 / 2 | Attività è raggiungibile col pollice, badge reale per il claim |
+
+Il beneficio principale non è abbassare artificialmente ogni contatore: è ridurre scroll, controlli duplicati e perdita del contesto. Viaggiare fra luoghi è una scelta di gioco; la mappa resta disponibile per raggiungere direttamente un nodo già sbloccato.
+
+### Verifica M6.2
+
+`tests/mobile-ux-browser.cjs` esercita tocchi reali a 320/390/430 px per Custode e Cacciatore: Home, quattro destinazioni, Creator/lock, Classe/Build e strategia, 16 slot, filtro per proficiency/famiglia, equip/ritorno, inventario completo, NPC/talk, missione e azioni pertinenti, spostamento e blocchi, Diario/dettaglio/Back/focus, incontro/ripresa/risultato/Continua, spedizione normale/offline/claim/badge, level-up su tutte le destinazioni, persistenza, Scoperte/titolo, reduced motion e overflow. Una prova separata verifica Menu/DEBUG solo in Test Mode. Gli otto screenshot a 390 px vengono scritti esclusivamente in `/tmp`.
+
+I test browser precedenti usano `tests/mobile-navigation-fixture.cjs` per raggiungere le stesse funzionalità tramite i nuovi percorsi UI: nessun tab globale nascosto per soddisfare i test. Il helper notifiche esegue dismiss reali, tenendo conto di un banner che può scadere fra controllo e tap. La suite navigation verifica anche che eccezioni, parse error o mancato caricamento di un modulo non impediscano i listener delle destinazioni.
+
+Esecuzione locale (Playwright/Chromium sono strumenti di sviluppo, non dipendenze dell'app):
+
+```sh
+python -m http.server 8004
+NYMERIA_TEST_URL=http://127.0.0.1:8004 node tests/mobile-ux-browser.cjs
+NYMERIA_TEST_URL=http://127.0.0.1:8004 node tests/navigation.cjs
+```
+
+I controlli sulle safe area sono strutturali e su viewport touch emulati Chromium. Una prova su iPhone/Safari fisico resta utile per valutare ergonomia, tastiera virtuale e barre dinamiche: non viene dichiarata come eseguita nell'ambiente cloud. Gli asset definitivi, animazioni di combattimento illustrate e art pass restano M6.5.
+
+Risultati della verifica cloud M6.2: **141 controlli engine e 13 suite browser completati con esito positivo**. Inclusi la storia principale completa per entrambe le classi su tutte e tre le larghezze, quattro side quest, Web Locks con due tab reali, storage negato/errore/retry e riavvio completo del browser. Un salvataggio generato dai moduli del commit M6 originale è stato caricato in M6.2 e confrontato integralmente, includendo titolo/scoperta e spedizione/incontro attivi. Verificato anche un caricamento reale dal sottopercorso `/nymeria/`: 34 asset HTTP 200 e navigazione senza errori JS. La normalizzazione può ripristinare l’ordine di catalogo degli oggetti dopo un drop: la verifica di persistenza confronta tutti gli oggetti e i loro dati per ID, non l’ordine incidentale dell’array.

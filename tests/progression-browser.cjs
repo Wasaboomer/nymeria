@@ -1,3 +1,4 @@
+const navigate = require('./mobile-navigation-fixture.cjs');
 /* Cold loads, full browser close/return, real touch and same-origin concurrent claims. */
 const assert = require("node:assert/strict");
 const dismissNotifications = require("./notifications-fixture.cjs");
@@ -47,7 +48,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
         );
       async function tab(id) {
         await dismissNotifications(page);
-        await page.locator("#tab-" + id).tap();
+        await navigate(page, id);
         await overflow();
       }
       async function equip(id) {
@@ -258,11 +259,15 @@ const frozen = new Date("2026-10-06T12:00:00Z");
       // Test Mode keeps normal timestamps but explicitly permits an early TEST-only resolution.
       await page.goto(base + "/?test=1");
       await tab("expeditions");
+      await navigate(page, "debug");
       assert.ok(await page.locator("#expedition-debug").isVisible());
+      await navigate(page, "expeditions");
       await page.locator('[data-start-expedition="patrol"]').tap();
       await settle();
       assert.ok((await state()).activeExpedition.testMode);
-      await page.locator("#expedition-debug-complete").tap();
+      await navigate(page, "debug");
+        await page.locator("#expedition-debug-complete").tap();
+        await navigate(page, "expeditions");
       await settle();
       assert.ok((await state()).pendingExpeditionResult.testMode);
       await page.locator("#expedition-claim").tap();
@@ -293,7 +298,9 @@ const frozen = new Date("2026-10-06T12:00:00Z");
           run.endsAt - run.startedAt,
           { "broken-trail": 300000, recon: 900000, vigil: 1800000 }[id],
         );
+        await navigate(page, "debug");
         await page.locator("#expedition-debug-complete").tap();
+        await navigate(page, "expeditions");
         await settle();
         assert.ok((await state()).pendingExpeditionResult.total > 0);
         await page.locator("#expedition-claim").tap();
@@ -508,12 +515,13 @@ const frozen = new Date("2026-10-06T12:00:00Z");
       (await p.evaluate(() => ProgressionSystem.start("patrol"))).ok,
       false,
     );
-    await p.locator("#tab-expeditions").click();
+    await navigate(p, "expeditions");
     assert.match(
       await p.locator("#expedition-storage").innerText(),
       /Salvataggio locale non disponibile/,
     );
-    await p.locator("#tab-combat").click();
+    await navigate(p, "combat");
+    await p.evaluate(() => {Equipment.equip("bow", "mainHand");Equipment.equip("quiver", "support");});
     assert.equal(await p.evaluate(() => CombatUI.start({ seed: 1 })), true);
     assert.deepEqual(deniedErrors, []);
     await denied.close();

@@ -1,3 +1,4 @@
+const navigate = require('./mobile-navigation-fixture.cjs');
 /* Real browser integration checks; no application dependencies or build step.
    Run a static server, then: node tests/browser.cjs
    Playwright is supplied by the development environment, not loaded by the app. */
@@ -31,7 +32,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
           "Horizontal overflow",
         );
       const screen = async (name) => {
-        await page.locator(`.screen-tabs [data-screen="${name}"]`).tap();
+        await navigate(page, name);
         await noOverflow();
       };
       const close = async () => {
@@ -309,16 +310,16 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       await screen("equipment");
       await page.locator('#equipment-grid [data-open-slot="head"]').tap();
       assert.match(await page.locator("#slot-filter").innerText(), /Copricapo/);
-      assert.equal(await page.locator(".inventory-item").count(), 3);
+      assert.equal(await page.locator(".inventory-item").count(), 1);
       await page.locator('[data-item-id="head-chain"]').tap();
       await page.locator("#equip-item").tap();
       await close();
-      await page.locator("#clear-slot-filter").tap();
+      await screen("inventory");
       await screen("character");
       await page.locator('[data-key="hair"][data-id="crest"]').tap();
       await page.locator('[data-key="hairColor"][data-id="copper"]').tap();
       await page.locator('[data-key="eyes"][data-id="sage"]').tap();
-      await page.locator('#categories [data-category="dye"]').tap();
+      await screen("equipment");
       await page.locator('[data-equipment-dye="wine"]').tap();
       const persisted = await model();
       assert.equal(persisted.character.hair, "crest");
@@ -420,7 +421,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         );
       }
       await page.evaluate(() => ClassSystem.selectClass("hunter"));
-      await page.locator("#reset-demo").tap();
+      await navigate(page, "debug");await page.locator("#reset-demo").tap();
       assert.deepEqual(await model(), initial);
       await page.reload();
       assert.deepEqual(await model(), initial);
@@ -442,6 +443,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       }),
     );
     await p.goto(baseURL);
+    await navigate(p, "character");
     await p.locator("#save").click();
     assert.match(await p.locator("#notice").innerText(), /non disponibile/);
     assert.deepEqual(errors, []);

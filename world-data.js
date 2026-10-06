@@ -13,6 +13,12 @@ const WorldData = (() => {
     { id: "vesper-ford", name: "Guado del Vespro", level: 4, mark: "ford", description: "Il passaggio è chiuso. Dall'altra riva si vede la Torre.", unlockHint: "Concludi Pietre che ricordano", enemies: ["ford-reaver", "ford-commander"], points: [{ id: "far-bank", name: "Riva opposta", text: "Il sentiero verso la Torre è finalmente libero.", requiresDefeat: "ford-commander" }] },
     { id: "silent-tower", name: "Torre Silente", level: 7, mark: "tower", description: "Un'ombra sulla soglia. Il silenzio, qui, ha un custode.", unlockHint: "Concludi Il Guado", enemies: ["silent-shade", "silence-keeper"], points: [] },
   ];
+  // Travel presentation graph; existing unlock/visit rules remain in WorldEngine.
+  const connections = {
+    veyra: ["broken-path"], "broken-path": ["veyra", "lantern-wood"],
+    "lantern-wood": ["broken-path", "elar-ruins"], "elar-ruins": ["lantern-wood", "vesper-ford"],
+    "vesper-ford": ["elar-ruins", "silent-tower"], "silent-tower": ["vesper-ford"],
+  };
   const npcs = [
     { id: "serah", name: "Capitana Serah Venn", role: "Comandante", location: "veyra", dialogues: [{ text: "Non chiedo promesse. Vai al Sentiero e dimmi cosa resta della pattuglia." }, { after: "mq02", text: "Quei distintivi... conoscevo ogni nome. Il Bosco ci deve una risposta." }, { after: "mq06", text: "Hai tenuto aperta la Frontiera. Ma il segnale non si è spento." }] },
     { id: "oren", name: "Oren Vale", role: "Esploratore", location: "broken-path", dialogues: [{ text: "Le tracce finiscono tutte qui. Nessuno torna dalla stessa direzione." }, { after: "mq03", text: "Il cervo non era la causa. Seguiva qualcosa, verso Elar." }] },
@@ -46,6 +52,6 @@ const WorldData = (() => {
   const supplyNames = { "patrol-badge": "Distintivo della Pattuglia", "corrupt-sample": "Campione corrotto", "elar-fragment": "Frammento di Elar", "mist-herb": "Erba della nebbia" };
   const location = (id) => locations.find((x) => x.id === id);
   const enemyById = (id) => enemies.find((x) => x.id === id);
-  return { zone, locations, npcs, enemies, discoveries, achievements, supplyNames, location, enemy: enemyById };
+  return { zone, locations, connections, npcs, enemies, discoveries, achievements, supplyNames, location, enemy: enemyById };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = WorldData;

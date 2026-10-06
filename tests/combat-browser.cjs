@@ -1,3 +1,4 @@
+const navigate = require('./mobile-navigation-fixture.cjs');
 /* Real mobile browser controls, deterministic simulation clock and Equipment UI integration. */
 const assert = require("node:assert/strict");
 const { chromium } = require("playwright");
@@ -24,7 +25,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       const state = () => page.evaluate(() => CombatUI.engine.snapshot());
       const config = () => page.evaluate(() => CombatUI.settings);
       const combat = async () => {
-        await page.locator("#tab-combat").tap();
+        await navigate(page, "combat");
         assert.ok(await page.locator("#panel-combat").isVisible());
       };
       const overflow = async () =>
@@ -34,7 +35,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
           ),
         );
       async function equip(id) {
-        await page.locator("#tab-inventory").tap();
+        await navigate(page, "inventory");
         await page.locator('[data-filter="all"]').tap();
         await page.locator(`[data-item-id="${id}"]`).tap();
         if (!(await page.locator("#equip-item").isDisabled()))
@@ -251,7 +252,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       Equipment.equip("bow", "mainHand");
       Equipment.equip("quiver", "support");
     });
-    await live.locator("#tab-combat").tap();
+    await navigate(live, "combat");
     await live.locator("#combat-start").tap();
     await live.waitForTimeout(1150);
     const firstTime = await live.evaluate(() => CombatUI.engine.time);
@@ -296,7 +297,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       }),
     );
     await denied.goto(baseURL);
-    await denied.locator("#tab-combat").click();
+    await navigate(denied, "combat");
     assert.match(
       await denied.locator("#combat-strategy-hint").innerText(),
       /non disponibile/,

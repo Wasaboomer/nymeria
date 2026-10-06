@@ -9,123 +9,60 @@
     <meta name="theme-color" content="#101c24" />
     <title>Nymeria Frontiera del Vespro &amp; Quest System 0.1</title>
     <!-- Bump this shared asset version together on releases to avoid mixed cached scripts. -->
-    <link rel="stylesheet" href="styles.css?v=m6-feedback-0.1" />
-    <script src="navigation.js?v=m6-feedback-0.1" defer></script>
-    <script src="progression-data.js?v=m6-feedback-0.1" defer></script>
-    <script src="expedition-data.js?v=m6-feedback-0.1" defer></script>
-    <script src="combat-data.js?v=m6-feedback-0.1" defer></script>
-    <script src="classes-data.js?v=m6-feedback-0.1" defer></script>
-    <script src="armor-rules.js?v=m6-feedback-0.1" defer></script>
-    <script src="build-system.js?v=m6-feedback-0.1" defer></script>
-    <script src="class-system.js?v=m6-feedback-0.1" defer></script>
-    <script src="items.js?v=m6-feedback-0.1" defer></script>
-    <script src="equipment-data.js?v=m6-feedback-0.1" defer></script>
-    <script src="personal-loot.js?v=m6-feedback-0.1" defer></script>
-    <script src="world-data.js?v=m6-feedback-0.1" defer></script>
-    <script src="quest-data.js?v=m6-feedback-0.1" defer></script>
-    <script src="quest-events.js?v=m6-feedback-0.1" defer></script>
-    <script src="quest-system.js?v=m6-feedback-0.1" defer></script>
-    <script src="progression-events.js?v=m6-feedback-0.1" defer></script>
-    <script src="progression-store.js?v=m6-feedback-0.1" defer></script>
-    <script src="equipment.js?v=m6-feedback-0.1" defer></script>
-    <script src="character.js?v=m6-feedback-0.1" defer></script>
-    <script src="inventory.js?v=m6-feedback-0.1" defer></script>
-    <script src="app.js?v=m6-feedback-0.1" defer></script>
-    <script src="combat-engine.js?v=m6-feedback-0.1" defer></script>
-    <script src="combat-ui.js?v=m6-feedback-0.1" defer></script>
-    <script src="class-ui.js?v=m6-feedback-0.1" defer></script>
-    <script src="expedition-engine.js?v=m6-feedback-0.1" defer></script>
-    <script src="progression-system.js?v=m6-feedback-0.1" defer></script>
-    <script src="expedition-ui.js?v=m6-feedback-0.1" defer></script>
-    <script src="world-system.js?v=m6-feedback-0.1" defer></script>
-    <script src="quest-ui.js?v=m6-feedback-0.1" defer></script>
-    <script src="world-ui.js?v=m6-feedback-0.1" defer></script>
-    <script src="notification-system.js?v=m6-feedback-0.1" defer></script>
-    <script src="notification-ui.js?v=m6-feedback-0.1" defer></script>
+    <link rel="stylesheet" href="styles.css?v=m6-mobile-0.2" />
+    <script src="navigation.js?v=m6-mobile-0.2" defer></script>
+    <script src="progression-data.js?v=m6-mobile-0.2" defer></script>
+    <script src="expedition-data.js?v=m6-mobile-0.2" defer></script>
+    <script src="combat-data.js?v=m6-mobile-0.2" defer></script>
+    <script src="classes-data.js?v=m6-mobile-0.2" defer></script>
+    <script src="armor-rules.js?v=m6-mobile-0.2" defer></script>
+    <script src="build-system.js?v=m6-mobile-0.2" defer></script>
+    <script src="class-system.js?v=m6-mobile-0.2" defer></script>
+    <script src="items.js?v=m6-mobile-0.2" defer></script>
+    <script src="equipment-data.js?v=m6-mobile-0.2" defer></script>
+    <script src="personal-loot.js?v=m6-mobile-0.2" defer></script>
+    <script src="world-data.js?v=m6-mobile-0.2" defer></script>
+    <script src="quest-data.js?v=m6-mobile-0.2" defer></script>
+    <script src="quest-events.js?v=m6-mobile-0.2" defer></script>
+    <script src="quest-system.js?v=m6-mobile-0.2" defer></script>
+    <script src="progression-events.js?v=m6-mobile-0.2" defer></script>
+    <script src="progression-store.js?v=m6-mobile-0.2" defer></script>
+    <script src="equipment.js?v=m6-mobile-0.2" defer></script>
+    <script src="character.js?v=m6-mobile-0.2" defer></script>
+    <script src="inventory.js?v=m6-mobile-0.2" defer></script>
+    <script src="app.js?v=m6-mobile-0.2" defer></script>
+    <script src="combat-engine.js?v=m6-mobile-0.2" defer></script>
+    <script src="combat-ui.js?v=m6-mobile-0.2" defer></script>
+    <script src="class-ui.js?v=m6-mobile-0.2" defer></script>
+    <script src="expedition-engine.js?v=m6-mobile-0.2" defer></script>
+    <script src="progression-system.js?v=m6-mobile-0.2" defer></script>
+    <script src="expedition-ui.js?v=m6-mobile-0.2" defer></script>
+    <script src="world-system.js?v=m6-mobile-0.2" defer></script>
+    <script src="quest-ui.js?v=m6-mobile-0.2" defer></script>
+    <script src="world-ui.js?v=m6-mobile-0.2" defer></script>
+    <script src="notification-system.js?v=m6-mobile-0.2" defer></script>
+    <script src="notification-ui.js?v=m6-mobile-0.2" defer></script>
+    <script src="mobile-ui.js?v=m6-mobile-0.2" defer></script>
   </head>
   <body>
     <main class="app">
-      <header>
-        <div class="brand">NYMERIA<span>LE CRONACHE DEL VESPRO</span></div>
-        <span class="edition">SLICE / 01</span>
+      <header class="mobile-topbar">
+        <div class="brand">NYMERIA</div>
+        <span id="topbar-context">Frontiera del Vespro</span>
       </header>
-      <section class="identity">
-        <div>
-          <span class="eyebrow">IL TUO PERSONAGGIO</span>
-          <h1>Iria del Vespro</h1>
-          <p>
-            Hayon <span>·</span> <span id="identity-class">Cacciatore</span>
-            <span>·</span> Liv. <span id="identity-level">1</span>
-          </p>
-        </div>
-        <span id="identity-level-badge" class="level" aria-label="Livello 1"
-          >01</span
-        >
-      </section>
-      <nav class="screen-tabs" role="tablist" aria-label="Character Lab">
-        <button
-          id="tab-character"
-          role="tab"
-          aria-selected="true"
-          aria-controls="panel-character"
-          data-screen="character"
-        >
-          Personaggio</button
-        ><button
-          id="tab-equipment"
-          role="tab"
-          aria-selected="false"
-          aria-controls="panel-equipment"
-          data-screen="equipment"
-          tabindex="-1"
-        >
-          Equipaggiamento</button
-        ><button
-          id="tab-inventory"
-          role="tab"
-          aria-selected="false"
-          aria-controls="panel-inventory"
-          data-screen="inventory"
-          tabindex="-1"
-        >
-          Inventario
-        </button>
-        <button
-          id="tab-combat"
-          role="tab"
-          aria-selected="false"
-          aria-controls="panel-combat"
-          data-screen="combat"
-          tabindex="-1"
-        >
-          Combattimento
-        </button>
-        <button
-          id="tab-class"
-          role="tab"
-          aria-selected="false"
-          aria-controls="panel-class"
-          data-screen="class"
-          tabindex="-1"
-        >
-          Classe
-        </button>
-        <button
-          id="tab-expeditions"
-          role="tab"
-          aria-selected="false"
-          aria-controls="panel-expeditions"
-          data-screen="expeditions"
-          tabindex="-1"
-        >
-          Spedizioni
-        </button>
-        <button id="tab-world" role="tab" aria-selected="false" aria-controls="panel-world" data-screen="world" tabindex="-1">Mondo</button>
+      <nav class="screen-tabs bottom-nav" role="tablist" aria-label="Navigazione principale">
+        <button id="tab-character" role="tab" aria-selected="false" aria-controls="panel-character" data-screen="character"><span aria-hidden="true">♙</span>Personaggio</button>
+        <button id="tab-world" role="tab" aria-selected="true" aria-controls="panel-world" data-screen="world"><span aria-hidden="true">◇</span>Mondo<span id="badge-world" class="nav-badge" hidden></span></button>
+        <button id="tab-expeditions" role="tab" aria-selected="false" aria-controls="panel-expeditions" data-screen="expeditions"><span aria-hidden="true">⌁</span>Attività<span id="badge-activities" class="nav-badge" hidden></span></button>
+        <button id="tab-menu" role="tab" aria-selected="false" aria-controls="panel-menu" data-screen="menu"><span aria-hidden="true">≡</span>Menu</button>
       </nav>
+      <div id="context-bar" class="context-bar" hidden><button id="navigation-back">← Indietro</button><strong id="context-title"></strong></div>
+      <section id="panel-menu" hidden aria-label="Menu"><h1>Menu</h1><p class="hint">I ricordi del viaggio e le conoscenze raccolte.</p><div class="hub-links"><button data-nav="discoveries">Scoperte <span>→</span></button><button id="menu-debug-link" data-nav="debug" hidden>DEBUG · Test Mode <span>→</span></button></div></section>
+      <section id="panel-debug" hidden aria-label="DEBUG"><h1>DEBUG · Test Mode</h1><p class="hint">Strumenti di sviluppo. Modificano il salvataggio locale reale.</p><div id="debug-tools"></div><button data-nav="combat">Incontro dimostrativo · DEBUG</button></section>
       <section
         id="panel-class"
         role="tabpanel"
-        aria-labelledby="tab-class"
+        aria-label="Classe e build"
         hidden
       >
         <div class="section-title">
@@ -149,6 +86,21 @@
         <p id="class-save-status" class="hint" role="status"></p>
       </section>
       <div id="panel-character" role="tabpanel" aria-labelledby="tab-character">
+      <section class="identity">
+        <div>
+          <span class="eyebrow">IL TUO PERSONAGGIO</span>
+          <h1>Iria del Vespro</h1>
+          <p>
+            Hayon <span>·</span> <span id="identity-class">Cacciatore</span>
+            <span>·</span> Liv. <span id="identity-level">1</span>
+          </p>
+        </div>
+        <span id="identity-level-badge" class="level" aria-label="Livello 1"
+          >01</span
+        >
+      </section>
+<p id="character-build" class="hint"></p>
+<div class="hub-links character-links"><button data-nav="equipment">Equipaggiamento <span>→</span></button><button data-nav="inventory">Inventario <span>→</span></button><button data-nav="class">Classe / Build <span>→</span></button></div>
         <section class="xp-summary" aria-label="Esperienza">
           <strong id="character-xp-label">Livello 1</strong
           ><span id="character-xp-value">0 / 80 XP</span>
@@ -260,7 +212,7 @@
       <section
         id="panel-equipment"
         role="tabpanel"
-        aria-labelledby="tab-equipment"
+        aria-label="Equipaggiamento"
         hidden
       >
         <div class="section-title">
@@ -277,7 +229,7 @@
       <section
         id="panel-inventory"
         role="tabpanel"
-        aria-labelledby="tab-inventory"
+        aria-label="Inventario"
         hidden
       >
         <div class="section-title">
@@ -314,7 +266,7 @@
       <section
         id="panel-combat"
         role="tabpanel"
-        aria-labelledby="tab-combat"
+        aria-label="Combattimento dimostrativo"
         hidden
       >
         <div class="section-title">
@@ -455,8 +407,8 @@
         hidden
       >
         <div class="section-title">
-          <h2>Frontiera del Vespro</h2>
-          <span>M5 / 01</span>
+          <h2>Spedizioni</h2>
+          <span>ATTIVITÀ</span>
         </div>
         <section class="xp-summary" aria-label="Esperienza">
           <strong id="expedition-xp-label">Livello 1</strong
@@ -523,21 +475,17 @@
         </section>
       </section>
       <section id="panel-world" role="tabpanel" aria-labelledby="tab-world" hidden>
-        <div class="section-title"><h2>Mondo</h2><span>M6 / 01</span></div>
-        <header class="world-intro"><span class="world-eyebrow">PRIMA FRONTIERA</span><h3 id="world-zone-name"></h3><p id="world-zone-story"></p><div id="world-summary" class="world-summary"></div></header>
-        <nav class="world-views" aria-label="Sezioni del mondo">
-          <button data-world-view="places" aria-pressed="true">Luoghi</button>
-          <button data-world-view="journal" aria-pressed="false">Diario</button>
-          <button data-world-view="discoveries" aria-pressed="false">Scoperte</button>
-        </nav>
+        <header class="world-intro"><span class="world-eyebrow" id="world-zone-name"></span><p id="world-zone-story" hidden></p><div id="world-summary" hidden></div></header>
+        <section id="world-current" tabindex="-1"></section>
+        <div class="world-shortcuts"><button id="world-active-link" data-world-view="battle" hidden>Riprendi incontro</button><button data-world-view="journal">Diario <span id="journal-badge"></span></button><button data-world-view="overview">Mappa dei luoghi</button></div>
         <p id="world-message" class="world-message" role="status" aria-live="polite"></p>
         <p id="world-storage" class="compatibility" role="status"></p>
         <aside id="world-tracked" class="quest-tracker" hidden></aside>
         <section id="world-places">
-          <div id="world-locations" class="world-locations"></div>
+          <div id="world-locations" class="world-locations" hidden></div>
           <section id="world-location-detail" class="world-location-detail"></section>
         </section>
-        <section id="world-journal" hidden><h3>Diario della Frontiera</h3><p class="hint">Gli obiettivi avanzano dopo l'accettazione. Le ricompense si riscuotono una sola volta.</p><div id="quest-journal"></div></section>
+        <section id="world-journal" hidden><h3>Diario della Frontiera</h3><p class="hint">Gli obiettivi avanzano dopo l'accettazione. Le ricompense si riscuotono una sola volta.</p><div id="quest-journal"></div><div id="quest-detail" hidden></div></section>
         <section id="world-discoveries" hidden><h3>Scoperte</h3><div id="world-discovery-list"></div><h3>Riconoscimenti</h3><div id="world-achievements"></div></section>
         <section id="world-battle" class="world-battle" hidden aria-label="Incontro nel mondo">
           <div class="section-title"><h3 id="world-battle-name"></h3><span id="world-battle-clock"></span></div>

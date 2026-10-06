@@ -1,3 +1,4 @@
+const navigate = require('./mobile-navigation-fixture.cjs');
 /* Side quest UI integration, particularly M5 expedition → M6 dispatcher. */
 const assert=require('node:assert/strict'),{chromium}=require('playwright');
 const dismissNotifications = require('./notifications-fixture.cjs');
@@ -16,23 +17,23 @@ const dismissNotifications = require('./notifications-fixture.cjs');
   });
   await dismissNotifications(page);
   await page.locator('#tab-world').tap();
-  const tap=async selector=>{await dismissNotifications(page);await page.locator(selector).tap();await page.waitForFunction(()=>document.getElementById('panel-world').getAttribute('aria-busy')==='false');};
+  const tap=async selector=>{await dismissNotifications(page);await page.locator(selector+':visible').tap();await page.waitForFunction(()=>document.getElementById('panel-world').getAttribute('aria-busy')==='false');};
   const accept=id=>tap(`#world-location-detail [data-quest-accept="${id}"]`);
-  const enter=id=>tap(`[data-world-enter="${id}"]`);
+  const enter=async id=>{await tap('[data-world-view="overview"]');await tap(`[data-world-enter="${id}"]`);};
   const claim=async id=>{
-   await tap('.world-views [data-world-view="journal"]');
-   await tap(`#quest-journal [data-quest-claim="${id}"]`);
+   await tap('[data-world-view="journal"]');await tap(`.journal-entry[data-quest-open="${id}"]`);
+   await tap(`#quest-detail [data-quest-claim="${id}"]`);
    assert.equal(await page.evaluate(id=>ProgressionStore.state.frontier.quests[id].status,id),'claimed');
-   await tap('.world-views [data-world-view="places"]');
+   await tap('#navigation-back');await tap('#navigation-back');
   };
   await accept('sq-debt');await accept('sq-herbs');await enter('broken-path');await accept('sq-merchant');await tap('[data-world-explore="lost-cart"]');
   for(let i=0;i<2;i++){
    await tap('[data-world-fight="vesper-raider"]');
-   await page.evaluate(async()=>{WorldUI.engine.advance(180);await WorldUI.settle();});
+   await page.evaluate(async()=>{WorldUI.engine.advance(180);await WorldUI.settle();});await tap('[data-world-continue]');
   }
   await claim('sq-debt');
   await page.locator('#tab-expeditions').tap();await page.locator('[data-start-expedition="patrol"]').tap();await page.locator('#expedition-running').waitFor({state:'visible'});
-  await page.locator('#expedition-debug-complete').tap();await page.locator('#expedition-report').waitFor({state:'visible'});
+  await navigate(page,'debug');await page.locator('#expedition-debug-complete').tap();await navigate(page,'expeditions');await page.locator('#expedition-report').waitFor({state:'visible'});
   assert.equal(await page.evaluate(()=>ProgressionStore.state.frontier.quests['sq-merchant'].progress[2]),0);
   await page.locator('#expedition-claim').tap();await page.locator('#expedition-claimed').waitFor({state:'visible'});
   await page.locator('#tab-world').tap();await claim('sq-merchant');

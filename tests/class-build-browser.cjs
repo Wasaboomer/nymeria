@@ -1,3 +1,4 @@
+const navigate = require('./mobile-navigation-fixture.cjs');
 /* M4 real touch flows; preferences are persisted independently for each class. */
 const assert = require("node:assert/strict");
 const { chromium } = require("playwright");
@@ -25,7 +26,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       assert.equal((await page.goto(baseURL)).status(), 200);
       await page.emulateMedia({ reducedMotion: "reduce" });
       const tab = async (id) => {
-        await page.locator("#tab-" + id).tap();
+        await navigate(page, id);
         assert.ok(await page.locator("#panel-" + id).isVisible());
         await overflow();
       };

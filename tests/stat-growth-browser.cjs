@@ -1,3 +1,4 @@
+const navigate = require('./mobile-navigation-fixture.cjs');
 const assert = require('node:assert/strict');
 const dismissNotifications = require('./notifications-fixture.cjs');
 const { chromium } = require('playwright');
@@ -34,7 +35,7 @@ const { chromium } = require('playwright');
    assert.ok(summary.includes('+3 Agilità') && summary.includes('+1 Vigor') && summary.includes('+0,5% Critico'));
    await dismissNotifications(page);
    for(const id of ['inventory','equipment','character']) {
-    await page.locator(`.screen-tabs [data-screen="${id}"]`).tap();
+    await navigate(page, id);
     assert.ok(await page.locator(`#panel-${id}`).isVisible());
    }
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

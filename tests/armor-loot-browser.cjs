@@ -1,3 +1,4 @@
+const navigate = require('./mobile-navigation-fixture.cjs');
 /* Mobile touch regression for proficiency, Advisor, class switches and personal loot. */
 const assert = require("node:assert/strict");
 const dismissNotifications = require("./notifications-fixture.cjs");
@@ -33,7 +34,7 @@ const base = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
           `${width}px overflow`,
         );
       const tab = async (id) => {
-        await page.locator("#tab-" + id).tap();
+        await navigate(page, id);
         assert.ok(await page.locator("#panel-" + id).isVisible());
         await overflow();
       };
@@ -160,7 +161,9 @@ const base = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
           await page.evaluate(() => ProgressionStore.state.activeExpedition),
           active,
         );
+        await navigate(page, "debug");
         await page.locator("#expedition-debug-complete").tap();
+        await navigate(page, "expeditions");
         await settle();
         const report = await page.evaluate(
           () => ProgressionStore.state.pendingExpeditionResult,

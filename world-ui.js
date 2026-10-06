@@ -1,8 +1,8 @@
 /* Mobile adapter: presentation clock only; durable actions remain in World/Quest engines. */
 const WorldUI = (() => {
   const node = id => document.getElementById(id), escape = QuestUI.escape;
-  let view = "places", busy = false, engine = null, ticketId = null;
-  let frameId = null, lastTime = null, renderingAt = 0, settling = false;
+  let view = "places", talked = null, talkedLocation = null, busy = false, engine = null, ticketId = null;
+  let messageTimer = null, frameId = null, lastTime = null, renderingAt = 0, settling = false;
   let estimateKey = "", estimates = {};
   const marks = {
     haven: "M12 31 30 10 48 31M18 27V48H42V27M25 48V34H35V48M8 48H52",
@@ -16,9 +16,8 @@ const WorldUI = (() => {
     return `<svg viewBox="0 0 60 60" aria-hidden="true" class="world-mark"><path d="${marks[id]}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
   function selectView(value) {
-    if (!["places", "journal", "discoveries"].includes(value)) return;
-    view = value;
-    render();
+    if (!["places", "journal", "quest", "discoveries", "overview", "battle"].includes(value)) return;
+    NymeriaNavigation.open("world", { view: value });
   }
   async function action(work) {
     if (busy) return;
@@ -26,6 +25,7 @@ const WorldUI = (() => {
     try {
       const result = await work();
       node("world-message").textContent = result?.message || "";
+      clearTimeout(messageTimer); messageTimer = setTimeout(() => { node("world-message").textContent = ""; }, 3500);
       return result;
     } catch (error) {
       node("world-message").textContent = `Operazione non applicata: ${error.message}`;
@@ -41,26 +41,60 @@ const WorldUI = (() => {
     node("world-summary").innerHTML = `<span>Livello <b>${state.level}</b> · ${state.currentXP}/${state.requiredXP || "MAX"} XP</span><span><b>${state.crowns}</b> Corone</span><small>Storia ${main.filter(q => frontier.quests[q.id].status === "claimed").length}/${main.length}</small>`;
     node("world-storage").textContent = ProgressionStore.error;
     for (const b of document.querySelectorAll("[data-world-view]")) b.setAttribute("aria-pressed", String(b.dataset.worldView === view));
-    for (const [id, value] of [["world-places", "places"], ["world-journal", "journal"], ["world-discoveries", "discoveries"]]) node(id).hidden = view !== value;
+    for (const [id, value] of [["world-places", "places"], ["world-journal", "journal"], ["world-discoveries", "discoveries"]]) node(id).hidden = value === "places" ? !["places", "overview"].includes(view) : value === "journal" ? !["journal", "quest"].includes(view) : view !== value;
     node("world-tracked").innerHTML = QuestUI.tracker(state);
-    node("world-tracked").hidden = !frontier.trackedQuest;
+    node("world-tracked").hidden = view !== "places";
+    node("world-locations").hidden = view !== "overview";
+    node("world-location-detail").hidden = view !== "places";
+    node("world-active-link").hidden = !frontier.activeEncounter;
+    document.querySelector(".world-shortcuts").hidden = view !== "places";
+    node("quest-journal").hidden = view !== "journal";
+    node("quest-detail").hidden = view !== "quest";
+    const selectedQuest = QuestData.get(NymeriaNavigation.route.questId);
+    node("quest-detail").innerHTML = selectedQuest ? QuestUI.card(selectedQuest, state) : "";
+    node("journal-badge").textContent = Object.values(frontier.quests).filter(q => q.status === "completed").length || "";
     node("world-locations").innerHTML = WorldData.locations.map(location => {
       const unlocked = state.unlockedContent.includes(`world:${location.id}`), current = location.id === frontier.location;
       return `<button class="world-node ${current ? "world-node-current" : ""}" data-world-enter="${location.id}" aria-pressed="${current}" ${!unlocked || frontier.activeEncounter || busy ? "disabled" : ""}>${mark(location.mark)}<span><strong>${escape(location.name)}</strong><small>${unlocked ? current ? "Ti trovi qui" : `Esplora · Liv. indicativo ${location.level}` : escape(location.unlockHint)}</small></span><b aria-hidden="true">${unlocked ? '<svg viewBox="0 0 12 12" width="12" height="12"><path d="M3 9 9 3M3 3H9V9" fill="none" stroke="currentColor"/></svg>' : '<svg viewBox="0 0 12 12" width="12" height="12"><path d="M6 1 11 6 6 11 1 6Z" fill="none" stroke="currentColor"/></svg>'}</b></button>`;
     }).join("");
     const location = WorldData.location(frontier.location);
+    node("world-current").hidden = view !== "places";
+    node("world-current").innerHTML = `<div class="world-place-heading">${mark(location.mark)}<h1>${escape(location.name)}</h1></div><p>${escape(location.description)}</p>`;
+    if (talkedLocation !== location.id) { talked = null; talkedLocation = location.id; }
     const key = JSON.stringify([location.id, Equipment.state.resultingStats, ClassSystem.state, Object.values(Equipment.state.equipment).map(e => e.equippedItem)]);
     if (key !== estimateKey) {
       estimateKey = key;
       estimates = Object.fromEntries(location.enemies.map(id => [id, WorldSystem.estimate(id)]));
     }
-    node("world-location-detail").innerHTML = `<div class="world-place-heading">${mark(location.mark)}<div><span class="world-eyebrow">LUOGO · LIV. ${location.level}</span><h3>${escape(location.name)}</h3></div></div><p>${escape(location.description)}</p>${WorldData.npcs.filter(n => n.location === location.id).map(npc => {
+    node("world-location-detail").innerHTML = `${WorldData.npcs.some(n => n.location === location.id) ? "<h4>Personaggi presenti</h4>" : ""}${WorldData.npcs.filter(n => n.location === location.id).map(npc => {
       const dialogue = npc.dialogues.filter(d => !d.after || frontier.quests[d.after]?.status === "claimed").pop();
-      return `<article class="world-npc"><div class="npc-heading"><span class="npc-seal" aria-hidden="true">${npc.name.split(" ")[0][0]}</span><div><h4>${escape(npc.name)}</h4><small>${escape(npc.role)}</small></div><button data-world-talk="${npc.id}">Parla</button></div><p>«${escape(dialogue.text)}»</p>${QuestUI.offers(npc.id, state)}</article>`;
-    }).join("")}${location.points.length ? '<h4>Da esplorare</h4>' : ""}${location.points.map(point => `<button class="world-point" data-world-explore="${point.id}" ${point.requiresDefeat && !frontier.defeatedEnemies.includes(point.requiresDefeat) ? "disabled" : ""}><strong>${escape(point.name)}</strong><small>${point.requiresDefeat && !frontier.defeatedEnemies.includes(point.requiresDefeat) ? "Passaggio controllato dal comandante" : point.discovery ? "Segreto professionale · esamina" : point.collect ? "Esplorazione · trova un campione" : "Esamina →"}</small></button>`).join("")}${location.enemies.length ? '<h4>Incontri</h4><p class="hint">La valutazione considera livello, kit e build. Ogni vittoria avanza le missioni accettate.</p>' : ""}<div class="world-enemies">${location.enemies.map(id => {
+      return `<article class="world-npc"><div class="npc-heading"><span class="npc-seal" aria-hidden="true">${npc.name.split(" ")[0][0]}</span><div><h4>${escape(npc.name)}</h4><small>${escape(npc.role)}</small></div><button data-world-talk="${npc.id}">Parla</button></div>${talked === npc.id ? `<p>«${escape(dialogue.text)}»</p>` : ""}${QuestUI.offers(npc.id, state)}</article>`;
+    }).join("")}${location.points.length ? '<h4 data-world-section="explore">Da esplorare</h4>' : ""}${location.points.map(point => `<button class="world-point" data-world-explore="${point.id}" ${point.requiresDefeat && !frontier.defeatedEnemies.includes(point.requiresDefeat) ? "disabled" : ""}><strong>${escape(point.name)}</strong><small>${point.requiresDefeat && !frontier.defeatedEnemies.includes(point.requiresDefeat) ? "Passaggio controllato dal comandante" : point.discovery ? "Segreto professionale · esamina" : point.collect ? "Esplorazione · trova un campione" : "Esamina →"}</small></button>`).join("")}${location.enemies.length ? '<h4 data-world-section="encounters">Incontri</h4>' : ""}<div class="world-enemies">${location.enemies.map(id => {
       const enemy = WorldData.enemy(id);
-      return `<article class="world-enemy enemy-${enemy.kind}"><div><small>${enemy.kind === "boss" ? "BOSS" : enemy.kind === "miniboss" ? "MINIBOSS" : "INCONTRO"} · LIV. ${enemy.level}</small><h4>${escape(enemy.name)}</h4><p>${estimates[id]} · ${enemy.rewards.xp} XP · ${enemy.rewards.crowns} Corone</p><small>${enemy.drops.map(id => escape(WorldData.supplyNames[id])).join(" · ") || "Nessun oggetto di missione"}</small></div><button data-world-fight="${id}" ${frontier.activeEncounter ? "disabled" : ""}>Affronta</button></article>`;
-    }).join("")}</div>${!ClassSystem.kitRequirement(Equipment.equipped("mainHand"), Equipment.equipped("support")) ? '<p class="compatibility">Prepara il kit della classe prima degli incontri.</p><button data-world-equipment>Prepara equipaggiamento</button>' : ""}`;
+      return `<article class="world-enemy enemy-${enemy.kind}"><div><small>${enemy.kind === "boss" ? "BOSS" : enemy.kind === "miniboss" ? "MINIBOSS" : "INCONTRO"} · LIV. ${enemy.level}</small><h4>${escape(enemy.name)}</h4><p>${estimates[id]} · ${enemy.rewards.xp} XP · ${enemy.rewards.crowns} Corone</p><small>${enemy.drops.map(id => escape(WorldData.supplyNames[id])).join(" · ") || "Nessun oggetto di missione"}</small></div><button data-world-fight="${id}" ${frontier.activeEncounter ? "disabled" : ""}>Combatti</button></article>`;
+    }).join("")}</div>${location.enemies.length && !ClassSystem.kitRequirement(Equipment.equipped("mainHand"), Equipment.equipped("support")) ? '<p class="compatibility">Prepara il kit della classe prima degli incontri.</p><button data-world-equipment>Prepara equipaggiamento</button>' : ""}`;
+    node("world-location-detail").innerHTML += `<section class="world-destinations"><h4>Destinazioni</h4>${WorldData.connections[location.id].map(id => {
+      const destination = WorldData.location(id), unlocked = state.unlockedContent.includes(`world:${id}`);
+      return `<button data-world-enter="${id}" ${!unlocked || frontier.activeEncounter || busy ? "disabled" : ""}><span><strong>${escape(destination.name)}</strong>${!unlocked ? `<small>Bloccato · ${escape(destination.unlockHint)}</small>` : ""}</span><b aria-hidden="true">${unlocked ? "→" : "🔒"}</b></button>`;
+    }).join("")}</section>`;
+    // Objective markers are semantic UI hints, never quest-engine branches.
+    const tracked = QuestData.get(frontier.trackedQuest), entry = tracked && frontier.quests[tracked.id];
+    if (tracked && entry?.status === "active") tracked.objectives.forEach((objective, i) => {
+      if (entry.progress[i] >= objective.count) return;
+      for (const button of node("world-location-detail").querySelectorAll("[data-world-talk], [data-world-fight], [data-world-explore], [data-world-enter]")) {
+        const target = button.dataset.worldTalk || button.dataset.worldFight || button.dataset.worldExplore || button.dataset.worldEnter;
+        const enemy = WorldData.enemy(target);
+        if (target === objective.target || enemy?.drops.includes(objective.target) || location.points.find(p => p.id === target)?.collect === objective.target) {
+          button.classList.add("quest-relevant"); button.setAttribute("aria-label", `${button.textContent.trim()} · obiettivo della missione tracciata`);
+        }
+      }
+    });
+    const detail = node("world-location-detail"), exploration = detail.querySelector('[data-world-section="explore"]'), encounters = detail.querySelector(".world-enemies");
+    // Put the tracked action before optional exploration; keep exploration first when relevant.
+    if (exploration && encounters.querySelector(".quest-relevant") && !detail.querySelector(".world-point.quest-relevant")) {
+      detail.insertBefore(detail.querySelector('[data-world-section="encounters"]'), exploration);
+      detail.insertBefore(encounters, exploration);
+    }
     node("quest-journal").innerHTML = QuestUI.journal(state);
     node("world-discovery-list").innerHTML = frontier.discoveries.length ? frontier.discoveries.map(id => {
       const d = WorldData.discoveries.find(x => x.id === id);
@@ -69,12 +103,12 @@ const WorldUI = (() => {
     node("world-achievements").innerHTML = frontier.achievements.length ? frontier.achievements.map(id => `<article class="discovery-card"><span class="world-eyebrow">TITOLO OTTENUTO</span><h4>${escape(WorldData.achievements.find(x => x.id === id).name)}</h4><p>${escape(WorldData.zone.epilogue)}</p></article>`).join("") : '<p class="hint">La Frontiera deve ancora conoscere il tuo nome.</p>';
     node("world-debug").hidden = !WorldSystem.testMode;
     for (const button of node("world-debug").querySelectorAll("button")) button.disabled = busy;
-    node("world-battle").hidden = !frontier.activeEncounter;
+    node("world-battle").hidden = view !== "battle" || !frontier.activeEncounter;
     const result = frontier.lastEncounter;
-    node("world-result").hidden = !result || !!frontier.activeEncounter;
-    if (result) node("world-result").innerHTML = `<span class="world-eyebrow">${escape(result.enemyName)}</span><h3>${result.outcome === "victory" ? "VITTORIA" : "SCONFITTA"}</h3><p>+${result.rewards.xp} XP · +${result.rewards.crowns} Corone</p><p class="level-up-feedback">${escape(ProgressionData.levelUpSummary(result))}</p>${result.drops.length ? `<small>${result.drops.map(id => escape(WorldData.supplyNames[id])).join(" · ")}</small>` : ""}${result.outcome === "defeat" ? '<p class="hint">Ritorno a Veyra. Nessuna perdita di livello o equipaggiamento. Nessuna penalità permanente.</p>' : ""}${WorldData.enemy(result.enemyId)?.kind === "boss" && result.outcome === "victory" ? `<p>${escape(WorldData.zone.epilogue)}</p><button data-world-view="journal">Apri il Diario · riscuoti la missione</button>` : ""}`;
+    node("world-result").hidden = view !== "battle" || !result || !!frontier.activeEncounter;
+    if (result) node("world-result").innerHTML = `<span class="world-eyebrow">${escape(result.enemyName)}</span><h3>${result.outcome === "victory" ? "VITTORIA" : "SCONFITTA"}</h3><p>+${result.rewards.xp} XP · +${result.rewards.crowns} Corone</p><p class="level-up-feedback">${escape(ProgressionData.levelUpSummary(result))}</p>${result.drops.length ? `<small>${result.drops.map(id => escape(WorldData.supplyNames[id])).join(" · ")}</small>` : ""}${result.outcome === "defeat" ? '<p class="hint">Ritorno a Veyra. Nessuna perdita di livello o equipaggiamento. Nessuna penalità permanente.</p>' : ""}<button data-world-continue class="quest-primary">Continua →</button>${WorldData.enemy(result.enemyId)?.kind === "boss" && result.outcome === "victory" ? `<p>${escape(WorldData.zone.epilogue)}</p><button data-world-view="journal">Apri il Diario · riscuoti la missione</button>` : ""}`;
     const reward = frontier.lastQuestClaim;
-    node("world-quest-reward").hidden = !reward;
+    node("world-quest-reward").hidden = !reward || !["quest", "journal"].includes(view);
     if (reward) node("world-quest-reward").innerHTML = `<span class="world-eyebrow">RICOMPENSA SALVATA</span><h4>${escape(reward.title)}</h4><p>${QuestUI.rewards(reward.rewards)}</p>${reward.loot.map(row => `<small>${escape(GearData.items.find(x => x.id === row.itemId)?.name || row.itemId)}${row.duplicate ? " · duplicato convertito in 2 Ferro" : " · aggiunto all'inventario"}</small>`).join("")}<p class="level-up-feedback">${escape(ProgressionData.levelUpSummary(reward))}</p>`;
     if (frontier.activeEncounter) {
       if (ticketId !== frontier.activeEncounter.id) {
@@ -140,23 +174,39 @@ const WorldUI = (() => {
     if (engine.result || engine.time >= 180) settle();
     else frameId = requestAnimationFrame(frame);
   }
-  node("panel-world").addEventListener("click", async event => {
+  document.addEventListener("click", async event => {
     const b = event.target.closest("button");
     if (!b || b.disabled) return;
+    if (b.dataset.questOpen) { NymeriaNavigation.open("world", { view: "quest", questId: b.dataset.questOpen }); return; }
+    if (b.hasAttribute("data-world-continue")) {
+      const receipt = ProgressionStore.state.frontier.lastEncounter;
+      if (receipt && ProgressionStore.state.frontier.location !== receipt.location) {
+        const entered = await action(() => WorldSystem.enter(receipt.location));
+        if (!entered?.ok) return;
+      }
+      if (NymeriaNavigation.depth) NymeriaNavigation.back(); else NymeriaNavigation.root("world");
+      return;
+    }
     if (b.dataset.worldView) { selectView(b.dataset.worldView); return; }
     if (b.hasAttribute("data-world-equipment")) { NymeriaNavigation.showScreen("equipment"); return; }
-    if (b.dataset.worldEnter) return action(() => WorldSystem.enter(b.dataset.worldEnter));
-    if (b.dataset.worldTalk) return action(() => WorldSystem.talk(b.dataset.worldTalk));
+    if (b.dataset.worldEnter) {
+      const result = await action(() => WorldSystem.enter(b.dataset.worldEnter));
+      if (result?.ok && view === "overview") NymeriaNavigation.back();
+      if (result?.ok) { window.scrollTo(0, 0); node("world-current").focus({ preventScroll: true }); }
+      return;
+    }
+    if (b.dataset.worldTalk) { talked = b.dataset.worldTalk; return action(() => WorldSystem.talk(b.dataset.worldTalk)); }
     if (b.dataset.worldExplore) return action(() => WorldSystem.explore(b.dataset.worldExplore));
     if (b.dataset.questAccept) return action(() => QuestSystem.accept(b.dataset.questAccept));
     if (b.dataset.questClaim) return action(() => QuestSystem.claim(b.dataset.questClaim));
     if (b.dataset.questTrack) return action(() => QuestSystem.track(b.dataset.questTrack));
     if (b.dataset.questGiver) {
-      selectView("places"); return action(() => WorldSystem.enter(QuestData.get(b.dataset.questGiver).location));
+      const result = await action(() => WorldSystem.enter(QuestData.get(b.dataset.questGiver).location));
+      if (result?.ok) NymeriaNavigation.root("world"); return;
     }
     if (b.dataset.worldFight) {
       const result = await action(() => WorldSystem.startEncounter(b.dataset.worldFight));
-      if (result?.ok) { resume(); node("world-battle").scrollIntoView({ block: "nearest" }); }
+      if (result?.ok) { selectView("battle"); resume(); }
       return;
     }
     if (b.dataset.questDebug) return action(() => QuestSystem.debug(node("world-debug-quest").value, b.dataset.questDebug));
@@ -175,7 +225,10 @@ const WorldUI = (() => {
       const entered = await WorldSystem.enter("silent-tower");
       return entered.ok ? WorldSystem.startEncounter("silence-keeper") : entered;
     });
-    if (result?.ok) resume();
+    if (result?.ok) { selectView("battle"); resume(); }
+  });
+  document.addEventListener("nymeria:navigation", event => {
+    if (event.detail.screen === "world") { view = event.detail.view || "places"; render(); }
   });
   ProgressionStore.subscribe(render); Equipment.subscribe(render); ClassSystem.subscribe(render);
   document.addEventListener("visibilitychange", () => {

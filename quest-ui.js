@@ -26,17 +26,29 @@ const QuestUI = (() => {
   }
   function journal(state) {
     return [["main", "Principale"], ["side", "Secondarie"]].map(([type, title]) =>
-      `<section class="journal-group"><h4>${title}</h4>${QuestData.quests.filter(q => q.type === type).map(q => card(q, state)).join("")}</section>`).join("");
+      `<section class="journal-group"><h4>${title}</h4>${QuestData.quests.filter(q => q.type === type).map(q => `<button class="journal-entry" data-quest-open="${q.id}"><span><strong>${escape(q.title)}</strong><small>${statusNames[state.frontier.quests[q.id].status]}</small></span><b aria-hidden="true">→</b></button>`).join("")}</section>`).join("");
   }
   function offers(npcId, state) {
-    return QuestData.quests.filter(q => q.giver === npcId && ["available", "active", "completed"].includes(state.frontier.quests[q.id].status))
+    return QuestData.quests.filter(q => q.giver === npcId && ["available", "active", "completed"].includes(state.frontier.quests[q.id].status) && !(state.frontier.trackedQuest === q.id && state.frontier.quests[q.id].status === "active"))
       .map(q => `<div class="npc-offer"><strong>${escape(q.title)}</strong><small>${statusNames[state.frontier.quests[q.id].status]}</small>${actions(q, state.frontier.quests[q.id], state)}</div>`).join("");
+  }
+  function objectiveLocation(objective) {
+    if (objective.type === "talk") return WorldData.npcs.find(n => n.id === objective.target)?.location;
+    if (objective.type === "completeExpedition") return "activities";
+    return WorldData.locations.find(location => location.id === objective.target || location.enemies.includes(objective.target) || location.points.some(p => p.id === objective.target || p.collect === objective.target) || location.enemies.some(id => WorldData.enemy(id).drops.includes(objective.target)))?.id;
   }
   function tracker(state) {
     const quest = QuestData.get(state.frontier.trackedQuest);
-    if (!quest) return "";
+    if (!quest) {
+      const next = QuestData.quests.find(q => q.type === "main" && state.frontier.quests[q.id].status === "available");
+      return next ? `<span class="world-eyebrow">PROSSIMA MISSIONE</span><strong>${escape(next.title)}</strong><small>Incontra ${escape(WorldData.npcs.find(n => n.id === next.giver).name)} · ${escape(WorldData.location(next.location).name)}</small>` : '<span class="world-eyebrow">LA FRONTIERA TI ATTENDE</span><small>Esplora il luogo o consulta il Diario.</small>';
+    }
     const entry = state.frontier.quests[quest.id];
-    return `<span class="world-eyebrow">MISSIONE TRACCIATA · ${statusNames[entry.status]}</span><strong>${escape(quest.title)}</strong><ul>${quest.objectives.map((o,i) => `<li><span>${escape(o.label)}</span><b>${entry.progress[i]}/${o.count}</b></li>`).join("")}</ul>${entry.status === "completed" ? actions(quest, entry, state) : ""}`;
+    const pending = quest.objectives.map((o, i) => ({o, i})).filter(({o, i}) => entry.progress[i] < o.count);
+    return `<span class="world-eyebrow">MISSIONE TRACCIATA · ${statusNames[entry.status]}</span><button class="tracker-title" data-quest-open="${quest.id}">${escape(quest.title)} →</button><ul>${pending.map(({o, i}) => {
+      const destination = objectiveLocation(o);
+      return `<li><span>${escape(o.label)}${destination && destination !== state.frontier.location ? `<small>${destination === "activities" ? "Attività → Spedizioni" : escape(WorldData.location(destination).name)}</small>` : ""}</span><b>${entry.progress[i]}/${o.count}</b></li>`;
+    }).join("")}</ul>${entry.status === "completed" ? actions(quest, entry, state) : ""}`;
   }
-  return { escape, rewards, journal, offers, tracker };
+  return { escape, rewards, journal, offers, tracker, card, objectiveLocation };
 })();
