@@ -1,30 +1,162 @@
-/* State and persistence: validate untrusted or outdated saved configurations. */
-const STORAGE_KEY='nymeria.character.v1';
-const DEFAULT_STATE={hair:'veil',hairColor:'ink',eyes:'amber',torso:'warden',legs:'ranger',boots:'plate',cloak:'dusk',weapon:'sword',dye:'sea'};
-const ALLOWED={...Object.fromEntries(Object.entries(ITEMS).map(([k,v])=>[k,v.map(x=>x.id)])),hairColor:PALETTES.hair.map(x=>x.id),eyes:PALETTES.eyes.map(x=>x.id),dye:PALETTES.dye.map(x=>x.id)};
-function validateState(candidate){return Object.fromEntries(Object.entries(DEFAULT_STATE).map(([k,v])=>[k,ALLOWED[k].includes(candidate?.[k])?candidate[k]:v]));}
-let state={...DEFAULT_STATE},storageUnavailable=false;
-try{state=validateState(JSON.parse(localStorage.getItem(STORAGE_KEY)));}catch{storageUnavailable=true;}
-let category='appearance';
-const CATEGORIES={appearance:'Aspetto',torso:'Corazza',legs:'Gambe',boots:'Stivali',cloak:'Mantello',weapon:'Arma',dye:'Tintura'};
-const findItem=(slot)=>ITEMS[slot].find(x=>x.id===state[slot]);
-const color=(palette,id)=>PALETTES[palette].find(x=>x.id===id).color;
-const rig=document.querySelector('#rig');
-/* Persistent groups form the rig. Equip updates only the affected group's children. */
-for(const layer of LAYER_ORDER){const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.dataset.layer=layer;g.classList.add('layer');rig.append(g);}
-function renderLayer(layer){const group=[...rig.children].find(g=>g.dataset.layer===layer);let markup=ANATOMY[layer];if(layer==='hair-back')markup=findItem('hair').back;else if(layer==='hair-front')markup=findItem('hair').front;else if(layer==='eyes')markup='<path fill="none" stroke="#503e3c" d="M131 94L142 92M158 92L169 94"/><path fill="#eee5d3" stroke="none" d="M132 98Q137 94 142 98Q137 101 132 98ZM158 98Q163 94 168 98Q163 101 158 98Z"/><path fill="var(--eyes)" stroke="#233b3d" stroke-width=".8" d="M136 95H139V100H136ZM161 95H164V100H161Z"/>';else if(ITEMS[layer])markup=findItem(layer).svg;group.innerHTML=markup;group.dataset.item=layer.startsWith('hair-')?state.hair:state[layer]||'base';}
-function applyColors(){rig.style.setProperty('--hair',color('hair',state.hairColor));rig.style.setProperty('--eyes',color('eyes',state.eyes));[...rig.children].find(g=>g.dataset.layer==='torso').style.setProperty('--dye',color('dye',state.dye));}
-function stats(){const values={force:12,dexterity:15,vitality:14,spirit:11};for(const slot of ['torso','weapon'])for(const [k,v] of Object.entries(findItem(slot).stats))values[k]+=v;document.querySelector('#power').textContent=Object.values(values).reduce((a,b)=>a+b,0)+18;document.querySelector('#stats').innerHTML=Object.entries(values).map(([k,v])=>`<div><dt>${{force:'Forza',dexterity:'Agilità',vitality:'Vigore',spirit:'Spirito'}[k]}</dt><dd>${v}</dd></div>`).join('');}
-function equip(key,id){if(!ALLOWED[key]?.includes(id))return;state[key]=id;if(key==='hair'){renderLayer('hair-back');renderLayer('hair-front');}else if(ITEMS[key])renderLayer(key);applyColors();stats();renderOptions();}
-/* UI uses item data, never geometry selectors to infer state. */
-function swatches(key,palette){return `<div class="swatches">${PALETTES[palette].map(x=>`<button class="swatch" style="--swatch:${x.color}" data-key="${key}" data-id="${x.id}" aria-label="${x.name}" title="${x.name}" aria-pressed="${state[key]===x.id}"></button>`).join('')}</div>`;}
-function itemGrid(slot){return `<div class="item-grid">${ITEMS[slot].map(x=>`<button class="item" data-key="${slot}" data-id="${x.id}" aria-pressed="${state[slot]===x.id}"><svg viewBox="${{hair:'105 50 90 90',torso:'95 132 108 160',legs:'110 218 80 125',boots:'95 300 110 90',cloak:'90 130 120 230',weapon:'195 78 60 310'}[slot]}" aria-hidden="true" style="--hair:${color('hair',state.hairColor)};--dye:${color('dye',state.dye)}"><g class="layer">${slot==='hair'?x.back+x.front:x.svg}</g></svg><span><strong>${x.name}</strong><small>${x.detail}</small></span></button>`).join('')}</div>`;}
-function renderOptions(){const options=document.querySelector('#options');if(category==='appearance')options.innerHTML='<p class="option-label">SILHOUETTE CAPELLI</p>'+itemGrid('hair')+'<p class="option-label">COLORE CAPELLI</p>'+swatches('hairColor','hair')+'<p class="option-label">COLORE OCCHI</p>'+swatches('eyes','eyes');else if(category==='dye')options.innerHTML='<p class="option-label">TINTURA DELLA CORAZZA</p>'+swatches('dye','dye')+'<p class="hint">Il pigmento cambia soltanto gli inserti della corazza. Metallo, pelle e altri slot mantengono il proprio materiale.</p>';else options.innerHTML=itemGrid(category);}
-function selectCategory(next){category=next;document.querySelector('#selection-label').textContent=CATEGORIES[category];document.querySelectorAll('#categories button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===category)));document.querySelectorAll('.equipment button').forEach(b=>b.classList.toggle('active',b.dataset.category===category));renderOptions();}
-document.querySelector('#categories').innerHTML=Object.entries(CATEGORIES).map(([id,label])=>`<button data-category="${id}" aria-pressed="${id===category}">${label}</button>`).join('');
-const right=document.createElement('nav');right.className='equipment right';right.setAttribute('aria-label','Slot destri');right.innerHTML='<button data-category="cloak" aria-label="Mantello">◬<small>04</small></button><button data-category="weapon" aria-label="Arma">†<small>05</small></button><button data-category="appearance" aria-label="Aspetto">✧<small>06</small></button>';document.querySelector('.stage').append(right);
-document.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;if(button.dataset.category)selectCategory(button.dataset.category);if(button.dataset.key)equip(button.dataset.key,button.dataset.id);});
-let noticeTimer;function notify(text){const n=document.querySelector('#notice');n.textContent=text;n.classList.add('show');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>n.classList.remove('show'),2600);}
-document.querySelector('#random').addEventListener('click',()=>{for(const [key,values] of Object.entries(ALLOWED))state[key]=values[Math.floor(Math.random()*values.length)];LAYER_ORDER.forEach(renderLayer);applyColors();stats();renderOptions();notify('Un nuovo volto delle soglie');});
-document.querySelector('#save').addEventListener('click',()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));notify('Aspetto salvato su questo dispositivo');}catch{notify('Salvataggio non disponibile in questo browser');}});
-LAYER_ORDER.forEach(renderLayer);applyColors();stats();renderOptions();if(storageUnavailable)notify('Memoria locale non disponibile o dati non validi');
+/* Application wiring and legacy appearance editor; gameplay rules live in equipment.js. */
+(() => {
+  const CATEGORIES = {
+    appearance: "Aspetto",
+    torso: "Corazza",
+    legs: "Gambe",
+    boots: "Stivali",
+    cloak: "Mantello",
+    weapon: "Arma",
+    dye: "Tintura",
+  };
+  let category = "appearance",
+    noticeTimer;
+  function notify(text) {
+    const n = document.querySelector("#notice");
+    n.textContent = text;
+    n.classList.add("show");
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => n.classList.remove("show"), 3800);
+  }
+  function showScreen(screen) {
+    if (!["character", "equipment", "inventory"].includes(screen)) return;
+    document.body.dataset.screen = screen;
+    document.querySelectorAll(".screen-tabs button").forEach((b) => {
+      const active = b.dataset.screen === screen;
+      b.setAttribute("aria-selected", String(active));
+      b.tabIndex = active ? 0 : -1;
+      document.querySelector(`#panel-${b.dataset.screen}`).hidden = !active;
+    });
+  }
+  function swatches(key, palette) {
+    return `<div class="swatches">${PALETTES[palette].map((x) => `<button class="swatch" style="--swatch:${x.color}" data-key="${key}" data-id="${x.id}" aria-label="${x.name}" title="${x.name}" aria-pressed="${Equipment.state.character[key] === x.id}"></button>`).join("")}</div>`;
+  }
+  function renderOptions() {
+    const state = Equipment.state.character;
+    const options = document.querySelector("#options");
+    if (category === "appearance")
+      options.innerHTML =
+        '<p class="option-label">SILHOUETTE CAPELLI</p><div class="item-grid">' +
+        ITEMS.hair
+          .map(
+            (x) =>
+              `<button class="item" data-key="hair" data-id="${x.id}" aria-pressed="${state.hair === x.id}"><svg viewBox="105 50 90 90" aria-hidden="true" style="--hair:${Character.color("hair", state.hairColor)}"><g class="layer">${x.back + x.front}</g></svg><span><strong>${x.name}</strong><small>${x.detail}</small></span></button>`,
+          )
+          .join("") +
+        '</div><p class="option-label">COLORE CAPELLI</p>' +
+        swatches("hairColor", "hair") +
+        '<p class="option-label">COLORE OCCHI</p>' +
+        swatches("eyes", "eyes");
+    else if (category === "dye")
+      options.innerHTML =
+        '<p class="option-label">TINTURA DELLA CORAZZA</p>' +
+        swatches("dye", "dye") +
+        '<p class="hint">Il pigmento cambia soltanto gli inserti della corazza, senza alterare le statistiche.</p>';
+    else {
+      const slot = category === "weapon" ? "mainHand" : category;
+      options.innerHTML =
+        '<div class="item-grid">' +
+        Equipment.state.inventory
+          .filter((i) => Equipment.compatibleSlots(i).includes(slot))
+          .map(
+            (i) =>
+              `<button class="item" data-quick-equip="${i.id}" data-quick-slot="${slot}" aria-pressed="${Equipment.equipped(slot)?.id === i.id}">${GearData.icon(i)}<span><strong>${i.name}</strong><small>${i.rarity} · iLv ${i.itemLevel}${i.handedness ? ` · ${i.handedness}` : ""}</small></span></button>`,
+          )
+          .join("") +
+        '</div><p class="hint">Per confronti e supporti, apri Inventario. Ogni scelta aggiorna anche l’equipaggiamento.</p>';
+    }
+  }
+  function selectCategory(next) {
+    category = next;
+    document.querySelector("#selection-label").textContent =
+      CATEGORIES[category];
+    document
+      .querySelectorAll("#categories button")
+      .forEach((b) =>
+        b.setAttribute("aria-pressed", String(b.dataset.category === category)),
+      );
+    document
+      .querySelectorAll(".equipment button")
+      .forEach((b) =>
+        b.classList.toggle("active", b.dataset.category === category),
+      );
+    renderOptions();
+  }
+  document.querySelector("#categories").innerHTML = Object.entries(CATEGORIES)
+    .map(
+      ([id, label]) =>
+        `<button data-category="${id}" aria-pressed="${id === category}">${label}</button>`,
+    )
+    .join("");
+  const right = document.createElement("nav");
+  right.className = "equipment right";
+  right.setAttribute("aria-label", "Slot destri");
+  right.innerHTML =
+    '<button data-category="cloak" aria-label="Mantello">◬<small>04</small></button><button data-category="weapon" aria-label="Arma">†<small>05</small></button><button data-category="appearance" aria-label="Aspetto">✧<small>06</small></button>';
+  document.querySelector(".stage").append(right);
+  document.addEventListener("click", (event) => {
+    const b = event.target.closest("button");
+    if (!b) return;
+    if (b.dataset.screen) showScreen(b.dataset.screen);
+    if (b.dataset.category) selectCategory(b.dataset.category);
+    if (b.dataset.key) Equipment.setCharacter(b.dataset.key, b.dataset.id);
+    if (b.dataset.quickEquip)
+      notify(
+        Equipment.equip(b.dataset.quickEquip, b.dataset.quickSlot).message,
+      );
+  });
+  document
+    .querySelector(".screen-tabs")
+    .addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
+        return;
+      event.preventDefault();
+      const tabs = [...document.querySelectorAll(".screen-tabs button")];
+      const current = tabs.indexOf(event.target);
+      const index =
+        event.key === "Home"
+          ? 0
+          : event.key === "End"
+            ? tabs.length - 1
+            : (current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
+              tabs.length;
+      showScreen(tabs[index].dataset.screen);
+      tabs[index].focus();
+    });
+  document.addEventListener("nymeria:screen", (e) => showScreen(e.detail));
+  document.addEventListener("nymeria:notice", (e) => notify(e.detail));
+  document.querySelector("#random").addEventListener("click", () => {
+    Equipment.randomizeCharacter();
+    notify("Aspetto casuale · equipaggiamento invariato");
+  });
+  document
+    .querySelector("#save")
+    .addEventListener("click", () =>
+      notify(
+        Equipment.save()
+          ? "Aspetto e inventario salvati su questo dispositivo"
+          : "Salvataggio non disponibile in questo browser",
+      ),
+    );
+  document.querySelector("#reset-demo").addEventListener("click", () => {
+    InventoryUI.close();
+    Equipment.reset();
+    category = "appearance";
+    selectCategory(category);
+    notify("Demo ripristinata: inventario, equipaggiamento e aspetto iniziali");
+  });
+  function refresh() {
+    Character.render();
+    Character.renderStats();
+    InventoryUI.render();
+    renderOptions();
+  }
+  Equipment.save();
+  Equipment.subscribe(refresh);
+  refresh();
+  showScreen("character");
+  if (Equipment.storageIssue)
+    notify(
+      "Dati locali non leggibili. Demo caricata; verifica il salvataggio.",
+    );
+})();

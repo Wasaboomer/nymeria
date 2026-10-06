@@ -1,36 +1,200 @@
 <!doctype html>
 <html lang="it">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#101c24">
-<title>Nymeria Modular Character Prototype 0.1</title>
-<link rel="stylesheet" href="styles.css">
-<script src="items.js" defer></script>
-<script src="app.js" defer></script>
-</head>
-<body>
-<main class="app">
-<header><div class="brand">NYMERIA<span>LE CRONACHE DEL VESPRO</span></div><span class="edition">SLICE / 01</span></header>
-<section class="identity"><div><span class="eyebrow">IL TUO PERSONAGGIO</span><h1>Iria del Vespro</h1><p>Hayon <span>·</span> Custode delle soglie <span>·</span> Liv. 1</p></div><span class="level" aria-label="Livello 1">01</span></section>
-<section class="stage" aria-label="Personaggio modulare">
-<div class="stage-heading"><span>ATELIER DELLE SOGLIE</span><span class="live">IDLE</span></div>
-<div class="halo"></div><div class="floor"></div>
-<nav class="equipment left" aria-label="Slot sinistri"><button data-category="torso" aria-label="Corazza">♜<small>01</small></button><button data-category="legs" aria-label="Gambe">⋈<small>02</small></button><button data-category="boots" aria-label="Stivali">⌁<small>03</small></button></nav>
-<svg id="character" viewBox="0 0 300 440" role="img" aria-label="Iria, personaggio fantasy adulto con equipaggiamento modulare">
-<defs>
-<linearGradient id="skin" x2="1" y2="1"><stop stop-color="#ddb69d"/><stop offset=".5" stop-color="#b98270"/><stop offset="1" stop-color="#76564f"/></linearGradient>
-<linearGradient id="metal" x2="1" y2="1"><stop stop-color="#ced4c6"/><stop offset=".3" stop-color="#758e8d"/><stop offset=".6" stop-color="#344b55"/><stop offset="1" stop-color="#132a35"/></linearGradient>
-<linearGradient id="cloth" x2="1" y2="1"><stop stop-color="#435c62"/><stop offset="1" stop-color="#182731"/></linearGradient>
-<linearGradient id="blade" x2="1" y2="0"><stop stop-color="#4d727e"/><stop offset=".5" stop-color="#e8e8d1"/><stop offset=".54" stop-color="#a0c2c2"/><stop offset="1" stop-color="#486473"/></linearGradient>
-<linearGradient id="hairShade" x2="1" y2="1"><stop stop-color="white" stop-opacity=".2"/><stop offset="1" stop-color="#050f18" stop-opacity=".5"/></linearGradient>
-</defs><g id="rig"></g>
-</svg>
-<div class="stage-caption"><span>HAYON / VESPRO</span><span>11 LAYER INDIPENDENTI</span></div>
-</section>
-<section class="stats" aria-label="Statistiche"><div class="power"><span>POTERE</span><strong id="power">—</strong></div><dl id="stats"></dl></section>
-<section class="customizer" aria-label="Personalizzazione"><div class="section-title"><h2>Forgiato da te</h2><span id="selection-label">Aspetto</span></div><nav id="categories" aria-label="Categorie"></nav><div id="options"></div></section>
-<footer><p>Nymeria Modular Character Prototype 0.1</p><span>Asset SVG esplorativi · sistema modulare</span></footer>
-</main>
-<div class="actions"><button id="random">↻ <span>Casuale</span></button><button id="save">Salva aspetto <span>→</span></button></div><div id="notice" role="status" aria-live="polite"></div>
-</body></html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#101c24" />
+    <title>Nymeria Equipment &amp; Inventory System 0.1</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="items.js" defer></script>
+    <script src="equipment-data.js" defer></script>
+    <script src="equipment.js" defer></script>
+    <script src="character.js" defer></script>
+    <script src="inventory.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <div class="brand">NYMERIA<span>LE CRONACHE DEL VESPRO</span></div>
+        <span class="edition">SLICE / 01</span>
+      </header>
+      <section class="identity">
+        <div>
+          <span class="eyebrow">IL TUO PERSONAGGIO</span>
+          <h1>Iria del Vespro</h1>
+          <p>Hayon <span>·</span> Custode delle soglie <span>·</span> Liv. 1</p>
+        </div>
+        <span class="level" aria-label="Livello 1">01</span>
+      </section>
+      <nav class="screen-tabs" role="tablist" aria-label="Character Lab">
+        <button
+          id="tab-character"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-character"
+          data-screen="character"
+        >
+          Personaggio</button
+        ><button
+          id="tab-equipment"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-equipment"
+          data-screen="equipment"
+          tabindex="-1"
+        >
+          Equipaggiamento</button
+        ><button
+          id="tab-inventory"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-inventory"
+          data-screen="inventory"
+          tabindex="-1"
+        >
+          Inventario
+        </button>
+      </nav>
+      <div id="panel-character" role="tabpanel" aria-labelledby="tab-character">
+        <section class="stage" aria-label="Personaggio modulare">
+          <div class="stage-heading">
+            <span>ATELIER DELLE SOGLIE</span><span class="live">IDLE</span>
+          </div>
+          <div class="halo"></div>
+          <div class="floor"></div>
+          <nav class="equipment left" aria-label="Slot sinistri">
+            <button data-category="torso" aria-label="Corazza">
+              ♜<small>01</small></button
+            ><button data-category="legs" aria-label="Gambe">
+              ⋈<small>02</small></button
+            ><button data-category="boots" aria-label="Stivali">
+              ⌁<small>03</small>
+            </button>
+          </nav>
+          <svg
+            id="character"
+            viewBox="0 0 300 440"
+            role="img"
+            aria-label="Iria, personaggio fantasy adulto con equipaggiamento modulare"
+          >
+            <defs>
+              <linearGradient id="skin" x2="1" y2="1">
+                <stop stop-color="#ddb69d" />
+                <stop offset=".5" stop-color="#b98270" />
+                <stop offset="1" stop-color="#76564f" />
+              </linearGradient>
+              <linearGradient id="metal" x2="1" y2="1">
+                <stop stop-color="#ced4c6" />
+                <stop offset=".3" stop-color="#758e8d" />
+                <stop offset=".6" stop-color="#344b55" />
+                <stop offset="1" stop-color="#132a35" />
+              </linearGradient>
+              <linearGradient id="cloth" x2="1" y2="1">
+                <stop stop-color="#435c62" />
+                <stop offset="1" stop-color="#182731" />
+              </linearGradient>
+              <linearGradient id="blade" x2="1" y2="0">
+                <stop stop-color="#4d727e" />
+                <stop offset=".5" stop-color="#e8e8d1" />
+                <stop offset=".54" stop-color="#a0c2c2" />
+                <stop offset="1" stop-color="#486473" />
+              </linearGradient>
+              <linearGradient id="hairShade" x2="1" y2="1">
+                <stop stop-color="white" stop-opacity=".2" />
+                <stop offset="1" stop-color="#050f18" stop-opacity=".5" />
+              </linearGradient>
+            </defs>
+            <g id="rig"></g>
+          </svg>
+          <div class="stage-caption">
+            <span>HAYON / VESPRO</span><span>16 SLOT · SVG MODULARE</span>
+          </div>
+        </section>
+        <section class="stats" aria-label="Statistiche">
+          <div class="power">
+            <span>POTERE</span><strong id="power">—</strong>
+          </div>
+          <dl id="stats"></dl>
+        </section>
+        <section class="customizer" aria-label="Personalizzazione">
+          <div class="section-title">
+            <h2>Forgiato da te</h2>
+            <span id="selection-label">Aspetto</span>
+          </div>
+          <nav id="categories" aria-label="Categorie"></nav>
+          <div id="options"></div>
+        </section>
+      </div>
+      <section
+        id="panel-equipment"
+        role="tabpanel"
+        aria-labelledby="tab-equipment"
+        hidden
+      >
+        <div class="section-title">
+          <h2>Il tuo equipaggiamento</h2>
+          <span>16 SLOT</span>
+        </div>
+        <div class="panel-summary" aria-label="Statistiche totali"></div>
+        <p class="hint">
+          Tocca uno slot per confrontare, rimuovere o scegliere un oggetto. SX e
+          DX sono indipendenti.
+        </p>
+        <div id="equipment-grid"></div>
+      </section>
+      <section
+        id="panel-inventory"
+        role="tabpanel"
+        aria-labelledby="tab-inventory"
+        hidden
+      >
+        <div class="section-title">
+          <h2>Inventario</h2>
+          <span id="visible-count"></span>
+        </div>
+        <div class="panel-summary" aria-label="Statistiche totali"></div>
+        <p id="inventory-count" class="hint"></p>
+        <nav class="inventory-filters" aria-label="Filtri inventario">
+          <button data-filter="all" aria-pressed="true">Tutto</button
+          ><button data-filter="weapons" aria-pressed="false">Armi</button
+          ><button data-filter="armor" aria-pressed="false">Armature</button
+          ><button data-filter="accessories" aria-pressed="false">
+            Accessori
+          </button>
+        </nav>
+        <div class="inventory-toolbar">
+          <span id="slot-filter"></span
+          ><label
+            >Ordina per
+            <select id="inventory-sort">
+              <option value="itemLevel">Item Level</option>
+              <option value="rarity">Rarità</option>
+            </select></label
+          >
+        </div>
+        <div id="inventory-grid"></div>
+      </section>
+      <footer>
+        <p>Nymeria Equipment &amp; Inventory System 0.1</p>
+        <span>Asset SVG esplorativi · sistema modulare</span
+        ><button id="reset-demo">Reset demo</button>
+      </footer>
+    </main>
+    <div class="actions">
+      <button id="random">↻ <span>Casuale</span></button
+      ><button id="save">Salva aspetto <span>→</span></button>
+    </div>
+    <div id="notice" role="status" aria-live="polite"></div>
+    <dialog id="item-dialog" aria-labelledby="detail-heading">
+      <div class="detail-header">
+        <h2 id="detail-heading"></h2>
+        <button id="close-detail" aria-label="Chiudi dettagli">×</button>
+      </div>
+      <div id="detail-body"></div>
+    </dialog>
+  </body>
+</html>
