@@ -16,6 +16,10 @@ const ProgressionLifecycle = (() => {
     typeof module !== "undefined" && module.exports
       ? require("./personal-loot.js")
       : PersonalLoot;
+  const combat =
+    typeof module !== "undefined" && module.exports
+      ? require("./combat-data.js")
+      : CombatData;
   const copy = (value) => JSON.parse(JSON.stringify(value));
   function create({
     store,
@@ -148,6 +152,70 @@ const ProgressionLifecycle = (() => {
         };
       });
     }
+    // Shared reward application: expedition claims and manual combat use one XP/level path.
+    function applyRewards(state, reward) {
+      const previousLevel = state.level;
+      state.totalXP = data.amount(state.totalXP + data.amount(reward.xp));
+      state.crowns = data.amount(state.crowns + data.amount(reward.crowns));
+      for (const key of Object.keys(state.materials))
+        state.materials[key] = data.amount(
+          state.materials[key] + data.amount(reward.materials?.[key]),
+        );
+      const after = data.fromTotal(state.totalXP);
+      const levelUps = [];
+      for (let level = previousLevel + 1; level <= after.level; level++)
+        levelUps.push(level);
+      return { previousLevel, resultingLevel: after.level, levelUps };
+    }
+    function beginManualCombat(enemyId) {
+      return store.transact((state) => {
+        const enemy = combat.enemies[enemyId];
+        if (!enemy) return { ok: false, message: "Nemico non disponibile." };
+        state.sequence++;
+        const ticket = {
+          id: `combat-${state.sequence}`,
+          enemyId,
+          enemyLevel: enemy.level,
+          difficulty: enemy.difficulty,
+          rewards: combat.enemyRewards(enemy),
+          startedAt: now(),
+        };
+        // Bounded abandoned-fight metadata; not a gameplay/farming limit.
+        state.manualCombatTickets = [
+          ...state.manualCombatTickets.slice(-63),
+          ticket,
+        ];
+        return { ok: true, ticket: copy(ticket) };
+      });
+    }
+    function awardManualCombat(id, outcome) {
+      return store.transact((state) => {
+        const ticket = state.manualCombatTickets.find(
+          (ticket) => ticket.id === id,
+        );
+        if (!ticket || !["victory", "defeat"].includes(outcome))
+          return {
+            ok: false,
+            message:
+              "Ricompensa già assegnata o combattimento non disponibile.",
+          };
+        const rewards =
+          outcome === "victory" ? ticket.rewards : { xp: 0, crowns: 0 };
+        const progress = applyRewards(state, rewards);
+        const receipt = {
+          ...ticket,
+          rewards,
+          outcome,
+          ...progress,
+          awardedAt: now(),
+        };
+        state.manualCombatTickets = state.manualCombatTickets.filter(
+          (ticket) => ticket.id !== id,
+        );
+        state.lastCombatReward = receipt;
+        return { ok: true, receipt: copy(receipt), ...progress };
+      });
+    }
     function claim(id) {
       return store.transact((state) => {
         const report = state.pendingExpeditionResult;
@@ -156,14 +224,8 @@ const ProgressionLifecycle = (() => {
             ok: false,
             message: "Ricompense già riscosse o report non disponibile.",
           };
-        const previousLevel = state.level,
-          reward = report.rewards;
-        state.totalXP = data.amount(state.totalXP + data.amount(reward.xp));
-        state.crowns = data.amount(state.crowns + data.amount(reward.crowns));
-        for (const key of Object.keys(state.materials))
-          state.materials[key] = data.amount(
-            state.materials[key] + data.amount(reward.materials[key]),
-          );
+        const reward = report.rewards;
+        const progress = applyRewards(state, reward);
         const loot = [];
         for (const itemId of reward.lootIds) {
           const item = catalogue.find(
@@ -176,23 +238,20 @@ const ProgressionLifecycle = (() => {
           else state.ownedLootIds.push(itemId);
           loot.push({ itemId, duplicate });
         }
-        const after = data.fromTotal(state.totalXP);
-        const levelUps = [];
-        for (let level = previousLevel + 1; level <= after.level; level++)
-          levelUps.push(level);
+        const { previousLevel, resultingLevel, levelUps } = progress;
         state.lastClaim = {
           ...report,
           loot,
           levelUps,
           previousLevel,
-          resultingLevel: after.level,
+          resultingLevel,
           claimedAt: now(),
         };
         state.pendingExpeditionResult = null;
         return {
           ok: true,
           message: levelUps.length
-            ? `LIVELLO ${after.level} RAGGIUNTO · Ricompense riscosse`
+            ? `LIVELLO ${resultingLevel} RAGGIUNTO · Ricompense riscosse`
             : "Ricompense riscosse",
           levelUps,
           loot,
@@ -201,6 +260,8 @@ const ProgressionLifecycle = (() => {
     }
     return {
       snapshot,
+      beginManualCombat,
+      awardManualCombat,
       start,
       refresh,
       cancel,

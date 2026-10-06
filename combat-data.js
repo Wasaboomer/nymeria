@@ -111,6 +111,9 @@ const CombatData = (() => {
     guardian: {
       id: "guardian",
       name: "Guardiano delle Rovine",
+      level: 1,
+      difficulty: 1,
+      rewards: { xpPerLevel: 35, crownsPerLevel: 4 },
       maxHp: 1050,
       armor: 35,
       attackInterval: 2.4,
@@ -132,6 +135,14 @@ const CombatData = (() => {
       ],
     },
   };
+  function enemyRewards(enemy) {
+    const factor =
+      Math.max(1, enemy.level || 1) * Math.max(1, enemy.difficulty || 1);
+    return {
+      xp: Math.round((enemy.rewards?.xpPerLevel || 0) * factor),
+      crowns: Math.round((enemy.rewards?.crownsPerLevel || 0) * factor),
+    };
+  }
   // Resolve equipped effect IDs, never displayed item names. Other hooks remain unimplemented.
   const itemHooks = {
     "thorn-bleed": {
@@ -214,6 +225,7 @@ const CombatData = (() => {
     conditions,
     defaultRules,
     enemies,
+    enemyRewards,
     itemHooks,
     normalizeRules,
     normalizeSettings,

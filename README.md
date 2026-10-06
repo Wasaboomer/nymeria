@@ -29,7 +29,7 @@ I test touch coprono 320/390/430 px: tutte le famiglie arma/supporto, 2H, slot d
 | `equipment.js` | Stato, compatibilità, equip/rimozione, confronto, statistiche, Potere e persistenza. |
 | `character.js` | Rendering dei gruppi SVG da `appearanceItem` e riepiloghi statistiche. |
 | `inventory.js` | Pannelli equipaggiamento/inventario, filtri, ordinamento e dialogo di confronto. |
-| `app.js` | Collegamento dei moduli e editor dell'aspetto esistente. |
+| `app.js` | Collegamento moduli, Character Creator con blocco persistente e UI separata di Equipment Appearance. |
 | `styles.css` / `index.html` | UI, struttura, materiali e animazioni del prototipo. |
 
 ## Modello e regole
@@ -53,7 +53,7 @@ Critico e Velocità sono punti percentuali nel prototipo. Gli effetti speciali s
 
 ## Persistenza e rappresentazione
 
-La chiave `nymeria.equipment.v1` conserva inventario, equipaggiamento, configurazione personaggio, statistiche e Potere. Ogni modifica viene salvata automaticamente; **Salva aspetto** salva anche l'intero stato. Al caricamento i dati vengono validati contro il catalogo, i duplicati vengono eliminati e statistiche/Potere ricalcolati. L'aspetto del vecchio prototipo viene importato da `nymeria.character.v1` se manca il nuovo salvataggio. **Reset demo** ripristina equipaggiamento e aspetto demo, conservando progressione, risorse e loot ottenuto. **Casuale** cambia soltanto capelli, occhi e tintura, mantenendo l'equipaggiamento.
+La chiave `nymeria.equipment.v1` conserva inventario, equipaggiamento, configurazione personaggio, statistiche e Potere. Le bozze e le modifiche consentite vengono salvate automaticamente; **Crea personaggio** conferma una volta l'aspetto e blocca il Creator soltanto dopo una scrittura riuscita. Al caricamento i dati vengono validati contro il catalogo, i duplicati vengono eliminati e statistiche/Potere ricalcolati. L'aspetto del vecchio prototipo viene importato da `nymeria.character.v1` se manca il nuovo salvataggio. **DEBUG · Reset equipaggiamento demo**, solo Test Mode, ripristina il kit senza riaprire il Creator o cambiare l'aspetto personale già confermato; conserva progressione, risorse e loot. **Casuale** è disponibile soltanto nel Creator aperto e cambia capelli/occhi, mantenendo equipaggiamento e tintura.
 
 Il rig conserva la geometria originale e aggiunge gruppi per i nuovi slot. Aggiornare uno slot non ricrea i figli degli altri gruppi. La tintura resta nel solo canale degli inserti della corazza, senza filtri globali. Gli slot vuoti possono mostrare abiti base del manichino, che non conferiscono statistiche. Alcuni oggetti condividono una silhouette provvisoria; gli accessori più piccoli sono segni SVG tecnici, non asset definitivi. `nymeria-art.png` è conservata e non utilizzata.
 
@@ -177,7 +177,7 @@ Laceratore attribuisce inoltre **18 punti** all'effetto `thorn-bleed`. Altri eff
 
 - `nymeria.classes.v1`: classe scelta e tendenza conservata per ciascuna classe.
 - `nymeria.combat.v2`: modalità, regole e velocità per ciascuna classe. Importa le preferenze `nymeria.combat.v1` nel Cacciatore. Nessuno scontro viene salvato.
-- Equipment e aspetto mantengono le chiavi e normalizzazione precedenti. Reset demo ripristina l'equipaggiamento/aspetto, non classe, strategie, XP o ritrovamenti; Reset combat azzera solo l'incontro.
+- Equipment e aspetto mantengono le chiavi e normalizzazione precedenti. Reset demo è un controllo DEBUG/Test Mode: ripristina il kit, conservando aspetto personale creato, classe, strategie, XP e ritrovamenti; Reset combat azzera solo l'incontro.
 - In caso di storage negato/dati non validi si usano default e messaggi discreti, senza bloccare tab o gameplay. Gli asset condividono `?v=idle-0.1` per evitare versioni cache miste.
 
 ```sh
@@ -254,7 +254,7 @@ I requisiti vengono derivati dal livello nel record `unlockedContent`; la UI blo
 
 La stima **Facile / Adeguata / Difficile / Pericolosa** non usa Potere o una percentuale inventata: risolve la stessa attività con la preparazione corrente su tre seed fissi (`11, 29, 71`). Tre successi con HP finale medio ≥50% → Facile; tre successi con HP inferiore → Adeguata; almeno un successo → Difficile; nessun successo → Pericolosa. Include livello, equipaggiamento, effetti, classe/build e strategia AUTO/PERSONALIZZATA. Il risultato effettivo usa un nuovo seed e può differire. Le stime sono memorizzate in UI per preparazione, senza ricalcolarle ogni secondo.
 
-Alla partenza viene salvato uno snapshot di statistiche reali, livello, oggetti/effects, profilo classe/build e regole della strategia. Prepararsi diversamente dopo la partenza non cambia retroattivamente la spedizione. Combattimento manuale resta disponibile e indipendente; non assegna ricompense di spedizione. Un level-up ricalcola Equipment e quindi resetta l'eventuale scontro manuale come una modifica alle statistiche, usando il comportamento già esistente.
+Alla partenza viene salvato uno snapshot di statistiche reali, livello, oggetti/effects, profilo classe/build e regole della strategia. Prepararsi diversamente dopo la partenza non cambia retroattivamente la spedizione. Combattimento manuale resta disponibile e indipendente: assegna ora le proprie ricompense XP/Corone tramite Progression System, senza riscuotere quelle di spedizione. Un level-up ricalcola Equipment; il report del combattimento appena vinto viene conservato durante la sua assegnazione di ricompense, mentre il prossimo scontro usa le nuove statistiche.
 
 Il piano degli incontri/eventi e i roll loot sono generati dal seed. Ogni incontro usa `CombatEngine.create` con il Guardiano scalato, mantenendo abilità, risorse, difese, critici, DoT, cooldown e Faretra delle Spine reali. HP residui vengono conservati, con un riposo di **40% HP massimi** prima del successivo incontro; risorsa e cooldown ripartono come in una nuova battaglia astratta. Ogni incontro viene risolto per massimo **180 secondi simulati**, a passi fissi del motore senza DOM/RAF/log dettagliato. Sconfitta o timeout interrompono la sequenza. Il costo del calcolo dipende dal numero finito di incontri, non dai minuti/giorni offline.
 
@@ -387,3 +387,95 @@ La conversione M5 di duplicati al claim resta il comportamento esistente; non è
 `tests/armor-loot-engine.cjs` verifica 23 casi usando Equipment, Class, Advisor, persistenza e Combat/Expedition reali: tutte le competenze/rifiuti, conservazione, migliore utilizzabile, gioielli, cambio classe, tutti i loot pool M5, snapshot e migrazione di inventari/spedizioni/report. `tests/character-fixture.cjs` condivide la preparazione reale con la suite M5.
 
 `tests/armor-loot-browser.cjs` verifica tramite touch a **320/390/430 px** tutti gli slot indossabili, rifiuti e messaggi, assenza di badge errati, cambio classe durante spedizione, reload, claim/possesso/equip del personal loot, gioielli, dimensioni leggibili del personaggio, errori JS e overflow. Le suite Equipment, Combat, M4, M5 e navigazione restano obbligatorie; i test si preparano con kit coerenti, senza aggirare le competenze. Test mobile eseguiti in Chromium emulato; Safari/iPhone fisico non verificato in questa iterazione.
+
+
+## M5 hotfix — XP & Rewards from Manual Combat
+
+Una vittoria nel tab Combattimento assegna automaticamente **XP + Corone**, subito persistiti nella stessa chiave canonica `nymeria.progression.v1`. **Sconfitta = 0 XP e 0 Corone**; nessuna XP parziale per ora. Reset, interruzione o refresh di uno scontro non concluso non assegnano premi. Gli incontri headless delle spedizioni continuano ad assegnare soltanto i premi delle rispettive attività, senza doppi premi del combattimento manuale.
+
+### Reward dei nemici e bilanciamento
+
+`combat-data.js` centralizza livello, difficoltà e coefficienti reward dei nemici. Per il **Guardiano delle Rovine**: `level: 1`, `difficulty: 1`, `rewards: { xpPerLevel: 35, crownsPerLevel: 4 }`. La formula provvisoria è:
+
+```text
+XP = round(xpPerLevel × livello nemico × difficoltà nemico)
+Corone = round(crownsPerLevel × livello nemico × difficoltà nemico)
+```
+
+Livello e difficoltà hanno minimo 1. Il Guardiano attuale assegna quindi **35 XP e 4 Corone per vittoria**, indipendentemente dal livello del personaggio. Servono tre vittorie per raggiungere L2 (105 XP totali, 25/204 XP nel nuovo livello), nove complessive per L3 e circa 1046 per L20 con questo solo nemico. Sono valori provvisori, centralizzati per il futuro bilanciamento. Nessuna stamina, diminishing returns, limite giornaliero o altro vincolo di farming è implementato. Loot/materiali manuali rimangono futuri e non vengono assegnati in questo hotfix.
+
+### Percorso condiviso e persistenza
+
+`progression-system.js` usa un'unica `applyRewards` per riscossione spedizioni e premio manuale: somma XP/Corone/materiali previsti e determina i level-up tramite `ProgressionData.fromTotal`. Livelli multipli, crescita statistica, sblocchi e cap L20 usano il percorso M5 esistente; nessuna seconda curva o duplicazione del calcolo. Al cap l'XP eccedente viene conservata, la barra mostra MAX e le Corone continuano ad aumentare.
+
+`beginManualCombat(enemyId)` registra un identificativo progressivo di scontro e congela i reward del nemico alla partenza. `awardManualCombat(id, outcome)` consuma quell'identificativo insieme alla scrittura atomica di premi e ricevuta `lastCombatReward`: una seconda richiesta per lo stesso scontro non assegna nulla, nemmeno dopo refresh o dopo una vittoria successiva. Web Locks usa il lock di progressione già esistente. I vecchi salvataggi M5 migrano aggiungendo `manualCombatTickets: []` e `lastCombatReward: null`, senza cambiare XP, risorse o spedizioni. Gli identificativi non conclusi non provocano ricompense automatiche al caricamento; vengono conservati al massimo 64 ticket recenti per limitare metadati di scontri abbandonati, non il numero di combattimenti giocabili.
+
+Il report mostra **VITTORIA**, **+35 XP · +4 Corone** e, se pertinente, **LIVELLO N RAGGIUNTO**. Entrambe le barre XP (Personaggio/Spedizioni) si aggiornano dalla notifica dello store canonico. Il level-up non nasconde il report appena vinto. Se una scrittura fallisce, XP e Corone non vengono applicate e il report offre **Riprova salvataggio ricompensa**. La ricevuta si salva immediatamente quando la transazione riesce; il combattimento in corso non viene ripristinato dopo refresh.
+
+### Test hotfix
+
+```sh
+node tests/manual-rewards-engine.cjs
+node tests/manual-rewards-browser.cjs
+node tests/combat-engine.cjs
+node tests/class-build-engine.cjs
+node tests/combat-browser.cjs
+node tests/class-build-browser.cjs
+node tests/progression-engine.cjs
+node tests/progression-browser.cjs
+node tests/armor-loot-engine.cjs
+node tests/navigation.cjs
+```
+
+I 16 controlli del nuovo motore di integrazione usano il Combat Engine reale: vittoria/sconfitta di Custode e Cacciatore, AUTO/PERSONALIZZATA, valori data-driven, level-up singolo/multiplo/cap, persistenza e idempotenza anche dopo sostituzione della ricevuta, scrittura fallita/retry, migrazione M5 e convivenza con spedizione attiva/report non riscosso. Il test browser touch a 320/390/430 px verifica gli stessi esiti, report preservato al level-up, entrambe le barre XP, refresh, chiamate duplicate, retry della persistenza, errori JavaScript e overflow. Le suite Combat/Class e Progression/Spedizioni rimangono regressioni obbligatorie.
+
+
+## M5 hotfix — Character Creator Lock 0.1
+
+Un nuovo salvataggio presenta il **Character Creator** con capelli, colore capelli e occhi. La bozza conserva esplicitamente `characterCreated: false`: refresh prima della conferma mantiene la bozza e il Creator disponibile. **Crea personaggio** salva tutti i dati estetici e `characterCreated: true` nella stessa scrittura `nymeria.equipment.v1`; soltanto se la scrittura riesce, sezione Creator e pulsanti Casuale/Crea scompaiono. Se il salvataggio fallisce, la bozza resta modificabile e può essere riconfermata.
+
+Dopo la creazione, la schermata Personaggio mostra il personaggio e i dati senza controlli per cambiare capelli/occhi. Refresh, chiusura pagina o riavvio completo del browser mantengono il blocco. `setCharacter` e `randomizeCharacter` applicano la regola anche nel modello, non soltanto nella UI. Una bozza obsoleta in un'altra scheda non può riportare il flag a false o sovrascrivere l'identità creata: il modello riconcilia il marker e l'aspetto persistiti, e la UI ascolta gli eventi storage.
+
+### Character Appearance / Equipment Appearance
+
+Il modello separa:
+
+```text
+characterCreated: true | false
+character: { hair, hairColor, eyes, level }
+equipmentAppearance: { dye }
+equipment[slot]: { equippedItem, appearanceItem }
+```
+
+`character` contiene l'aspetto personale e il livello derivato dalla progressione; `equipmentAppearance.dye` è il canale colore dell'armatura. `equippedItem` resta la fonte delle statistiche e `appearanceItem` quella della rappresentazione per slot, predisposta per **Equipment Appearance / Glamour / transmog** futuri. Il blocco del Creator riguarda **Character Appearance**: equipaggiamento, inventario, tintura armatura e normalizzazione degli appearanceItem continuano a funzionare. Nessun glamour completo o Barbiere viene implementato qui. La tintura resta isolata nel layer torso e non cambia pelle, capelli, occhi o statistiche.
+
+### Migrazione dei personaggi del prototipo
+
+Un salvataggio Equipment valido senza `characterCreated` appartiene al prototipo precedente e viene considerato **già creato**. Importa i valori estetici attuali, aggiunge `characterCreated: true` e trasferisce il vecchio `character.dye` in `equipmentAppearance.dye`, preservando il colore. Un salvataggio legacy `nymeria.character.v1` viene ugualmente importato come personaggio già creato. Le nuove bozze con false esplicito restano bozze; agli utenti esistenti non viene richiesta una nuova creazione.
+
+La chiave Equipment e la versione 1 restano valide: migrazione additiva, senza cancellare livello/XP, classe/build, gear/inventario, Corone/materiali, progressione, ricevute Combat o spedizioni/report. La progressione mantiene la propria chiave canonica e il level-up non sblocca il Creator. Il salvataggio migrato viene persistito all'avvio come già avviene per Equipment.
+
+### DEBUG / Test Mode
+
+Soltanto **`?test=1`** mostra **DEBUG · Riapri Character Creator** e **DEBUG · Reset equipaggiamento demo**. Riaprire il Creator è un override temporaneo in memoria: il personaggio esistente conserva sempre `characterCreated: true` anche mentre si prova un diverso aspetto. Il pannello e la conferma indicano DEBUG. Ricaricare la pagina, anche in Test Mode, o tornare all'URL normale richiude l'editor; confermare salva l'aspetto DEBUG e richiude subito. `debugReopenCreator()` rifiuta la chiamata fuori da Test Mode. Il reset del kit non sblocca il personaggio e non tocca progressione/risorse/ritrovamenti. Nessun comando di riapertura/reset del Creator compare nell'esperienza normale.
+
+### Barber System — TODO, non implementato
+
+In futuro il giocatore potrà pagare **Corone** per modificare elementi estetici consentiti tramite un servizio dedicato:
+
+- Capelli.
+- Barba.
+- Eventuali cosmetici minori.
+
+Modifiche profonde potranno richiedere servizi differenti e più costosi. **Razza e caratteristiche fondamentali non devono essere liberamente modificabili.** Il Barbiere resta separato da Equipment Appearance/Glamour; non viene aggiunto alcun servizio, prezzo o consumo di Corone in questo hotfix.
+
+### Test Character Creator Lock
+
+```sh
+node tests/creator-lock-engine.cjs
+node tests/creator-lock-browser.cjs
+```
+
+Gli 11 controlli di integrazione verificano nuova bozza, conferma atomica, lock persistente e blocco delle API, separazione dye/appearanceItem, migrazione M5 e legacy, XP/class/build/gear/inventario/risorse/spedizioni/report e ricevute manuali conservati, fallimento scrittura, riapertura DEBUG temporanea, reset kit e protezione da scheda obsoleta.
+
+Il browser touch a **320/390/430 px** verifica creazione e scomparsa dei controlli, refresh/chiusura pagina, migrazione completa, tintura/equipaggiamento, Class, XP manuale e spedizioni, Test Mode, errori JS e overflow. Un test chiude e riavvia completamente Chromium con lo stesso profilo persistente; altri verificano scrittura fallita con retry e due schede reali. Restano obbligatorie le regressioni Equipment, Combat/Class, Progression/Spedizioni e il precedente hotfix XP (35 XP / 4 Corone).

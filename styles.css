@@ -1595,3 +1595,15 @@ body:not([data-screen="character"]) .app {
 #expedition-storage:empty {
   display: none;
 }
+
+/* Creator debug controls stay outside the normal experience. */
+#creator-debug {
+  min-height: 44px;
+  padding: 10px 12px;
+  margin-top: 10px;
+  border: 1px dashed var(--accent);
+  border-radius: 8px;
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+}

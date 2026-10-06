@@ -14,7 +14,6 @@ const Equipment = (() => {
     hair: "veil",
     hairColor: "ink",
     eyes: "amber",
-    dye: "sea",
     level: 1,
   };
   const slotById = Object.fromEntries(GearData.slots.map((s) => [s.id, s]));
@@ -23,8 +22,12 @@ const Equipment = (() => {
     hair: ITEMS.hair.map((x) => x.id),
     hairColor: PALETTES.hair.map((x) => x.id),
     eyes: PALETTES.eyes.map((x) => x.id),
-    dye: PALETTES.dye.map((x) => x.id),
   };
+  const equipmentDyes = PALETTES.dye.map((x) => x.id);
+  const isTestMode = () =>
+    typeof location !== "undefined" &&
+    new URLSearchParams(location.search).get("test") === "1";
+  let debugCreatorOpen = false;
   const listeners = new Set();
   let storageIssue = false;
   const clone = (x) => JSON.parse(JSON.stringify(x));
@@ -115,6 +118,8 @@ const Equipment = (() => {
       equipment[slot] = { equippedItem: id, appearanceItem: id };
     return sync({
       version: 1,
+      characterCreated: false,
+      equipmentAppearance: { dye: "sea" },
       inventory: clone(GearData.items.filter((item) => !item.expeditionOnly)),
       equipment,
       character: { ...defaultCharacter },
@@ -135,6 +140,10 @@ const Equipment = (() => {
     const fresh = initial();
     if (!raw || raw.version !== 1 || !Array.isArray(raw.inventory))
       return fresh;
+    // Missing marker means an existing prototype character; explicit false is a new draft.
+    fresh.characterCreated = raw.characterCreated !== false;
+    const dye = raw.equipmentAppearance?.dye ?? raw.character?.dye;
+    if (equipmentDyes.includes(dye)) fresh.equipmentAppearance.dye = dye;
     const owned = new Set(
       raw.inventory.map((x) => x?.id).filter((id) => itemById[id]),
     );
@@ -186,6 +195,11 @@ const Equipment = (() => {
     if (saved) state = normalize(JSON.parse(saved));
     else {
       const old = JSON.parse(localStorage.getItem("nymeria.character.v1"));
+      if (old && typeof old === "object" && !Array.isArray(old)) {
+        state.characterCreated = true;
+        if (equipmentDyes.includes(old.dye))
+          state.equipmentAppearance.dye = old.dye;
+      }
       for (const [key, values] of Object.entries(appearanceAllowed))
         if (values.includes(old?.[key])) state.character[key] = old[key];
       for (const [slot, legacy] of Object.entries({
@@ -211,15 +225,38 @@ const Equipment = (() => {
   } catch {
     storageIssue = true;
   }
-  function save() {
+  function reconcileCreatedAppearance(model) {
+    // A stale draft in another tab must not undo creation or overwrite the saved identity.
+    let raw;
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+      raw = JSON.parse(localStorage.getItem(SAVE_KEY));
+    } catch {
+      return;
+    }
+    if (
+      !raw ||
+      raw.version !== 1 ||
+      !Array.isArray(raw.inventory) ||
+      raw.characterCreated === false
+    )
+      return;
+    model.characterCreated = true;
+    if (isTestMode() && debugCreatorOpen) return;
+    for (const [key, values] of Object.entries(appearanceAllowed))
+      if (values.includes(raw.character?.[key]))
+        model.character[key] = raw.character[key];
+  }
+  function persist(model) {
+    try {
+      reconcileCreatedAppearance(model);
+      localStorage.setItem(SAVE_KEY, JSON.stringify(model));
       return true;
     } catch {
       storageIssue = true;
       return false;
     }
   }
+  const save = () => persist(state);
   function publish() {
     sync(state);
     const persisted = save();
@@ -337,19 +374,62 @@ const Equipment = (() => {
       ),
     };
   }
+  const creatorAvailable = () => {
+    reconcileCreatedAppearance(state);
+    return !state.characterCreated || (isTestMode() && debugCreatorOpen);
+  };
   function setCharacter(key, value) {
-    if (!appearanceAllowed[key]?.includes(value)) return false;
+    if (!creatorAvailable() || !appearanceAllowed[key]?.includes(value))
+      return false;
     state.character[key] = value;
     publish();
     return true;
   }
   function randomizeCharacter() {
+    if (!creatorAvailable()) return false;
     for (const [key, values] of Object.entries(appearanceAllowed))
       state.character[key] = values[Math.floor(Math.random() * values.length)];
     publish();
+    return true;
+  }
+  function setEquipmentDye(value) {
+    if (!equipmentDyes.includes(value)) return false;
+    state.equipmentAppearance.dye = value;
+    publish();
+    return true;
+  }
+  function createCharacter() {
+    if (!creatorAvailable())
+      return { ok: false, message: "Personaggio già creato." };
+    const next = clone(state);
+    next.characterCreated = true;
+    if (!persist(next))
+      return {
+        ok: false,
+        message:
+          "Salvataggio non disponibile: personaggio non confermato. Riprova.",
+      };
+    state = next;
+    debugCreatorOpen = false;
+    listeners.forEach((fn) => fn(state));
+    return {
+      ok: true,
+      message: "Personaggio e aspetto salvati. Character Creator bloccato.",
+    };
+  }
+  function debugReopenCreator() {
+    if (!isTestMode()) return false;
+    debugCreatorOpen = true;
+    listeners.forEach((fn) => fn(state));
+    return true;
   }
   function reset() {
+    const previous = state;
     state = initial();
+    if (previous.characterCreated) {
+      state.characterCreated = true;
+      state.character = { ...previous.character };
+    }
     publish();
   }
   return {
@@ -374,7 +454,16 @@ const Equipment = (() => {
     equip,
     unequip,
     comparison,
+    get creatorAvailable() {
+      return creatorAvailable();
+    },
+    get testMode() {
+      return isTestMode();
+    },
+    createCharacter,
+    debugReopenCreator,
     setCharacter,
+    setEquipmentDye,
     randomizeCharacter,
     reset,
     reconcileProgression: publish,
@@ -382,6 +471,7 @@ const Equipment = (() => {
     subscribe(fn) {
       listeners.add(fn);
     },
+    reconcileCreator: () => reconcileCreatedAppearance(state),
     normalize,
   };
 })();

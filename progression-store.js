@@ -23,6 +23,8 @@ const ProgressionStorage = (() => {
       unlockedContent: ["patrol"],
       ownedLootIds: [],
       sequence: 0,
+      manualCombatTickets: [],
+      lastCombatReward: null,
       activeExpedition: null,
       pendingExpeditionResult: null,
       lastClaim: null,
@@ -238,6 +240,19 @@ const ProgressionStorage = (() => {
       )
     );
   }
+  function validCombatTicket(ticket) {
+    return (
+      isObject(ticket) &&
+      /^combat-\d+$/.test(ticket.id) &&
+      textValue(ticket.enemyId) &&
+      numberValue(ticket.enemyLevel, 10000) &&
+      numberValue(ticket.difficulty, 10000) &&
+      numberValue(ticket.startedAt, 1e15) &&
+      isObject(ticket.rewards) &&
+      numberValue(ticket.rewards.xp) &&
+      numberValue(ticket.rewards.crowns)
+    );
+  }
   function normalize(raw) {
     const state = initial();
     if (!raw || raw.version !== data.schemaVersion) return state;
@@ -258,6 +273,29 @@ const ProgressionStorage = (() => {
         ]
       : [];
     state.sequence = data.amount(raw.sequence);
+    const seenTickets = new Set();
+    state.manualCombatTickets = Array.isArray(raw.manualCombatTickets)
+      ? raw.manualCombatTickets
+          .filter((ticket) => {
+            if (
+              !validCombatTicket(ticket) ||
+              seenTickets.has(ticket.id) ||
+              Number(ticket.id.slice(7)) > state.sequence
+            )
+              return false;
+            seenTickets.add(ticket.id);
+            return true;
+          })
+          .slice(-64)
+          .map(copy)
+      : [];
+    if (
+      validCombatTicket(raw.lastCombatReward) &&
+      ["victory", "defeat"].includes(raw.lastCombatReward.outcome) &&
+      Array.isArray(raw.lastCombatReward.levelUps) &&
+      numberValue(raw.lastCombatReward.resultingLevel, data.levelCap)
+    )
+      state.lastCombatReward = copy(raw.lastCombatReward);
     const active = raw.activeExpedition;
     if (validActive(active)) {
       try {
@@ -310,7 +348,7 @@ const ProgressionStorage = (() => {
         return true;
       } catch {
         error =
-          "Salvataggio locale non disponibile: le spedizioni richiedono persistenza.";
+          "Salvataggio locale non disponibile: le ricompense richiedono persistenza.";
         return false;
       }
     }

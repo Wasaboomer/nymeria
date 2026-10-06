@@ -24,6 +24,8 @@ const CombatUI = (() => {
     lastWallTime = null,
     lastLogVersion = -1,
     lastRenderAt = -1;
+  let rewardState = null;
+  let configurationKey = "";
   let gearKey = "",
     lookKey = "";
   const node = (id) => document.getElementById(id);
@@ -190,7 +192,67 @@ const CombatUI = (() => {
     lastRenderAt = -1;
     frameId = requestAnimationFrame(frame);
   }
+  function renderRewards() {
+    const record = rewardState;
+    if (!record || record.engine !== engine || !engine.result) return;
+    const receipt = record.receipt;
+    text(
+      "combat-reward-values",
+      receipt
+        ? `+${receipt.rewards.xp} XP · +${receipt.rewards.crowns} Corone`
+        : engine.result.outcome === "defeat"
+          ? "+0 XP · +0 Corone"
+          : "Ricompense in salvataggio…",
+    );
+    text(
+      "combat-reward-level",
+      receipt?.levelUps.length
+        ? `LIVELLO ${receipt.resultingLevel} RAGGIUNTO`
+        : "",
+    );
+    text(
+      "combat-reward-status",
+      record.status === "failed"
+        ? record.message
+        : record.status === "paid"
+          ? "Ricompensa salvata."
+          : "Salvataggio in corso…",
+    );
+    node("combat-reward-retry").hidden = record.status !== "failed";
+  }
+  function settleRewards() {
+    const record = rewardState;
+    if (!record || !record.engine.result || record.status === "paid")
+      return Promise.resolve(record?.receipt);
+    if (record.status === "saving") return record.work;
+    record.status = "saving";
+    record.work = (async () => {
+      try {
+        let registration = await record.registration;
+        if (!registration.ok) {
+          record.registration = ProgressionSystem.beginManualCombat("guardian");
+          registration = await record.registration;
+        }
+        if (!registration.ok) throw new Error(registration.message);
+        const result = await ProgressionSystem.awardManualCombat(
+          registration.ticket.id,
+          record.engine.result.outcome,
+        );
+        if (!result.ok) throw new Error(result.message);
+        record.receipt = result.receipt;
+        record.status = "paid";
+      } catch (error) {
+        record.status = "failed";
+        record.message = `Ricompensa non salvata: ${error.message} Riprova prima di iniziare un nuovo scontro.`;
+      }
+      if (record.engine === engine) renderBattle();
+      return record.receipt;
+    })();
+    renderRewards();
+    return record.work;
+  }
   function start(options = {}) {
+    if (rewardState?.status === "saving") return false;
     if (!kitReady()) {
       text(
         "combat-status",
@@ -200,6 +262,12 @@ const CombatUI = (() => {
     }
     stopClock();
     engine = makeEngine(options.seed);
+    rewardState = {
+      engine,
+      status: "ready",
+      receipt: null,
+      registration: ProgressionSystem.beginManualCombat("guardian"),
+    };
     engine.start();
     lastLogVersion = -1;
     renderBattle();
@@ -219,6 +287,7 @@ const CombatUI = (() => {
   }
   function reset() {
     stopClock();
+    rewardState = null;
     engine = makeEngine();
     lastLogVersion = -1;
     renderBattle();
@@ -321,7 +390,8 @@ const CombatUI = (() => {
     node("combat-start").disabled =
       !kitReady() ||
       snapshot.status === "running" ||
-      snapshot.status === "paused";
+      snapshot.status === "paused" ||
+      rewardState?.status === "saving";
     node("combat-start").textContent =
       snapshot.status === "finished"
         ? "Nuovo combattimento"
@@ -352,6 +422,8 @@ const CombatUI = (() => {
         '<li class="hint">Lo scontro non è ancora iniziato.</li>';
       lastLogVersion = snapshot.logVersion;
     }
+    node("combat-reset").disabled = rewardState?.status === "saving";
+    node("combat-again").disabled = rewardState?.status === "saving";
     node("combat-result").hidden = !snapshot.result;
     if (snapshot.result) {
       text(
@@ -384,6 +456,8 @@ const CombatUI = (() => {
           ([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`,
         )
         .join("");
+      renderRewards();
+      if (rewardState?.status === "ready") settleRewards();
     }
   }
   function equipmentChanged() {
@@ -404,6 +478,7 @@ const CombatUI = (() => {
     });
     const appearance = JSON.stringify({
       character: Equipment.state.character,
+      equipmentAppearance: Equipment.state.equipmentAppearance,
       items: Object.values(Equipment.state.equipment).map(
         (entry) => entry.appearanceItem,
       ),
@@ -413,8 +488,23 @@ const CombatUI = (() => {
       clonePlayer();
     }
     if (fingerprint === gearKey) return;
+    const nextConfiguration = JSON.stringify({
+      selection: ClassSystem.state,
+      equipment: Object.values(Equipment.state.equipment).map(
+        (entry) => entry.equippedItem,
+      ),
+    });
+    const onlyStatsChanged = nextConfiguration === configurationKey;
+    configurationKey = nextConfiguration;
     const hadFight = engine && engine.status !== "idle";
     gearKey = fingerprint;
+    // Our reward level-up refreshes Equipment synchronously. Keep this completed report.
+    if (
+      onlyStatsChanged &&
+      engine?.status === "finished" &&
+      rewardState?.status === "saving"
+    )
+      return;
     reset();
     node("combat-requirement").hidden = kitReady();
     if (hadFight)
@@ -423,6 +513,7 @@ const CombatUI = (() => {
         "Configurazione aggiornata: avvia un nuovo scontro",
       );
   }
+  node("combat-reward-retry").addEventListener("click", () => settleRewards());
   node("combat-start").addEventListener("click", () => start());
   node("combat-again").addEventListener("click", () => start());
   node("combat-pause").addEventListener("click", pauseToggle);
@@ -498,6 +589,7 @@ const CombatUI = (() => {
   return {
     start,
     reset,
+    settleRewards,
     get engine() {
       return engine;
     },

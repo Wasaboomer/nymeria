@@ -24,6 +24,8 @@ function fixture({
     localStorage: storage,
     ProgressionStore: store,
     ProgressionData: Data,
+    URLSearchParams,
+    location: { search: testMode ? "?test=1" : "" },
   });
   for (const file of [
     "combat-data",

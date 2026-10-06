@@ -136,7 +136,10 @@ const Character = (() => {
     }
     rig.style.setProperty("--hair", color("hair", state.hairColor));
     rig.style.setProperty("--eyes", color("eyes", state.eyes));
-    groups.torso.style.setProperty("--dye", color("dye", state.dye));
+    groups.torso.style.setProperty(
+      "--dye",
+      color("dye", Equipment.state.equipmentAppearance.dye),
+    );
   }
   function renderStats() {
     const values = Equipment.state.resultingStats;

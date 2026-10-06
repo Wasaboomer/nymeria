@@ -19,7 +19,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       });
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
-      assert.equal((await page.goto(baseURL)).status(), 200);
+      assert.equal((await page.goto(baseURL + "/?test=1")).status(), 200);
       await page.emulateMedia({ reducedMotion: "reduce" });
       const model = () =>
         page.evaluate(() => JSON.parse(JSON.stringify(Equipment.state)));
@@ -307,7 +307,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       }
       // Empty-slot browse + persistent appearance settings.
       await screen("equipment");
-      await page.locator('[data-open-slot="head"]').tap();
+      await page.locator('#equipment-grid [data-open-slot="head"]').tap();
       assert.match(await page.locator("#slot-filter").innerText(), /Copricapo/);
       assert.equal(await page.locator(".inventory-item").count(), 3);
       await page.locator('[data-item-id="head-chain"]').tap();
@@ -319,10 +319,10 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       await page.locator('[data-key="hairColor"][data-id="copper"]').tap();
       await page.locator('[data-key="eyes"][data-id="sage"]').tap();
       await page.locator('#categories [data-category="dye"]').tap();
-      await page.locator('[data-key="dye"][data-id="wine"]').tap();
+      await page.locator('[data-equipment-dye="wine"]').tap();
       const persisted = await model();
       assert.equal(persisted.character.hair, "crest");
-      assert.equal(persisted.character.dye, "wine");
+      assert.equal(persisted.equipmentAppearance.dye, "wine");
       assert.deepEqual(
         await page.evaluate(() =>
           JSON.parse(localStorage.getItem(Equipment.SAVE_KEY)),

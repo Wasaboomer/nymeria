@@ -9,29 +9,29 @@
     <meta name="theme-color" content="#101c24" />
     <title>Nymeria Character Progression &amp; First Idle Loop 0.1</title>
     <!-- Bump this shared asset version together on releases to avoid mixed cached scripts. -->
-    <link rel="stylesheet" href="styles.css?v=armor-loot-0.1" />
-    <script src="navigation.js?v=armor-loot-0.1" defer></script>
-    <script src="progression-data.js?v=armor-loot-0.1" defer></script>
-    <script src="expedition-data.js?v=armor-loot-0.1" defer></script>
-    <script src="combat-data.js?v=armor-loot-0.1" defer></script>
-    <script src="classes-data.js?v=armor-loot-0.1" defer></script>
-    <script src="armor-rules.js?v=armor-loot-0.1" defer></script>
-    <script src="build-system.js?v=armor-loot-0.1" defer></script>
-    <script src="class-system.js?v=armor-loot-0.1" defer></script>
-    <script src="items.js?v=armor-loot-0.1" defer></script>
-    <script src="equipment-data.js?v=armor-loot-0.1" defer></script>
-    <script src="personal-loot.js?v=armor-loot-0.1" defer></script>
-    <script src="progression-store.js?v=armor-loot-0.1" defer></script>
-    <script src="equipment.js?v=armor-loot-0.1" defer></script>
-    <script src="character.js?v=armor-loot-0.1" defer></script>
-    <script src="inventory.js?v=armor-loot-0.1" defer></script>
-    <script src="app.js?v=armor-loot-0.1" defer></script>
-    <script src="combat-engine.js?v=armor-loot-0.1" defer></script>
-    <script src="combat-ui.js?v=armor-loot-0.1" defer></script>
-    <script src="class-ui.js?v=armor-loot-0.1" defer></script>
-    <script src="expedition-engine.js?v=armor-loot-0.1" defer></script>
-    <script src="progression-system.js?v=armor-loot-0.1" defer></script>
-    <script src="expedition-ui.js?v=armor-loot-0.1" defer></script>
+    <link rel="stylesheet" href="styles.css?v=m5-hotfix-0.1" />
+    <script src="navigation.js?v=m5-hotfix-0.1" defer></script>
+    <script src="progression-data.js?v=m5-hotfix-0.1" defer></script>
+    <script src="expedition-data.js?v=m5-hotfix-0.1" defer></script>
+    <script src="combat-data.js?v=m5-hotfix-0.1" defer></script>
+    <script src="classes-data.js?v=m5-hotfix-0.1" defer></script>
+    <script src="armor-rules.js?v=m5-hotfix-0.1" defer></script>
+    <script src="build-system.js?v=m5-hotfix-0.1" defer></script>
+    <script src="class-system.js?v=m5-hotfix-0.1" defer></script>
+    <script src="items.js?v=m5-hotfix-0.1" defer></script>
+    <script src="equipment-data.js?v=m5-hotfix-0.1" defer></script>
+    <script src="personal-loot.js?v=m5-hotfix-0.1" defer></script>
+    <script src="progression-store.js?v=m5-hotfix-0.1" defer></script>
+    <script src="equipment.js?v=m5-hotfix-0.1" defer></script>
+    <script src="character.js?v=m5-hotfix-0.1" defer></script>
+    <script src="inventory.js?v=m5-hotfix-0.1" defer></script>
+    <script src="app.js?v=m5-hotfix-0.1" defer></script>
+    <script src="combat-engine.js?v=m5-hotfix-0.1" defer></script>
+    <script src="combat-ui.js?v=m5-hotfix-0.1" defer></script>
+    <script src="class-ui.js?v=m5-hotfix-0.1" defer></script>
+    <script src="expedition-engine.js?v=m5-hotfix-0.1" defer></script>
+    <script src="progression-system.js?v=m5-hotfix-0.1" defer></script>
+    <script src="expedition-ui.js?v=m5-hotfix-0.1" defer></script>
   </head>
   <body>
     <main class="app">
@@ -218,10 +218,29 @@
           </div>
           <dl id="stats"></dl>
         </section>
-        <section class="customizer" aria-label="Personalizzazione">
+        <section
+          id="character-creator"
+          class="customizer"
+          aria-label="Character Creator"
+          hidden
+        >
           <div class="section-title">
-            <h2>Forgiato da te</h2>
-            <span id="selection-label">Aspetto</span>
+            <h2 id="creator-heading">Crea il tuo personaggio</h2>
+            <span>ASPETTO</span>
+          </div>
+          <p class="hint">
+            Scegli capelli e occhi, poi conferma con Crea personaggio.
+          </p>
+          <div id="character-appearance-options"></div>
+        </section>
+        <section
+          id="equipment-customizer"
+          class="customizer"
+          aria-label="Equipaggiamento e tintura"
+        >
+          <div class="section-title">
+            <h2>Equipaggiamento</h2>
+            <span id="selection-label">Corazza</span>
           </div>
           <nav id="categories" aria-label="Categorie"></nav>
           <div id="options"></div>
@@ -388,6 +407,12 @@
         >
           <h3 id="combat-result-heading"></h3>
           <dl id="combat-result-stats"></dl>
+          <p id="combat-reward-values" role="status" aria-live="polite"></p>
+          <p id="combat-reward-level" class="level-up-feedback"></p>
+          <p id="combat-reward-status" class="hint" role="status"></p>
+          <button id="combat-reward-retry" hidden>
+            Riprova salvataggio ricompensa
+          </button>
           <button id="combat-again">Combatti di nuovo</button>
         </section>
         <section class="combat-strategy">
@@ -489,12 +514,17 @@
       <footer>
         <p>Nymeria Character Progression &amp; First Idle Loop 0.1</p>
         <span>Asset SVG esplorativi · sistema modulare</span
-        ><button id="reset-demo">Reset demo</button>
+        ><button id="reset-demo" hidden>
+          DEBUG · Reset equipaggiamento demo
+        </button>
+        <button id="creator-debug" hidden>
+          DEBUG · Riapri Character Creator
+        </button>
       </footer>
     </main>
-    <div class="actions">
+    <div id="creator-actions" class="actions" hidden>
       <button id="random">↻ <span>Casuale</span></button
-      ><button id="save">Salva aspetto <span>→</span></button>
+      ><button id="save">Crea personaggio <span>→</span></button>
     </div>
     <div id="notice" role="status" aria-live="polite"></div>
     <dialog id="item-dialog" aria-labelledby="detail-heading">

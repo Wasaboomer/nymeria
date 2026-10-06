@@ -106,7 +106,7 @@ const modules = [
       const assets = requests.filter((url) => /\.(js|css)$/.test(url.pathname));
       assert.equal(assets.length, 23);
       assert.ok(
-        assets.every((url) => url.searchParams.get("v") === "armor-loot-0.1"),
+        assets.every((url) => url.searchParams.get("v") === "m5-hotfix-0.1"),
       );
       console.log(
         `PASS ${name}: panel visibility + hidden + aria-selected; versioned assets`,
