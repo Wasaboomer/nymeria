@@ -178,7 +178,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       await screen("character");
       await page.evaluate(() => {
         window.originalWeapon = document.querySelector(
-          '[data-layer="weapon"]',
+          '#rig [data-layer="weapon"]',
         ).firstElementChild;
       });
       const beforeArmor = await model();
@@ -210,12 +210,15 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         await page.evaluate(
           () =>
             window.originalWeapon ===
-            document.querySelector('[data-layer="weapon"]').firstElementChild,
+            document.querySelector('#rig [data-layer="weapon"]')
+              .firstElementChild,
         ),
         "Unrelated weapon DOM replaced",
       );
       assert.equal(
-        await page.locator('[data-layer="torso"]').getAttribute("data-item"),
+        await page
+          .locator('#rig [data-layer="torso"]')
+          .getAttribute("data-item"),
         "torso-oracle",
       );
       // Independent recomputation of sums and power, equipped markers and unique IDs.
@@ -380,13 +383,13 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
           const layer = slot === "mainHand" ? "weapon" : slot;
           assert.equal(
             await page
-              .locator(`[data-layer="${layer}"]`)
+              .locator(`#rig [data-layer="${layer}"]`)
               .getAttribute("data-item"),
             item.id,
           );
           assert.ok(
             await page
-              .locator(`[data-layer="${layer}"]`)
+              .locator(`#rig [data-layer="${layer}"]`)
               .evaluate((g) => g.childElementCount > 0),
           );
         }

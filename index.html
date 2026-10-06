@@ -7,14 +7,19 @@
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
     <meta name="theme-color" content="#101c24" />
-    <title>Nymeria Equipment &amp; Inventory System 0.1</title>
-    <link rel="stylesheet" href="styles.css" />
-    <script src="items.js" defer></script>
-    <script src="equipment-data.js" defer></script>
-    <script src="equipment.js" defer></script>
-    <script src="character.js" defer></script>
-    <script src="inventory.js" defer></script>
-    <script src="app.js" defer></script>
+    <title>Nymeria Combat Prototype 0.1</title>
+    <!-- Bump this shared asset version together on releases to avoid mixed cached scripts. -->
+    <link rel="stylesheet" href="styles.css?v=combat-0.1" />
+    <script src="navigation.js?v=combat-0.1" defer></script>
+    <script src="items.js?v=combat-0.1" defer></script>
+    <script src="equipment-data.js?v=combat-0.1" defer></script>
+    <script src="equipment.js?v=combat-0.1" defer></script>
+    <script src="character.js?v=combat-0.1" defer></script>
+    <script src="inventory.js?v=combat-0.1" defer></script>
+    <script src="app.js?v=combat-0.1" defer></script>
+    <script src="combat-data.js?v=combat-0.1" defer></script>
+    <script src="combat-engine.js?v=combat-0.1" defer></script>
+    <script src="combat-ui.js?v=combat-0.1" defer></script>
   </head>
   <body>
     <main class="app">
@@ -57,6 +62,16 @@
           tabindex="-1"
         >
           Inventario
+        </button>
+        <button
+          id="tab-combat"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-combat"
+          data-screen="combat"
+          tabindex="-1"
+        >
+          Combattimento
         </button>
       </nav>
       <div id="panel-character" role="tabpanel" aria-labelledby="tab-character">
@@ -178,8 +193,129 @@
         </div>
         <div id="inventory-grid"></div>
       </section>
+      <section
+        id="panel-combat"
+        role="tabpanel"
+        aria-labelledby="tab-combat"
+        hidden
+      >
+        <div class="section-title">
+          <h2>Le rovine del vespro</h2>
+          <span>ARCIERE · 1 VS 1</span>
+        </div>
+        <div id="combat-requirement" class="combat-requirement">
+          <p>Equipaggia Arco + Faretra per utilizzare il kit Arciere.</p>
+          <button id="combat-go-equipment">Vai a Equipaggiamento</button>
+        </div>
+        <div class="combat-arena">
+          <article class="fighter">
+            <div id="combat-player-avatar" class="combat-avatar"></div>
+            <h3 id="combat-player-name">Iria del Vespro</h3>
+            <p id="combat-player-hp"></p>
+            <div
+              id="combat-player-bar"
+              class="hp-bar"
+              role="progressbar"
+              aria-labelledby="combat-player-name"
+              aria-valuemin="0"
+            >
+              <span></span>
+            </div>
+            <div id="combat-player-effects" class="combat-effects"></div>
+            <p id="combat-player-action" class="fighter-action"></p>
+          </article>
+          <span class="versus">VS</span>
+          <article class="fighter">
+            <div class="combat-avatar guardian-avatar">
+              <svg viewBox="0 0 90 120" aria-hidden="true">
+                <path
+                  fill="#47585d"
+                  stroke="#182b32"
+                  stroke-width="2"
+                  d="M33 9L57 9 68 30 60 44 74 51 83 73 69 80 61 68 60 93 66 112 48 112 44 98 40 112 23 112 30 92 29 67 20 80 7 73 16 51 30 44 22 30Z"
+                />
+                <path
+                  fill="#263c43"
+                  d="M35 16H55L59 34 45 42 31 34ZM28 52L45 61 62 52 59 85 45 94 31 85Z"
+                />
+                <path
+                  fill="none"
+                  stroke="#b7a277"
+                  stroke-width="2"
+                  d="M33 27H40M50 27H57M45 67V83M32 95L30 106M58 95L60 106"
+                />
+              </svg>
+            </div>
+            <h3 id="combat-enemy-name">Guardiano delle Rovine</h3>
+            <p id="combat-enemy-hp"></p>
+            <div
+              id="combat-enemy-bar"
+              class="hp-bar enemy-hp"
+              role="progressbar"
+              aria-labelledby="combat-enemy-name"
+              aria-valuemin="0"
+            >
+              <span></span>
+            </div>
+            <div id="combat-enemy-effects" class="combat-effects"></div>
+            <p id="combat-enemy-action" class="fighter-action"></p>
+            <p id="combat-enemy-special" class="enemy-special-cooldown"></p>
+          </article>
+        </div>
+        <div class="combat-clock">
+          <span id="combat-status" role="status" aria-live="polite">Pronto</span
+          ><strong id="combat-time">00:00</strong><span id="combat-gcd"></span>
+        </div>
+        <div class="combat-controls">
+          <button id="combat-start">Inizia combattimento</button
+          ><button id="combat-pause" disabled>Pausa</button
+          ><button id="combat-reset">Reset</button>
+        </div>
+        <div
+          class="simulation-speed"
+          role="group"
+          aria-label="Velocità simulazione"
+        >
+          <span>Simulazione</span
+          ><button data-combat-speed="1" aria-pressed="true">1×</button
+          ><button data-combat-speed="2" aria-pressed="false">2×</button
+          ><button data-combat-speed="4" aria-pressed="false">4×</button>
+        </div>
+        <div id="combat-cooldowns" aria-label="Abilità e cooldown"></div>
+        <section
+          id="combat-result"
+          class="combat-result"
+          aria-labelledby="combat-result-heading"
+          hidden
+        >
+          <h3 id="combat-result-heading"></h3>
+          <dl id="combat-result-stats"></dl>
+          <button id="combat-again">Combatti di nuovo</button>
+        </section>
+        <section class="combat-strategy">
+          <div class="section-title">
+            <h2>La tua strategia</h2>
+            <span>5 ABILITÀ</span>
+          </div>
+          <div class="combat-mode" role="group" aria-label="Modalità priorità">
+            <button data-combat-mode="auto" aria-pressed="true">AUTO</button
+            ><button data-combat-mode="custom" aria-pressed="false">
+              PERSONALIZZATA
+            </button>
+          </div>
+          <p id="combat-strategy-hint" class="hint"></p>
+          <div id="combat-priorities"></div>
+        </section>
+        <section class="combat-log-section">
+          <div class="section-title">
+            <h2>Diario dello scontro</h2>
+            <span>ULTIME 60 RIGHE</span>
+          </div>
+          <ol id="combat-log" aria-label="Log combattimento"></ol>
+        </section>
+      </section>
       <footer>
-        <p>Nymeria Equipment &amp; Inventory System 0.1</p>
+        <p>Nymeria Combat Prototype 0.1</p>
         <span>Asset SVG esplorativi · sistema modulare</span
         ><button id="reset-demo">Reset demo</button>
       </footer>

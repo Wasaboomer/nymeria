@@ -1,0 +1,200 @@
+/* Tunable prototype rules. No equipment stats are duplicated here. */
+const CombatData = (() => {
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const formulas = {
+    maxHp: (stats) => Math.round(160 + stats.vigor * 9),
+    damage: (stats) =>
+      8 + stats.force * 0.75 + stats.agility * 1.3 + stats.spirit * 0.3,
+    mitigated: (damage, armor) => (damage * 100) / (100 + Math.max(0, armor)),
+    criticalChance: (stats) =>
+      clamp(0.05 + stats.agility * 0.0015 + stats.critical / 100, 0, 0.6),
+    criticalMultiplier: 1.75,
+    gcd: (stats) =>
+      Math.max(0.55, 1.6 / (1 + stats.speed / 100 + stats.agility / 200)),
+    dodgeChance: (stats, bonus = 0) =>
+      clamp(stats.agility * 0.001 + bonus, 0, 0.35),
+  };
+  const effects = {
+    bleeding: {
+      id: "bleeding",
+      name: "Sanguinamento",
+      kind: "debuff",
+      duration: 6,
+      tickInterval: 1,
+      maxStacks: 1,
+      damageCoefficient: 0.12,
+    },
+    wind: {
+      id: "wind",
+      name: "Passo del Vento",
+      kind: "buff",
+      duration: 6,
+      maxStacks: 1,
+      modifiers: { agility: 8, speed: 20, dodge: 0.12 },
+    },
+  };
+  const abilities = [
+    {
+      id: "rapid",
+      name: "Tiro Rapido",
+      description: "Attacco base affidabile, senza cooldown proprio.",
+      cooldown: 0,
+      kind: "attack",
+      coefficient: 0.65,
+      flatDamage: 8,
+      tags: ["rangedHit"],
+    },
+    {
+      id: "lacerating",
+      name: "Freccia Lacerante",
+      description: "Applica Sanguinamento per 6 s, con un tick ogni secondo.",
+      cooldown: 4,
+      kind: "attack",
+      coefficient: 0.55,
+      flatDamage: 4,
+      effectId: "bleeding",
+      tags: ["rangedHit"],
+    },
+    {
+      id: "power",
+      name: "Tiro Potente",
+      description: "Danno elevato. Cooldown di 6 s.",
+      cooldown: 6,
+      kind: "attack",
+      coefficient: 1.8,
+      flatDamage: 12,
+      tags: ["rangedHit"],
+    },
+    {
+      id: "final",
+      name: "Colpo Finale",
+      description: "Danno ×2,3 quando il nemico è sotto il 25% HP.",
+      cooldown: 5,
+      kind: "attack",
+      coefficient: 0.85,
+      flatDamage: 8,
+      executeBelow: 0.25,
+      executeMultiplier: 2.3,
+      tags: ["rangedHit"],
+    },
+    {
+      id: "wind",
+      name: "Passo del Vento",
+      description: "Per 6 s: Agilità +8, Velocità +20%, Schivata +12%.",
+      cooldown: 12,
+      kind: "buff",
+      effectId: "wind",
+      tags: [],
+    },
+  ];
+  const conditions = [
+    { id: "always", label: "Sempre" },
+    { id: "debuffAbsent", label: "Se debuff assente" },
+    { id: "buffAbsent", label: "Se buff assente" },
+    { id: "enemyHpBelow", label: "Se HP nemico < X%" },
+    { id: "playerHpBelow", label: "Se HP giocatore < X%" },
+    { id: "ready", label: "Se abilità pronta" },
+  ];
+  const defaultRules = [
+    {
+      abilityId: "lacerating",
+      condition: { type: "debuffAbsent", effectId: "bleeding" },
+    },
+    { abilityId: "final", condition: { type: "enemyHpBelow", threshold: 25 } },
+    { abilityId: "power", condition: { type: "always" } },
+    { abilityId: "wind", condition: { type: "buffAbsent", effectId: "wind" } },
+    { abilityId: "rapid", condition: { type: "always" } },
+  ];
+  const enemies = {
+    guardian: {
+      id: "guardian",
+      name: "Guardiano delle Rovine",
+      maxHp: 1050,
+      armor: 35,
+      attackInterval: 2.4,
+      attacks: [
+        {
+          id: "ruin-crush",
+          name: "Frattura delle Rovine",
+          damage: 72,
+          cooldown: 8,
+          initialDelay: 4,
+        },
+        {
+          id: "guardian-strike",
+          name: "Colpo del Guardiano",
+          damage: 44,
+          cooldown: 0,
+          initialDelay: 0,
+        },
+      ],
+    },
+  };
+  // Resolve equipped effect IDs, never displayed item names. Other hooks remain unimplemented.
+  const itemHooks = {
+    "thorn-bleed": {
+      trigger: "rangedHit",
+      chance: 0.3,
+      effectId: "bleeding",
+      tickMultiplier: 1.35,
+      extraDuration: 2,
+    },
+  };
+  const copy = (value) => JSON.parse(JSON.stringify(value));
+  function normalizeRules(raw) {
+    const result = [],
+      used = new Set();
+    if (Array.isArray(raw))
+      for (const row of raw) {
+        if (
+          !row ||
+          !abilities.some((a) => a.id === row.abilityId) ||
+          used.has(row.abilityId)
+        )
+          continue;
+        used.add(row.abilityId);
+        const condition = row.condition || {};
+        const type = conditions.some((c) => c.id === condition.type)
+          ? condition.type
+          : "always";
+        const normalized = { type };
+        if (type === "enemyHpBelow" || type === "playerHpBelow")
+          normalized.threshold = Number.isFinite(Number(condition.threshold))
+            ? clamp(Number(condition.threshold), 1, 99)
+            : 25;
+        if (type === "debuffAbsent") normalized.effectId = "bleeding";
+        if (type === "buffAbsent") normalized.effectId = "wind";
+        result.push({ abilityId: row.abilityId, condition: normalized });
+      }
+    for (const rule of defaultRules)
+      if (!used.has(rule.abilityId)) result.push(copy(rule));
+    return result;
+  }
+  function normalizeSettings(raw) {
+    return {
+      mode: raw?.mode === "custom" ? "custom" : "auto",
+      speed: [1, 2, 4].includes(raw?.speed) ? raw.speed : 1,
+      rules: normalizeRules(raw?.rules),
+    };
+  }
+  function kitRequirement(main, support) {
+    return main?.weaponType === "bow" && support?.type === "quiver";
+  }
+  return {
+    formulas,
+    effects,
+    abilities,
+    conditions,
+    defaultRules,
+    enemies,
+    itemHooks,
+    normalizeRules,
+    normalizeSettings,
+    kitRequirement,
+    copy,
+    step: 0.05,
+    logLimit: 60,
+  };
+})();
+if (typeof module !== "undefined" && module.exports)
+  module.exports = CombatData;

@@ -1,0 +1,154 @@
+/* Cold-load tab regression, independent of the inventory test helpers.
+   Also verify asset versioning and isolate navigation from module failures. */
+const assert = require("node:assert/strict");
+const { chromium } = require("playwright");
+const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
+const modules = [
+  "equipment-data.js",
+  "equipment.js",
+  "character.js",
+  "inventory.js",
+  "app.js",
+  "combat-data.js",
+  "combat-engine.js",
+  "combat-ui.js",
+];
+
+(async () => {
+  const browser = await chromium.launch({
+    executablePath: process.env.NYMERIA_CHROMIUM || "/usr/bin/chromium",
+    args: ["--no-sandbox"],
+    headless: true,
+  });
+  try {
+    async function scenario(name, configure, touch) {
+      // New context = no previous storage, cookies, HTTP cache or warmed application.
+      const context = await browser.newContext(
+        touch
+          ? {
+              viewport: { width: touch, height: 844 },
+              isMobile: true,
+              hasTouch: true,
+            }
+          : { viewport: { width: 1280, height: 900 } },
+      );
+      const page = await context.newPage();
+      const errors = [],
+        requests = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      page.on("request", (request) => requests.push(new URL(request.url())));
+      if (configure) await configure(page);
+      assert.equal((await page.goto(baseURL)).status(), 200);
+      async function activate(screen) {
+        const tab = page.locator("#tab-" + screen);
+        if (touch) await tab.tap();
+        else await tab.click();
+        for (const other of ["character", "equipment", "inventory", "combat"]) {
+          const panel = page.locator("#panel-" + other);
+          assert.equal(
+            await panel.isVisible(),
+            other === screen,
+            `${name}: ${other} visibility`,
+          );
+          assert.equal(
+            await panel.evaluate((node) => node.hidden),
+            other !== screen,
+          );
+          assert.equal(
+            (await panel.getAttribute("hidden")) !== null,
+            other !== screen,
+          );
+          assert.equal(
+            await page.locator("#tab-" + other).getAttribute("aria-selected"),
+            String(other === screen),
+          );
+        }
+      }
+      // Explicit sequence requested: initial -> Inventory -> Equipment -> Character.
+      assert.ok(await page.locator("#panel-character").isVisible());
+      assert.ok(!(await page.locator("#panel-inventory").isVisible()));
+      await activate("inventory");
+      await activate("equipment");
+      await activate("combat");
+      await activate("character");
+      if (!configure) {
+        assert.deepEqual(errors, []);
+        assert.equal(
+          await page.locator("#equipment-grid .slot-card").count(),
+          16,
+        );
+        assert.equal(
+          await page.locator("#inventory-grid .inventory-item").count(),
+          44,
+        );
+      }
+      const assets = requests.filter((url) => /\.(js|css)$/.test(url.pathname));
+      assert.equal(assets.length, 11);
+      assert.ok(
+        assets.every((url) => url.searchParams.get("v") === "combat-0.1"),
+      );
+      console.log(
+        `PASS ${name}: panel visibility + hidden + aria-selected; versioned assets`,
+      );
+      await context.close();
+    }
+    await scenario("desktop cold load", null, false);
+    for (const width of [320, 390, 430])
+      await scenario(`mobile ${width}px cold load`, null, width);
+    // A failed module must never prevent tab events from being connected.
+    for (const file of modules) {
+      await scenario(
+        `${file} startup exception`,
+        (page) =>
+          page.route(`**/${file}?*`, (route) =>
+            route.fulfill({
+              contentType: "application/javascript",
+              body: `throw new Error('Injected startup failure: ${file}');`,
+            }),
+          ),
+        false,
+      );
+    }
+    // Syntax errors and failed network loads occur before module initialization.
+    await scenario(
+      "equipment.js parse failure",
+      (page) =>
+        page.route("**/equipment.js?*", (route) =>
+          route.fulfill({
+            contentType: "application/javascript",
+            body: "const Equipment = ;",
+          }),
+        ),
+      false,
+    );
+    await scenario(
+      "app.js network failure",
+      (page) => page.route("**/app.js?*", (route) => route.abort()),
+      false,
+    );
+    // Simulate the old unversioned cache entry: new HTML must never request it.
+    let staleHits = 0;
+    await scenario(
+      "unversioned previous app.js cached",
+      (page) =>
+        page.route("**/app.js*", (route) => {
+          const url = new URL(route.request().url());
+          if (!url.search) {
+            staleHits++;
+            return route.fulfill({
+              contentType: "application/javascript",
+              body: "/* Previous app: no screen-tab listeners. */",
+            });
+          }
+          return route.continue();
+        }),
+      false,
+    );
+    assert.equal(staleHits, 0);
+  } finally {
+    await browser.close();
+  }
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

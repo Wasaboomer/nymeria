@@ -1021,3 +1021,354 @@ body:not([data-screen="character"]) .app {
   border-color: var(--line);
   font-size: 11px;
 }
+/* Combat 0.1: compact technical arena and readable automatic-action controls. */
+.screen-tabs {
+  grid-template-columns: 1fr 1.35fr 1fr 1.1fr;
+}
+.screen-tabs button {
+  font-size: 10px;
+}
+.combat-requirement {
+  padding: 13px;
+  margin: 15px 0;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: #2b3939;
+}
+.combat-requirement p {
+  font-size: 12px;
+  line-height: 1.6;
+}
+#panel-combat button,
+#panel-combat select,
+#panel-combat input {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  background: #21353d;
+  font:
+    11px Arial,
+    sans-serif;
+  padding: 9px;
+}
+#panel-combat button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+#combat-go-equipment {
+  margin-top: 10px;
+}
+.combat-arena {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr);
+  gap: 7px;
+  background: radial-gradient(ellipse at 50% 30%, #2a4248, #14272f);
+  padding: 14px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-top: 14px;
+}
+.fighter {
+  min-width: 0;
+  text-align: center;
+}
+.fighter h3 {
+  font:
+    14px Georgia,
+    serif;
+  min-height: 34px;
+  line-height: 1.3;
+  margin: 8px 0;
+}
+.fighter > p {
+  font-size: 10px;
+  color: var(--muted);
+}
+.combat-avatar {
+  height: 115px;
+  display: grid;
+  place-items: center;
+}
+.combat-avatar svg {
+  width: 84px;
+  height: 115px;
+  overflow: visible;
+}
+.combat-avatar .layer {
+  animation: none !important;
+}
+.versus {
+  align-self: start;
+  margin-top: 65px;
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+.hp-bar {
+  height: 8px;
+  overflow: hidden;
+  background: #0b1c24;
+  border-radius: 6px;
+  margin: 8px 0;
+}
+.hp-bar > span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: #8eb3a2;
+}
+.enemy-hp > span {
+  background: #bd967d;
+}
+.combat-effects {
+  min-height: 40px;
+  font-size: 8px;
+  line-height: 1.5;
+}
+.effect-chip {
+  display: block;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #72918c;
+  margin-bottom: 4px;
+  color: #c2d7c7;
+}
+.effect-chip.debuff {
+  color: #e1b6a2;
+  border-color: #976d63;
+}
+.no-effect {
+  color: var(--muted);
+}
+.fighter-action {
+  min-height: 26px;
+  line-height: 1.4;
+}
+.combat-clock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 13px 0;
+  font-size: 10px;
+  color: var(--muted);
+}
+.combat-clock strong {
+  font:
+    22px Georgia,
+    serif;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+#combat-status {
+  max-width: 48%;
+  line-height: 1.4;
+}
+.combat-controls {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1fr;
+  gap: 7px;
+}
+#panel-combat #combat-start,
+#panel-combat #combat-again {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #162a32;
+}
+.simulation-speed {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 14px 0;
+  font-size: 10px;
+  color: var(--muted);
+}
+.simulation-speed > span {
+  flex: 1;
+}
+.simulation-speed button {
+  width: 46px;
+}
+#panel-combat button[aria-pressed="true"] {
+  background: #3b423a;
+  border-color: var(--accent);
+}
+#combat-cooldowns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+#combat-cooldowns div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: #192e36;
+  border-radius: 6px;
+  font-size: 9px;
+}
+#combat-cooldowns strong {
+  font-size: 9px;
+  color: var(--accent);
+  font-weight: normal;
+  flex-shrink: 0;
+}
+.combat-mode {
+  display: flex;
+  gap: 8px;
+}
+.combat-mode button {
+  flex: 1;
+}
+.priority-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  background: #172a33;
+}
+.priority-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.priority-number {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 25px;
+  flex-shrink: 0;
+  color: var(--accent);
+  font:
+    18px Georgia,
+    serif;
+}
+.priority-heading > div:not(.priority-order) {
+  flex: 1;
+  min-width: 0;
+}
+.priority-heading strong {
+  font:
+    14px Georgia,
+    serif;
+}
+.priority-heading small {
+  display: block;
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.priority-order {
+  display: flex;
+  gap: 5px;
+}
+.priority-order button {
+  width: 44px;
+  padding: 0 !important;
+  font-size: 16px !important;
+}
+.priority-row label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+.priority-row select {
+  min-width: 0;
+  flex: 1;
+  width: 100%;
+}
+.priority-row input {
+  width: 65px;
+}
+.condition-effect {
+  font-size: 10px;
+  color: var(--accent);
+  margin-top: 8px;
+}
+.combat-result {
+  margin-top: 18px;
+  border: 1px solid var(--accent);
+  padding: 16px;
+  border-radius: 10px;
+  background: #293b3c;
+}
+.combat-result h3 {
+  font:
+    22px Georgia,
+    serif;
+  letter-spacing: 3px;
+  color: var(--accent);
+  margin: 0 0 14px;
+}
+.combat-result dl {
+  margin: 0 0 15px;
+}
+.combat-result dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  padding: 6px 0;
+}
+.combat-result dt {
+  color: var(--muted);
+}
+.combat-result dd {
+  margin: 0;
+  text-align: right;
+}
+#combat-again {
+  width: 100%;
+}
+#combat-log {
+  padding: 0;
+  margin: 0;
+  max-height: 310px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #12252d;
+}
+#combat-log li {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  font-size: 10px;
+  line-height: 1.5;
+  border-bottom: 1px solid #31434a66;
+}
+#combat-log time {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+@media (max-width: 350px) {
+  .screen-tabs button {
+    padding-left: 2px;
+    padding-right: 2px;
+    font-size: 9px;
+  }
+  .priority-row {
+    padding: 10px;
+  }
+  .priority-heading {
+    flex-wrap: wrap;
+  }
+  .priority-order {
+    margin-left: 30px;
+  }
+  .fighter h3 {
+    font-size: 13px;
+  }
+  #combat-cooldowns div {
+    font-size: 8px;
+  }
+}

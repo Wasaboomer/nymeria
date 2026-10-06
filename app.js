@@ -18,16 +18,6 @@
     clearTimeout(noticeTimer);
     noticeTimer = setTimeout(() => n.classList.remove("show"), 3800);
   }
-  function showScreen(screen) {
-    if (!["character", "equipment", "inventory"].includes(screen)) return;
-    document.body.dataset.screen = screen;
-    document.querySelectorAll(".screen-tabs button").forEach((b) => {
-      const active = b.dataset.screen === screen;
-      b.setAttribute("aria-selected", String(active));
-      b.tabIndex = active ? 0 : -1;
-      document.querySelector(`#panel-${b.dataset.screen}`).hidden = !active;
-    });
-  }
   function swatches(key, palette) {
     return `<div class="swatches">${PALETTES[palette].map((x) => `<button class="swatch" style="--swatch:${x.color}" data-key="${key}" data-id="${x.id}" aria-label="${x.name}" title="${x.name}" aria-pressed="${Equipment.state.character[key] === x.id}"></button>`).join("")}</div>`;
   }
@@ -97,7 +87,6 @@
   document.addEventListener("click", (event) => {
     const b = event.target.closest("button");
     if (!b) return;
-    if (b.dataset.screen) showScreen(b.dataset.screen);
     if (b.dataset.category) selectCategory(b.dataset.category);
     if (b.dataset.key) Equipment.setCharacter(b.dataset.key, b.dataset.id);
     if (b.dataset.quickEquip)
@@ -105,25 +94,6 @@
         Equipment.equip(b.dataset.quickEquip, b.dataset.quickSlot).message,
       );
   });
-  document
-    .querySelector(".screen-tabs")
-    .addEventListener("keydown", (event) => {
-      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key))
-        return;
-      event.preventDefault();
-      const tabs = [...document.querySelectorAll(".screen-tabs button")];
-      const current = tabs.indexOf(event.target);
-      const index =
-        event.key === "Home"
-          ? 0
-          : event.key === "End"
-            ? tabs.length - 1
-            : (current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) %
-              tabs.length;
-      showScreen(tabs[index].dataset.screen);
-      tabs[index].focus();
-    });
-  document.addEventListener("nymeria:screen", (e) => showScreen(e.detail));
   document.addEventListener("nymeria:notice", (e) => notify(e.detail));
   document.querySelector("#random").addEventListener("click", () => {
     Equipment.randomizeCharacter();
@@ -154,7 +124,7 @@
   Equipment.save();
   Equipment.subscribe(refresh);
   refresh();
-  showScreen("character");
+  window.NymeriaNavigation.showScreen("character");
   if (Equipment.storageIssue)
     notify(
       "Dati locali non leggibili. Demo caricata; verifica il salvataggio.",
