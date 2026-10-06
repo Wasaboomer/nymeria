@@ -40,7 +40,7 @@ async function check(name, test) {
       await f.level(10);
       const after = f.system.snapshot();
       assert.deepEqual(after.gearIds, before.gearIds);
-      for (const key of ["force", "agility", "vigor", "spirit"])
+      for (const key of ["agility", "vigor", "critical"])
         assert.ok(after.stats[key] > before.stats[key]);
       const low = Combat.create({ ...before, seed: 1 }),
         high = Combat.create({ ...after, seed: 1 });
@@ -51,10 +51,10 @@ async function check(name, test) {
       high.advance(180);
       assert.ok(high.result.duration < low.result.duration);
       assert.ok(high.result.dps > low.result.dps);
-      assert.equal(after.stats.force - before.stats.force, 18);
-      assert.equal(after.stats.agility - before.stats.agility, 18);
-      assert.equal(after.stats.vigor - before.stats.vigor, 18);
-      assert.equal(after.stats.spirit - before.stats.spirit, 9);
+      assert.equal(after.stats.force - before.stats.force, 0);
+      assert.equal(after.stats.agility - before.stats.agility, 27);
+      assert.equal(after.stats.vigor - before.stats.vigor, 9);
+      assert.equal(after.stats.spirit - before.stats.spirit, 0);
     },
   );
   await check(

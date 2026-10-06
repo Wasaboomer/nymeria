@@ -165,7 +165,15 @@ const ProgressionLifecycle = (() => {
       const levelUps = [];
       for (let level = previousLevel + 1; level <= after.level; level++)
         levelUps.push(level);
-      return { previousLevel, resultingLevel: after.level, levelUps };
+      return {
+        previousLevel,
+        resultingLevel: after.level,
+        levelUps,
+        growthClassId: classes.state.classId,
+        statGains: data.statGains(
+          classes.selected().statGrowthPerLevel, levelUps.length,
+        ),
+      };
     }
     function beginManualCombat(enemyId) {
       return store.transact((state) => {
@@ -241,6 +249,7 @@ const ProgressionLifecycle = (() => {
         const { previousLevel, resultingLevel, levelUps } = progress;
         state.lastClaim = {
           ...report,
+          ...progress,
           loot,
           levelUps,
           previousLevel,

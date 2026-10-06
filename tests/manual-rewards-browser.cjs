@@ -94,7 +94,9 @@ const base = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
           );
           assert.equal(
             await page.locator("#combat-reward-level").innerText(),
-            "LIVELLO 2 RAGGIUNTO",
+            cls === "hunter"
+              ? "LIVELLO 2 RAGGIUNTO · +3 Agilità · +1 Vigor · +0,5% Critico"
+              : "LIVELLO 2 RAGGIUNTO · +2 Forza · +3 Vigor · +1 Spirito",
           );
           assert.equal(
             await page.evaluate(() => Equipment.state.character.level),

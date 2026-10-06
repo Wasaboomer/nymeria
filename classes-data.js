@@ -9,6 +9,7 @@ const ClassesData = (() => {
       id: "hunter",
       name: "Cacciatore",
       armorProficiency: "mail",
+      statGrowthPerLevel: { force: 0, agility: 3, vigor: 1, spirit: 0, critical: 0.5 },
       role: "DPS fisico a distanza",
       description:
         "Pressione a distanza: alterna attacchi economici, critici e ferite persistenti.",
@@ -49,6 +50,7 @@ const ClassesData = (() => {
       id: "warden",
       name: "Custode",
       armorProficiency: "plate",
+      statGrowthPerLevel: { force: 2, agility: 0, vigor: 3, spirit: 1, critical: 0 },
       role: "Tank",
       description:
         "Difesa attiva: trasforma i colpi ricevuti e bloccati in Risolutezza e contrattacchi.",

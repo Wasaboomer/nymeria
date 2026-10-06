@@ -1,16 +1,7 @@
-/* M5 progression curve and growth. Equipment owns the level-1 stat constants. */
+/* M5 XP curve and pure stat helpers. Classes own growth; Equipment owns L1 bases. */
 const ProgressionData = (() => {
   const levelCap = 20;
   const xpCurve = { base: 80, exponent: 1.35 };
-  const growth = {
-    force: 2,
-    agility: 2,
-    vigor: 2,
-    spirit: 1,
-    critical: 0,
-    speed: 0,
-    armor: 0,
-  };
   const materialNames = {
     iron: "Ferro del Vespro",
     fiber: "Fibra Lunare",
@@ -39,7 +30,7 @@ const ProgressionData = (() => {
       overflowXP: level === levelCap ? totalXP - thresholds[levelCap - 1] : 0,
     };
   }
-  function baseStats(level, initial) {
+  function baseStats(level, initial, growth = {}) {
     const steps = Math.min(levelCap, Math.max(1, Math.floor(level))) - 1;
     return Object.fromEntries(
       Object.entries(initial).map(([key, value]) => [
@@ -48,10 +39,31 @@ const ProgressionData = (() => {
       ]),
     );
   }
+  // Receipts keep aggregate gains at the time XP is awarded, even after class changes.
+  function statGains(growth, levels) {
+    return Object.fromEntries(
+      Object.entries(growth || {})
+        .filter(([, value]) => value > 0)
+        .map(([key, value]) => [key, value * levels]),
+    );
+  }
+  function levelUpSummary(receipt) {
+    if (!receipt?.levelUps?.length) return "";
+    const labels = {
+      force: "Forza", agility: "Agilità", vigor: "Vigor",
+      spirit: "Spirito", critical: "Critico",
+    };
+    const gains = Object.entries(receipt.statGains || {}).map(([key, value]) =>
+      `+${Number(value).toLocaleString("it-IT")}${key === "critical" ? "%" : ""} ${labels[key] || key}`,
+    );
+    return [`LIVELLO ${receipt.resultingLevel} RAGGIUNTO`, ...gains].join(" · ");
+  }
   return {
+    statKeys: ["force", "agility", "vigor", "spirit", "critical", "speed", "armor"],
+    statGains,
+    levelUpSummary,
     levelCap,
     xpCurve,
-    growth,
     materialNames,
     requiredXP,
     thresholds,

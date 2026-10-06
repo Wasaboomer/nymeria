@@ -121,7 +121,7 @@ async function check(name, test) {
     async () => {
       const f = fixture();
       f.kit();
-      const original = f.equipment.state.resultingStats.force;
+      const original = f.equipment.state.resultingStats.agility;
       for (let i = 0; i < 3; i++) {
         const ticket = (await f.system.beginManualCombat("guardian")).ticket;
         const result = await f.system.awardManualCombat(
@@ -134,7 +134,7 @@ async function check(name, test) {
       assert.equal(f.store.state.level, 2);
       assert.equal(f.store.state.currentXP, 25);
       assert.equal(f.store.state.crowns, 12);
-      assert.equal(f.equipment.state.resultingStats.force, original + 2);
+      assert.equal(f.equipment.state.resultingStats.agility, original + 3);
     },
   );
   await check(

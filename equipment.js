@@ -34,7 +34,9 @@ const Equipment = (() => {
   function calculateStats(model) {
     const totals =
       typeof ProgressionData !== "undefined"
-        ? ProgressionData.baseStats(model.character.level, baseStats)
+        ? ProgressionData.baseStats(
+            model.character.level, baseStats, currentClass()?.statGrowthPerLevel,
+          )
         : { ...baseStats };
     for (const entry of Object.values(model.equipment)) {
       const item = model.inventory.find((i) => i.id === entry.equippedItem);

@@ -204,7 +204,7 @@ const ProgressionStorage = (() => {
       snapshot.level >= 1 &&
       snapshot.level <= data.levelCap &&
       isObject(snapshot.stats) &&
-      Object.keys(data.growth).every((key) =>
+      data.statKeys.every((key) =>
         numberValue(snapshot.stats[key], 10000),
       ) &&
       Array.isArray(snapshot.effects) &&

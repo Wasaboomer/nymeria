@@ -228,14 +228,16 @@ Livello, XP corrente/necessaria ed eccedenza vengono ricalcolati dall'unica font
 
 ```text
 Base livello L = base livello 1 + (L − 1) × crescita
-Crescita per livello: Forza +2, Agilità +2, Vigor +2, Spirito +1
-Critico, Velocità e Armatura base: nessuna crescita automatica
+Crescita per livello: definita da `ClassesData.classes[classId].statGrowthPerLevel`
+Custode: Forza +2, Agilità +0, Vigor +3, Spirito +1, Critico +0
+Cacciatore: Forza +0, Agilità +3, Vigor +1, Spirito +0, Critico +0,5 punti percentuali
+Velocità e Armatura base: nessuna crescita automatica
 Totali Equipment = base livello + statistiche oggetti
 Statistica effettiva Combat = totali Equipment + classe/build + buff/modificatori
 HP = (160 + 9 × Vigor totale) × eventuale moltiplicatore del profilo, arrotondato
 ```
 
-A parità di oggetti il livello 10 aggiunge Forza/Agilità/Vigor +18 e Spirito +9 rispetto al livello 1; l'HP base Combat cresce di 162 prima dei moltiplicatori di classe. I test confrontano davvero gli incontri con lo stesso kit ai due livelli. Il requisito di livello degli oggetti usa questa progressione, non il vecchio Liv. 1 fisso.
+A parità di oggetti il livello 10 aggiunge al Custode Forza +18, Vigor +27 e Spirito +9; al Cacciatore Agilità +27, Vigor +9 e Critico +4,5 punti. I test confrontano davvero gli incontri con lo stesso kit ai due livelli. Il requisito di livello degli oggetti usa questa progressione, non il vecchio Liv. 1 fisso.
 
 ### Quattro spedizioni
 
@@ -479,3 +481,11 @@ node tests/creator-lock-browser.cjs
 Gli 11 controlli di integrazione verificano nuova bozza, conferma atomica, lock persistente e blocco delle API, separazione dye/appearanceItem, migrazione M5 e legacy, XP/class/build/gear/inventario/risorse/spedizioni/report e ricevute manuali conservati, fallimento scrittura, riapertura DEBUG temporanea, reset kit e protezione da scheda obsoleta.
 
 Il browser touch a **320/390/430 px** verifica creazione e scomparsa dei controlli, refresh/chiusura pagina, migrazione completa, tintura/equipaggiamento, Class, XP manuale e spedizioni, Test Mode, errori JS e overflow. Un test chiude e riavvia completamente Chromium con lo stesso profilo persistente; altri verificano scrittura fallita con retry e due schede reali. Restano obbligatorie le regressioni Equipment, Combat/Class, Progression/Spedizioni e il precedente hotfix XP (35 XP / 4 Corone).
+
+### Class-based Stat Growth
+
+Valori provvisori da bilanciare. La crescita è ricostruita dal livello: base L1 + (livello − 1) × crescita della classe corrente + equipaggiamento; build e modificatori restano applicati dal profilo Combat. Nessun bonus viene accumulato o salvato permanentemente a ogni level-up. Il cambio classe ricalcola la crescita senza conservare quella precedente. HP = round(160 + Vigor × 9), poi moltiplicatore HP del profilo. Nessuna Fortuna introdotta. Curva XP, ricompense e meccaniche delle spedizioni invariate.
+
+Le ricevute dei level-up conservano classe e aumenti totali effettivi (anche per livelli multipli); i report mostrano gli aumenti con Critico in punti percentuali. Ricevute precedenti senza questi dati restano leggibili; non vengono inventati aumenti retroattivi. Nessuna migrazione distruttiva: i salvataggi esistenti ricalcolano automaticamente le statistiche usando livello e classe salvati.
+
+Test dedicati: `node tests/stat-growth-engine.cjs` (12 verifiche integrate, livelli 1/2/10/20 per entrambe le classi, HP, ricalcolo, persistenza, cambio classe, ricevute Combat/Spedizioni, livelli multipli e classi future) e `node tests/stat-growth-browser.cjs` (320/390/430 px, refresh, touch, nessun errore/overflow). Le regressioni dei premi manuali ora verificano anche il testo completo degli aumenti per entrambe le classi. Gli asset usano `?v=m5-stat-growth-0.1` per evitare script della versione precedente rimasti in cache.

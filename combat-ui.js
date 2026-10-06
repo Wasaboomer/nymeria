@@ -207,7 +207,7 @@ const CombatUI = (() => {
     text(
       "combat-reward-level",
       receipt?.levelUps.length
-        ? `LIVELLO ${receipt.resultingLevel} RAGGIUNTO`
+        ? ProgressionData.levelUpSummary(receipt)
         : "",
     );
     text(

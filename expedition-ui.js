@@ -51,7 +51,7 @@ const ExpeditionUI = (() => {
       bar.firstElementChild.style.width = `${state.requiredXP ? (state.currentXP / state.requiredXP) * 100 : 100}%`;
     }
     node("progression-level-up").textContent = state.lastClaim?.levelUps?.length
-      ? `LIVELLO ${state.level} RAGGIUNTO`
+      ? ProgressionData.levelUpSummary(state.lastClaim)
       : "";
     const wealth = `<span><strong>${state.crowns}</strong> Corone</span>${Object.entries(
       ProgressionData.materialNames,
@@ -109,7 +109,7 @@ const ExpeditionUI = (() => {
         )
         .join(
           "",
-        )}</dl>${!report.success ? '<p class="hint">Ricompense parziali dai soli incontri vinti. Nessun equipaggiamento perso.</p>' : ""}<h3>Ritrovamenti</h3>${lootMarkup(report)}<h3>Eventi avvenuti</h3>${report.events.length ? `<ul>${report.events.map((event) => `<li><strong>${escape(event.name)}</strong> — ${escape(event.description)}</li>`).join("")}</ul>` : '<p class="hint">Nessun evento particolare.</p>'}${report.levelUps?.length ? `<p class="level-up-feedback">LIVELLO ${report.resultingLevel} RAGGIUNTO${report.levelUps.length > 1 ? ` · ${report.levelUps.length} livelli guadagnati` : ""}</p>` : pending && futureLevel > state.level ? `<p class="hint">Con la riscossione raggiungerai il livello ${futureLevel}.</p>` : ""}`;
+        )}</dl>${!report.success ? '<p class="hint">Ricompense parziali dai soli incontri vinti. Nessun equipaggiamento perso.</p>' : ""}<h3>Ritrovamenti</h3>${lootMarkup(report)}<h3>Eventi avvenuti</h3>${report.events.length ? `<ul>${report.events.map((event) => `<li><strong>${escape(event.name)}</strong> — ${escape(event.description)}</li>`).join("")}</ul>` : '<p class="hint">Nessun evento particolare.</p>'}${report.levelUps?.length ? `<p class="level-up-feedback">${escape(ProgressionData.levelUpSummary(report))}</p>` : pending && futureLevel > state.level ? `<p class="hint">Con la riscossione raggiungerai il livello ${futureLevel}.</p>` : ""}`;
     node("expedition-claim").hidden = !pending;
     node("expedition-claim").disabled = busy;
     node("expedition-claimed").hidden = !!pending;
