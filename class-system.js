@@ -31,6 +31,7 @@ const ClassSystem = (() => {
   function selectClass(id) {
     if (!ClassesData.classes[id]) return false;
     state.classId = id;
+    if (typeof Equipment !== "undefined") Equipment.reconcileProgression();
     publish();
     return true;
   }
@@ -77,6 +78,10 @@ const ClassSystem = (() => {
     return CombatData.copy({
       classId: cls.id,
       className: cls.name,
+      armorProficiency: cls.armorProficiency,
+      weaponTypes: cls.weaponTypes,
+      supportTypes: cls.supportTypes,
+      handedness: cls.handedness,
       buildId: tendency.id,
       buildName: tendency.name,
       abilities: cls.abilities,

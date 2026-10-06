@@ -7,7 +7,8 @@
       screen !== "equipment" &&
       screen !== "inventory" &&
       screen !== "combat" &&
-      screen !== "class"
+      screen !== "class" &&
+      screen !== "expeditions"
     )
       return;
     var tabs = document.querySelectorAll(".screen-tabs button");

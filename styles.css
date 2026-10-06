@@ -1461,3 +1461,137 @@ body:not([data-screen="character"]) .app {
 .advisor-score {
   line-height: 1.5;
 }
+/* M5: persistent XP/resources and expedition panels reuse the prototype materials. */
+.xp-summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 14px 0;
+  font-size: 12px;
+}
+.xp-summary > span {
+  color: var(--muted);
+  text-align: right;
+}
+.xp-bar {
+  grid-column: 1 / -1;
+  height: 7px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #0a1820;
+  border: 1px solid var(--line);
+}
+.xp-bar > span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #b8a16b;
+}
+.level-up-feedback {
+  grid-column: 1 / -1;
+  color: #d8c28b;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 3px 0;
+}
+.level-up-feedback:empty {
+  display: none;
+}
+.resource-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin: 10px 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.resource-summary strong {
+  color: var(--ink);
+}
+#panel-expeditions button {
+  min-height: 44px;
+  white-space: normal;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #22343c;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+#panel-expeditions #expedition-claim,
+#panel-expeditions [data-start-expedition]:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #162a32;
+}
+#panel-expeditions button:disabled {
+  opacity: 0.55;
+}
+#panel-expeditions {
+  font-size: 13px;
+  line-height: 1.6;
+}
+#panel-expeditions h3 {
+  font-size: 16px;
+  margin: 8px 0;
+}
+.expedition-card,
+.expedition-running,
+.expedition-report,
+.expedition-debug {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #152630;
+  padding: 14px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.expedition-card small,
+.expedition-loot small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+.expedition-card button {
+  width: 100%;
+  margin-top: 12px;
+}
+.expedition-result-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.expedition-result-stats dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+.expedition-result-stats dd {
+  margin: 0;
+}
+.expedition-report ul {
+  padding-left: 18px;
+}
+.expedition-report li {
+  margin-bottom: 8px;
+}
+.expedition-loot {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.expedition-debug {
+  border: 2px dashed #bc875f;
+  background: #322c29;
+}
+.expedition-debug h3 {
+  color: #e2b88c;
+}
+.expedition-welcome {
+  border-left: 3px solid var(--accent);
+  padding: 10px 12px;
+  background: #23383b;
+}
+#expedition-message:empty,
+#expedition-storage:empty {
+  display: none;
+}

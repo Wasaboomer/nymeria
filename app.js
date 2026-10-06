@@ -113,7 +113,9 @@
     Equipment.reset();
     category = "appearance";
     selectCategory(category);
-    notify("Demo ripristinata: inventario, equipaggiamento e aspetto iniziali");
+    notify(
+      "Equipaggiamento e aspetto demo ripristinati · progressione e ritrovamenti conservati",
+    );
   });
   function refresh() {
     Character.render();

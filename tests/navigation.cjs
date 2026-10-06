@@ -16,6 +16,14 @@ const modules = [
   "build-system.js",
   "class-system.js",
   "class-ui.js",
+  "armor-rules.js",
+  "personal-loot.js",
+  "progression-data.js",
+  "progression-store.js",
+  "progression-system.js",
+  "expedition-data.js",
+  "expedition-engine.js",
+  "expedition-ui.js",
 ];
 
 (async () => {
@@ -53,6 +61,7 @@ const modules = [
           "inventory",
           "combat",
           "class",
+          "expeditions",
         ]) {
           const panel = page.locator("#panel-" + other);
           assert.equal(
@@ -81,6 +90,7 @@ const modules = [
       await activate("equipment");
       await activate("combat");
       await activate("class");
+      await activate("expeditions");
       await activate("character");
       if (!configure) {
         assert.deepEqual(errors, []);
@@ -90,13 +100,13 @@ const modules = [
         );
         assert.equal(
           await page.locator("#inventory-grid .inventory-item").count(),
-          44,
+          49,
         );
       }
       const assets = requests.filter((url) => /\.(js|css)$/.test(url.pathname));
-      assert.equal(assets.length, 15);
+      assert.equal(assets.length, 23);
       assert.ok(
-        assets.every((url) => url.searchParams.get("v") === "class-build-0.1"),
+        assets.every((url) => url.searchParams.get("v") === "armor-loot-0.1"),
       );
       console.log(
         `PASS ${name}: panel visibility + hidden + aria-selected; versioned assets`,

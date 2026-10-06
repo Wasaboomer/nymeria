@@ -23,6 +23,8 @@ const CombatEngine = (() => {
       playerName = "Iria",
       enemyId = "guardian",
       profile = null,
+      enemyTemplate = null,
+      captureLog = true,
     }) {
       this.random = seededRng(
         seed === undefined ? Math.floor(Math.random() * 4294967296) : seed,
@@ -64,7 +66,7 @@ const CombatEngine = (() => {
           ...data.copy(this.profile.resource),
           current: this.profile.resource.initial,
         };
-      const template = data.enemies[enemyId];
+      const template = enemyTemplate || data.enemies[enemyId];
       this.enemy = {
         ...data.copy(template),
         hp: template.maxHp,
@@ -81,6 +83,7 @@ const CombatEngine = (() => {
       this.ticks = 0;
       this.accumulator = 0;
       this.log = [];
+      this.captureLog = captureLog;
       this.logVersion = 0;
       this.metrics = {
         damage: 0,
@@ -112,6 +115,7 @@ const CombatEngine = (() => {
     }
     emit(event) {
       this.logVersion++;
+      if (!this.captureLog) return;
       this.log.push({ ...event, time: this.time, serial: this.logVersion });
       if (this.log.length > data.logLimit) this.log.shift();
     }

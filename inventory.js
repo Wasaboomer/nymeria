@@ -53,6 +53,9 @@ const InventoryUI = (() => {
   function advisorMarkup(item, slot) {
     const cls = ClassSystem.selected(),
       build = ClassSystem.build();
+    const unavailable = ArmorRules.unavailableLabel(item, cls);
+    if (unavailable)
+      return `<span class="hint armor-incompatible">${unavailable}</span>`;
     const advice = BuildSystem.advise(item, slot, cls.id, build.id, Equipment);
     return advice
       ? `<span class="gear-advice">${advice.improvement ? "<span>↑ Miglioramento</span>" : ""}${advice.bestOwned ? "<span>★ Migliore posseduto</span>" : ""}</span>`
@@ -99,7 +102,7 @@ const InventoryUI = (() => {
       ownSlot = equippedSlot(item.id);
     document.querySelector("#detail-heading").textContent = item.name;
     document.querySelector("#detail-body").innerHTML =
-      `<div class="detail-meta ${rarityClass(item)}">${GearData.icon(item)}<div><strong>${rarityLabel(item)}</strong><p>Item Level ${item.itemLevel} · Richiede Lv ${item.requiredLevel}</p><p>${GearData.typeLabels[item.type] || item.type}${item.handedness ? ` · ${item.handedness}` : ""}</p></div></div><p class="description">${item.description}</p>${item.allowedSupports ? `<p class="hint">${item.handedness === "2H" ? "Occupa arma principale e supporto." : `Supporti: ${item.allowedSupports.map((x) => ({ shield: "scudo", dagger: "pugnale", offhandBlade: "seconda lama", quiver: "faretra", bolts: "dardi", book: "libro", orb: "orb", focus: "reliquia / focus" })[x]).join(", ")}.`}</p>` : ""}<dl class="detail-stats">${Object.entries(
+      `<div class="detail-meta ${rarityClass(item)}">${GearData.icon(item)}<div><strong>${rarityLabel(item)}</strong><p>Item Level ${item.itemLevel} · Richiede Lv ${item.requiredLevel}</p><p>${GearData.typeLabels[item.type] || item.type}${item.handedness ? ` · ${item.handedness}` : ""}${item.armorType ? ` · ${ArmorRules.labels[item.armorType]}` : ""}</p></div></div><p class="description">${item.description}</p>${item.allowedSupports ? `<p class="hint">${item.handedness === "2H" ? "Occupa arma principale e supporto." : `Supporti: ${item.allowedSupports.map((x) => ({ shield: "scudo", dagger: "pugnale", offhandBlade: "seconda lama", quiver: "faretra", bolts: "dardi", book: "libro", orb: "orb", focus: "reliquia / focus" })[x]).join(", ")}.`}</p>` : ""}<dl class="detail-stats">${Object.entries(
         item.stats,
       )
         .map(

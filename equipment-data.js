@@ -223,9 +223,9 @@ const GearData = (() => {
   const armor = [
     [
       "head-veil",
-      "Diadema del vespro",
+      "Fascia rituale del vespro",
       "head",
-      "Diadema",
+      "Fascia di tessuto",
       { spirit: 2, armor: 2 },
       1,
       4,
@@ -373,6 +373,74 @@ const GearData = (() => {
       stats,
       "Materiali del vespro, lavorati per durare oltre il viaggio.",
       { appearance: { layer: slot, asset } },
+    );
+  // Material identity is explicit, never inferred from stats or random rolls.
+  const armorTypes = {
+    "head-veil": "cloth",
+    "head-helm": "plate",
+    "torso-warden": "plate",
+    "torso-oracle": "cloth",
+    "legs-ranger": "leather",
+    "legs-sentinel": "plate",
+    "boots-soft": "leather",
+    "boots-plate": "plate",
+    "gloves-thread": "cloth",
+    "gloves-iron": "plate",
+  };
+  for (const gear of items)
+    if (armorTypes[gear.id]) gear.armorType = armorTypes[gear.id];
+  const mailKit = [
+    [
+      "head-chain",
+      "Cappuccio delle maglie quiete",
+      "head",
+      { agility: 2, armor: 4 },
+      "helm",
+    ],
+    [
+      "torso-chain",
+      "Usbergo del confine",
+      "torso",
+      { force: 4, vigor: 5, armor: 10 },
+      "warden",
+    ],
+    [
+      "legs-chain",
+      "Gambali delle maglie quiete",
+      "legs",
+      { agility: 3, armor: 2 },
+      "ranger",
+    ],
+    [
+      "gloves-chain",
+      "Presa delle maglie quiete",
+      "gloves",
+      { agility: 3, armor: 3 },
+      "thread",
+    ],
+    [
+      "boots-chain",
+      "Passo delle maglie quiete",
+      "boots",
+      { vigor: 2, armor: 4 },
+      "soft",
+    ],
+  ];
+  for (const [id, name, slot, stats, asset] of mailKit)
+    item(
+      id,
+      name,
+      slot,
+      "Armatura di maglia",
+      "Raro",
+      6,
+      stats,
+      "Maglia flessibile su imbottitura scura. Asset provvisorio condiviso.",
+      {
+        armorType: "mail",
+        demoMigration: true,
+        appearance: { layer: slot, asset },
+      },
     );
   const accessories = [
     [
@@ -545,5 +613,192 @@ const GearData = (() => {
     bracelet: "Bracciale",
     necklace: "Collana",
   };
-  return { slots, rarities, statLabels, typeLabels, items, icon };
+  // Fixed personal-loot catalogue, excluded from starter/demo ownership.
+  const expeditionLoot = [
+    [
+      "frontier-ring",
+      "Anello della Frontiera",
+      "ring",
+      "ring",
+      "Raro",
+      8,
+      { agility: 5, critical: 2, vigor: 2 },
+      { layer: "ring", asset: "sun" },
+      1,
+    ],
+    [
+      "moon-boots",
+      "Stivali del guado lunare",
+      "boots",
+      "boots",
+      "Raro",
+      8,
+      { agility: 5, vigor: 3, armor: 5 },
+      { layer: "boots", asset: "soft" },
+      1,
+    ],
+    [
+      "vesper-blade",
+      "Lama della frontiera",
+      "weapon",
+      "sword",
+      "Epico",
+      12,
+      { force: 12, vigor: 3 },
+      { layer: "weapon", asset: "sword" },
+      3,
+    ],
+    [
+      "lunar-bow",
+      "Arco della ricognizione",
+      "weapon",
+      "bow",
+      "Epico",
+      14,
+      { agility: 13, critical: 3, speed: 3 },
+      { layer: "weapon", asset: "bow" },
+      5,
+    ],
+    [
+      "frontier-mail",
+      "Corazza della veglia",
+      "torso",
+      "torso",
+      "Epico",
+      14,
+      { vigor: 8, force: 4, armor: 18 },
+      { layer: "torso", asset: "warden" },
+      5,
+    ],
+    [
+      "ether-quiver",
+      "Faretra del vespro stellato",
+      "support",
+      "quiver",
+      "Leggendario",
+      18,
+      { agility: 10, critical: 3, speed: 3 },
+      { layer: "support", asset: "quiver" },
+      8,
+    ],
+  ];
+  for (const [
+    id,
+    name,
+    slot,
+    type,
+    rarity,
+    itemLevel,
+    stats,
+    appearance,
+    requiredLevel,
+  ] of expeditionLoot) {
+    item(
+      id,
+      name,
+      slot,
+      type,
+      rarity,
+      itemLevel,
+      stats,
+      "Ritrovamento della Frontiera del Vespro. Asset provvisorio condiviso.",
+      {
+        expeditionOnly: true,
+        appearance,
+        requiredLevel,
+        ...(slot === "weapon"
+          ? {
+              weaponType: type,
+              handedness: "1H",
+              allowedSupports:
+                type === "bow"
+                  ? ["quiver"]
+                  : ["shield", "dagger", "offhandBlade"],
+            }
+          : {}),
+      },
+    );
+  }
+  items.find((i) => i.id === "moon-boots").armorType = "mail";
+  items.find((i) => i.id === "moon-boots").type = "Stivali di maglia";
+  items.find((i) => i.id === "frontier-mail").armorType = "plate";
+  items.find((i) => i.id === "frontier-mail").type = "Corazza a piastre";
+  const counterparts = [
+    [
+      "moon-boots",
+      "moon-sabatons",
+      "Sabatons del guado lunare",
+      {
+        armorType: "plate",
+        type: "Stivali a piastre",
+        appearance: { layer: "boots", asset: "plate" },
+        stats: { force: 3, vigor: 5, armor: 7 },
+      },
+    ],
+    [
+      "vesper-blade",
+      "trail-bow",
+      "Arco del sentiero spezzato",
+      {
+        weaponType: "bow",
+        type: "bow",
+        allowedSupports: ["quiver"],
+        appearance: { layer: "weapon", asset: "bow" },
+        stats: { agility: 12, speed: 3 },
+      },
+    ],
+    [
+      "lunar-bow",
+      "vigil-blade",
+      "Lama della veglia",
+      {
+        weaponType: "sword",
+        type: "sword",
+        allowedSupports: ["shield", "dagger", "offhandBlade"],
+        appearance: { layer: "weapon", asset: "sword" },
+        stats: { force: 13, vigor: 5, armor: 3 },
+      },
+    ],
+    [
+      "frontier-mail",
+      "frontier-chain",
+      "Usbergo della veglia",
+      {
+        armorType: "mail",
+        type: "Usbergo di maglia",
+        stats: { agility: 8, vigor: 4, armor: 12 },
+      },
+    ],
+    [
+      "ether-quiver",
+      "ether-shield",
+      "Scudo del vespro stellato",
+      {
+        type: "shield",
+        appearance: { layer: "support", asset: "shield" },
+        stats: { force: 5, vigor: 10, armor: 12 },
+      },
+    ],
+  ];
+  const personalLootVariants = {};
+  for (const [source, id, name, changes] of counterparts) {
+    items.push({
+      ...JSON.parse(JSON.stringify(items.find((i) => i.id === source))),
+      id,
+      name,
+      ...changes,
+    });
+    personalLootVariants[source] = [source, id];
+  }
+  return {
+    slots,
+    rarities,
+    statLabels,
+    typeLabels,
+    items,
+    icon,
+    personalLootVariants,
+  };
 })();
+
+if (typeof module !== "undefined" && module.exports) module.exports = GearData;

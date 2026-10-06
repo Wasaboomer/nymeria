@@ -11,7 +11,7 @@ const ClassUI = (() => {
       )
       .join("");
     node("class-info").innerHTML =
-      `<h3>${cls.name} · ${cls.role}</h3><p>${cls.description}</p><dl><div><dt>Risorsa</dt><dd>${cls.resource.name} · ${cls.resource.max}</dd></div><div><dt>Statistiche consigliate</dt><dd>${cls.preferredStats.map((s) => GearData.statLabels[s]).join(" · ")}</dd></div><div><dt>Equipaggiamento richiesto</dt><dd>${cls.requirement}</dd></div></dl><p><strong>${cls.passive.name}</strong> — ${cls.passive.description}</p><h3>Abilità</h3><ul>${cls.abilities.map((a) => `<li><strong>${a.name}</strong> — ${a.description} <small>Costo ${a.cost} · CD ${a.cooldown}s${a.resourceGain ? ` · recupera ${a.resourceGain}` : ""}</small></li>`).join("")}</ul>`;
+      `<h3>${cls.name} · ${cls.role}</h3><p>${cls.description}</p><dl><div><dt>Risorsa</dt><dd>${cls.resource.name} · ${cls.resource.max}</dd></div><div><dt>Statistiche consigliate</dt><dd>${cls.preferredStats.map((s) => GearData.statLabels[s]).join(" · ")}</dd></div><div><dt>Competenza armature</dt><dd>${ArmorRules.labels[cls.armorProficiency]}</dd></div><div><dt>Equipaggiamento richiesto</dt><dd>${cls.requirement}</dd></div></dl><p><strong>${cls.passive.name}</strong> — ${cls.passive.description}</p><h3>Abilità</h3><ul>${cls.abilities.map((a) => `<li><strong>${a.name}</strong> — ${a.description} <small>Costo ${a.cost} · CD ${a.cooldown}s${a.resourceGain ? ` · recupera ${a.resourceGain}` : ""}</small></li>`).join("")}</ul>`;
     node("build-choices").innerHTML = cls.buildIds
       .map((id) => ClassesData.builds[id])
       .map(

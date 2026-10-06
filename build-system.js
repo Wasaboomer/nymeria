@@ -4,6 +4,10 @@ const BuildSystem = (() => {
     typeof module !== "undefined" && module.exports
       ? require("./classes-data.js")
       : ClassesData;
+  const armor =
+    typeof module !== "undefined" && module.exports
+      ? require("./armor-rules.js")
+      : ArmorRules;
   function getBuild(classId, buildId) {
     const cls = data.classes[classId] || data.classes.hunter;
     return data.builds[
@@ -12,7 +16,7 @@ const BuildSystem = (() => {
   }
   function compatible(item, classId) {
     const cls = data.classes[classId];
-    if (!item || !cls) return false;
+    if (!item || !cls || !armor.compatible(item, cls)) return false;
     if (item.slot === "weapon")
       return (
         cls.weaponTypes.includes(item.weaponType) &&
@@ -42,7 +46,14 @@ const BuildSystem = (() => {
   function scoreItemForBuild(item, classId, buildId) {
     return scoreBreakdown(item, classId, buildId)?.total ?? null;
   }
-  function advise(item, slot, classId, buildId, equipment) {
+  function advise(
+    item,
+    slot,
+    classId,
+    buildId,
+    equipment,
+    { includeCandidate = false } = {},
+  ) {
     const score = scoreItemForBuild(item, classId, buildId);
     if (score === null || item.requiredLevel > equipment.state.character.level)
       return null;
@@ -52,6 +63,11 @@ const BuildSystem = (() => {
         candidate.requiredLevel <= equipment.state.character.level &&
         compatible(candidate, classId),
     );
+    if (
+      includeCandidate &&
+      !candidates.some((candidate) => candidate.id === item.id)
+    )
+      candidates.push(item);
     const bestScore = Math.max(
       ...candidates.map((candidate) =>
         scoreItemForBuild(candidate, classId, buildId),
@@ -67,7 +83,9 @@ const BuildSystem = (() => {
       improvement:
         !item.equipped &&
         item.id !== current?.id &&
-        !equipment.canEquip(item.id, slot) &&
+        !(includeCandidate
+          ? equipment.canEquipCandidate(item, slot)
+          : equipment.canEquip(item.id, slot)) &&
         score - currentScore > Math.max(2, Math.abs(currentScore) * 0.05),
     };
   }

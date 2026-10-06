@@ -40,8 +40,18 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       const state = () => page.evaluate(() => CombatUI.engine.snapshot());
       const config = () => page.evaluate(() => CombatUI.settings);
       async function choose(cls, build) {
+        const previousClass = await page.evaluate(
+          () => ClassSystem.selected().id,
+        );
         await tab("class");
         await page.locator(`[data-class-id="${cls}"]`).tap();
+        if (previousClass !== cls) {
+          for (const id of cls === "hunter"
+            ? ["torso-chain", "legs-chain", "boots-chain"]
+            : ["torso-warden", "legs-sentinel", "boots-plate"])
+            await equip(id);
+          await tab("class");
+        }
         if (build) await page.locator(`[data-build-id="${build}"]`).tap();
         await overflow();
       }
@@ -65,7 +75,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       );
       assert.equal(
         await page.evaluate(() => Equipment.state.inventory.length),
-        44,
+        49,
       );
       await tab("combat");
       assert.ok(await page.locator("#combat-start").isDisabled());
@@ -287,7 +297,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       assert.equal(await page.evaluate(() => CombatUI.start()), false);
       assert.equal(
         await page.evaluate(() => Equipment.state.inventory.length),
-        44,
+        49,
       );
       await overflow();
       assert.deepEqual(errors, []);

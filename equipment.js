@@ -29,7 +29,10 @@ const Equipment = (() => {
   let storageIssue = false;
   const clone = (x) => JSON.parse(JSON.stringify(x));
   function calculateStats(model) {
-    const totals = { ...baseStats };
+    const totals =
+      typeof ProgressionData !== "undefined"
+        ? ProgressionData.baseStats(model.character.level, baseStats)
+        : { ...baseStats };
     for (const entry of Object.values(model.equipment)) {
       const item = model.inventory.find((i) => i.id === entry.equippedItem);
       if (item) for (const [k, v] of Object.entries(item.stats)) totals[k] += v;
@@ -48,7 +51,38 @@ const Equipment = (() => {
         s.armor,
     );
   }
+  function progressionState() {
+    return typeof ProgressionStore !== "undefined" && ProgressionStore
+      ? ProgressionStore.state
+      : { level: 1, ownedLootIds: [] };
+  }
+  function currentClass() {
+    return typeof ClassSystem !== "undefined" ? ClassSystem.selected() : null;
+  }
+  function armorError(item) {
+    const cls = currentClass();
+    return cls ? ArmorRules.reason(item, cls) : null;
+  }
   function sync(model) {
+    const progression = progressionState();
+    model.character.level = progression.level;
+    const owned = new Set(progression.ownedLootIds);
+    model.inventory = model.inventory.filter(
+      (item) => !item.expeditionOnly || owned.has(item.id),
+    );
+    for (const id of owned)
+      if (
+        !model.inventory.some((item) => item.id === id) &&
+        itemById[id]?.expeditionOnly
+      )
+        model.inventory.push(clone(itemById[id]));
+    for (const entry of Object.values(model.equipment)) {
+      const item = model.inventory.find((i) => i.id === entry.equippedItem);
+      if (item && armorError(item)) {
+        entry.equippedItem = null;
+        entry.appearanceItem = null;
+      }
+    }
     const ids = new Set(
       Object.values(model.equipment).map((x) => x.equippedItem),
     );
@@ -71,11 +105,17 @@ const Equipment = (() => {
       boots: "boots-plate",
       cloak: "cloak-dusk",
     };
+    if (currentClass()?.armorProficiency === "mail") {
+      initialIds.torso = "torso-chain";
+      initialIds.legs = "legs-chain";
+      initialIds.boots = "boots-chain";
+    } else if (currentClass()?.armorProficiency === "plate")
+      initialIds.legs = "legs-sentinel";
     for (const [slot, id] of Object.entries(initialIds))
       equipment[slot] = { equippedItem: id, appearanceItem: id };
     return sync({
       version: 1,
-      inventory: clone(GearData.items),
+      inventory: clone(GearData.items.filter((item) => !item.expeditionOnly)),
       equipment,
       character: { ...defaultCharacter },
     });
@@ -98,6 +138,9 @@ const Equipment = (() => {
     const owned = new Set(
       raw.inventory.map((x) => x?.id).filter((id) => itemById[id]),
     );
+    // Add the coherent Mail demo kit to older M2–M5 inventories; retain every owned item.
+    for (const item of GearData.items)
+      if (item.demoMigration) owned.add(item.id);
     fresh.inventory = clone(GearData.items.filter((i) => owned.has(i.id)));
     for (const [key, values] of Object.entries(appearanceAllowed))
       if (values.includes(raw.character?.[key]))
@@ -200,8 +243,13 @@ const Equipment = (() => {
   function canEquip(id, slot) {
     const item = state.inventory.find((i) => i.id === id);
     if (!item) return "Oggetto non disponibile.";
+    return canEquipCandidate(item, slot);
+  }
+  function canEquipCandidate(item, slot) {
     if (!compatibleSlots(item).includes(slot))
       return "Questo oggetto non appartiene allo slot.";
+    const proficiencyError = armorError(item);
+    if (proficiencyError) return proficiencyError;
     if (item.requiredLevel > state.character.level)
       return `Richiede livello ${item.requiredLevel}.`;
     if (slot === "support") return supportRule(equipped("mainHand"), item);
@@ -320,6 +368,7 @@ const Equipment = (() => {
     calculatePower,
     supportRule,
     canEquip,
+    canEquipCandidate,
     equipped,
     appearance,
     equip,
@@ -328,6 +377,7 @@ const Equipment = (() => {
     setCharacter,
     randomizeCharacter,
     reset,
+    reconcileProgression: publish,
     save,
     subscribe(fn) {
       listeners.add(fn);

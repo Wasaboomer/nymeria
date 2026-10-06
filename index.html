@@ -7,23 +7,31 @@
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
     <meta name="theme-color" content="#101c24" />
-    <title>Nymeria Class &amp; Build System 0.1</title>
+    <title>Nymeria Character Progression &amp; First Idle Loop 0.1</title>
     <!-- Bump this shared asset version together on releases to avoid mixed cached scripts. -->
-    <link rel="stylesheet" href="styles.css?v=class-build-0.1" />
-    <script src="navigation.js?v=class-build-0.1" defer></script>
-    <script src="items.js?v=class-build-0.1" defer></script>
-    <script src="equipment-data.js?v=class-build-0.1" defer></script>
-    <script src="equipment.js?v=class-build-0.1" defer></script>
-    <script src="character.js?v=class-build-0.1" defer></script>
-    <script src="combat-data.js?v=class-build-0.1" defer></script>
-    <script src="classes-data.js?v=class-build-0.1" defer></script>
-    <script src="build-system.js?v=class-build-0.1" defer></script>
-    <script src="class-system.js?v=class-build-0.1" defer></script>
-    <script src="inventory.js?v=class-build-0.1" defer></script>
-    <script src="app.js?v=class-build-0.1" defer></script>
-    <script src="combat-engine.js?v=class-build-0.1" defer></script>
-    <script src="combat-ui.js?v=class-build-0.1" defer></script>
-    <script src="class-ui.js?v=class-build-0.1" defer></script>
+    <link rel="stylesheet" href="styles.css?v=armor-loot-0.1" />
+    <script src="navigation.js?v=armor-loot-0.1" defer></script>
+    <script src="progression-data.js?v=armor-loot-0.1" defer></script>
+    <script src="expedition-data.js?v=armor-loot-0.1" defer></script>
+    <script src="combat-data.js?v=armor-loot-0.1" defer></script>
+    <script src="classes-data.js?v=armor-loot-0.1" defer></script>
+    <script src="armor-rules.js?v=armor-loot-0.1" defer></script>
+    <script src="build-system.js?v=armor-loot-0.1" defer></script>
+    <script src="class-system.js?v=armor-loot-0.1" defer></script>
+    <script src="items.js?v=armor-loot-0.1" defer></script>
+    <script src="equipment-data.js?v=armor-loot-0.1" defer></script>
+    <script src="personal-loot.js?v=armor-loot-0.1" defer></script>
+    <script src="progression-store.js?v=armor-loot-0.1" defer></script>
+    <script src="equipment.js?v=armor-loot-0.1" defer></script>
+    <script src="character.js?v=armor-loot-0.1" defer></script>
+    <script src="inventory.js?v=armor-loot-0.1" defer></script>
+    <script src="app.js?v=armor-loot-0.1" defer></script>
+    <script src="combat-engine.js?v=armor-loot-0.1" defer></script>
+    <script src="combat-ui.js?v=armor-loot-0.1" defer></script>
+    <script src="class-ui.js?v=armor-loot-0.1" defer></script>
+    <script src="expedition-engine.js?v=armor-loot-0.1" defer></script>
+    <script src="progression-system.js?v=armor-loot-0.1" defer></script>
+    <script src="expedition-ui.js?v=armor-loot-0.1" defer></script>
   </head>
   <body>
     <main class="app">
@@ -37,10 +45,12 @@
           <h1>Iria del Vespro</h1>
           <p>
             Hayon <span>·</span> <span id="identity-class">Cacciatore</span>
-            <span>·</span> Liv. 1
+            <span>·</span> Liv. <span id="identity-level">1</span>
           </p>
         </div>
-        <span class="level" aria-label="Livello 1">01</span>
+        <span id="identity-level-badge" class="level" aria-label="Livello 1"
+          >01</span
+        >
       </section>
       <nav class="screen-tabs" role="tablist" aria-label="Character Lab">
         <button
@@ -90,6 +100,16 @@
         >
           Classe
         </button>
+        <button
+          id="tab-expeditions"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-expeditions"
+          data-screen="expeditions"
+          tabindex="-1"
+        >
+          Spedizioni
+        </button>
       </nav>
       <section
         id="panel-class"
@@ -118,6 +138,26 @@
         <p id="class-save-status" class="hint" role="status"></p>
       </section>
       <div id="panel-character" role="tabpanel" aria-labelledby="tab-character">
+        <section class="xp-summary" aria-label="Esperienza">
+          <strong id="character-xp-label">Livello 1</strong
+          ><span id="character-xp-value">0 / 80 XP</span>
+          <div
+            id="character-xp-bar"
+            class="xp-bar"
+            role="progressbar"
+            aria-label="Esperienza"
+            aria-valuemin="0"
+            aria-valuemax="80"
+            aria-valuenow="0"
+          >
+            <span></span>
+          </div>
+          <p
+            id="progression-level-up"
+            class="level-up-feedback"
+            role="status"
+          ></p>
+        </section>
         <section class="stage" aria-label="Personaggio modulare">
           <div class="stage-heading">
             <span>ATELIER DELLE SOGLIE</span><span class="live">IDLE</span>
@@ -215,6 +255,11 @@
           <span id="visible-count"></span>
         </div>
         <div class="panel-summary" aria-label="Statistiche totali"></div>
+        <div
+          id="inventory-resources"
+          class="resource-summary"
+          aria-label="Risorse"
+        ></div>
         <p id="inventory-count" class="hint"></p>
         <nav class="inventory-filters" aria-label="Filtri inventario">
           <button data-filter="all" aria-pressed="true">Tutto</button
@@ -367,8 +412,82 @@
           <ol id="combat-log" aria-label="Log combattimento"></ol>
         </section>
       </section>
+      <section
+        id="panel-expeditions"
+        role="tabpanel"
+        aria-labelledby="tab-expeditions"
+        hidden
+      >
+        <div class="section-title">
+          <h2>Frontiera del Vespro</h2>
+          <span>M5 / 01</span>
+        </div>
+        <section class="xp-summary" aria-label="Esperienza">
+          <strong id="expedition-xp-label">Livello 1</strong
+          ><span id="expedition-xp-value">0 / 80 XP</span>
+          <div
+            id="expedition-xp-bar"
+            class="xp-bar"
+            role="progressbar"
+            aria-label="Esperienza"
+            aria-valuemin="0"
+            aria-valuemax="80"
+            aria-valuenow="0"
+          >
+            <span></span>
+          </div>
+        </section>
+        <div
+          id="expedition-wealth"
+          class="resource-summary"
+          aria-label="Risorse"
+        ></div>
+        <p id="expedition-kit" class="hint"></p>
+        <button id="expedition-go-equipment">Prepara equipaggiamento</button>
+        <p id="expedition-storage" class="compatibility" role="status"></p>
+        <p
+          id="expedition-message"
+          class="hint"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <p id="expedition-welcome" class="expedition-welcome" hidden></p>
+        <section id="expedition-running" class="expedition-running" hidden>
+          <h3 id="expedition-active-name"></h3>
+          <p id="expedition-countdown" role="status"></p>
+          <div
+            id="expedition-time-bar"
+            class="xp-bar"
+            role="progressbar"
+            aria-label="Avanzamento spedizione"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <span></span>
+          </div>
+          <p id="expedition-active-info" class="hint"></p>
+          <button id="expedition-cancel">Termina spedizione</button>
+        </section>
+        <section id="expedition-report" class="expedition-report" hidden>
+          <div id="expedition-report-body"></div>
+          <button id="expedition-claim">Riscuoti ricompense</button>
+          <p id="expedition-claimed" class="hint" hidden>
+            Ricompense riscosse.
+          </p>
+        </section>
+        <div id="expedition-activities"></div>
+        <section id="expedition-debug" class="expedition-debug" hidden>
+          <h3>TEST MODE · SOLO SVILUPPO</h3>
+          <p class="hint">
+            Completamento anticipato per verificare report e ricompense. Durate
+            reali invariate; ricompense TEST nello stesso salvataggio locale.
+          </p>
+          <button id="expedition-debug-complete">Completa ora · TEST</button>
+        </section>
+      </section>
       <footer>
-        <p>Nymeria Class &amp; Build System 0.1</p>
+        <p>Nymeria Character Progression &amp; First Idle Loop 0.1</p>
         <span>Asset SVG esplorativi · sistema modulare</span
         ><button id="reset-demo">Reset demo</button>
       </footer>

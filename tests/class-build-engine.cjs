@@ -14,13 +14,14 @@ function model() {
     },
   });
   for (const file of [
+    "combat-data",
+    "classes-data",
+    "armor-rules",
+    "build-system",
+    "class-system",
     "items",
     "equipment-data",
     "equipment",
-    "combat-data",
-    "classes-data",
-    "build-system",
-    "class-system",
   ])
     vm.runInContext(
       fs.readFileSync(path.join(__dirname, "..", file + ".js"), "utf8"),
@@ -35,7 +36,7 @@ function model() {
 const m = model();
 function setup(cls = "hunter", build, bare = false, thorn = false) {
   m.run(
-    `Equipment.reset();ClassSystem.selectClass('${cls}');ClassSystem.selectBuild('${build || (cls === "hunter" ? "predator" : "bulwark")}');Equipment.equip('${cls === "hunter" ? "bow" : "sword"}','mainHand');Equipment.equip('${cls === "hunter" ? (thorn ? "thorn-quiver" : "quiver") : "shield"}','support');`,
+    `ClassSystem.selectClass('${cls}');Equipment.reset();ClassSystem.selectBuild('${build || (cls === "hunter" ? "predator" : "bulwark")}');Equipment.equip('${cls === "hunter" ? "bow" : "sword"}','mainHand');Equipment.equip('${cls === "hunter" ? (thorn ? "thorn-quiver" : "quiver") : "shield"}','support');`,
   );
   if (bare)
     m.run(
@@ -99,7 +100,7 @@ check(
       bad.advance(2);
       assert.equal(bad.status, "idle");
       assert.equal(bad.time, 0);
-      assert.equal(m.read("Equipment.state.inventory.length"), 44);
+      assert.equal(m.read("Equipment.state.inventory.length"), 49);
       const other = cls === "hunter" ? "warden" : "hunter";
       assert.equal(
         m.run(

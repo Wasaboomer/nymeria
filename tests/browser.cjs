@@ -59,7 +59,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       }
       let state = await model();
       const initial = JSON.parse(JSON.stringify(state));
-      assert.equal(state.inventory.length, 44);
+      assert.equal(state.inventory.length, 49);
       assert.equal(Object.keys(state.equipment).length, 16);
       for (const i of state.inventory) {
         for (const field of [
@@ -104,7 +104,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       assert.equal((await model()).equipment.support.equippedItem, "quiver");
       await open("shield");
       assert.match(
-        await page.locator(".compatibility").innerText(),
+        await page.locator("#item-dialog .compatibility").innerText(),
         /non può usare/,
       );
       const beforeRejected = await model();
@@ -182,12 +182,12 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         ).firstElementChild;
       });
       const beforeArmor = await model();
-      await open("torso-warden");
+      await open("torso-chain");
       await page.locator('[data-remove="torso"]').tap();
       state = await model();
       assert.equal(state.equipment.torso.equippedItem, null);
       assert.equal(
-        state.inventory.find((i) => i.id === "torso-warden").equipped,
+        state.inventory.find((i) => i.id === "torso-chain").equipped,
         false,
       );
       assert.notEqual(state.power, beforeArmor.power);
@@ -196,12 +196,12 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         beforeArmor.resultingStats.force - 4,
       );
       await close();
-      await open("torso-oracle");
+      await open("torso-chain");
       const predicted = await page.evaluate(() =>
-        Equipment.comparison("torso-oracle", "torso"),
+        Equipment.comparison("torso-chain", "torso"),
       );
-      assert.match(await page.locator(".comparison").innerText(), /Spirito/);
-      assert.match(await page.locator(".comparison").innerText(), /\+7/);
+      assert.match(await page.locator(".comparison").innerText(), /Forza/);
+      assert.match(await page.locator(".comparison").innerText(), /\+4/);
       await page.locator("#equip-item").tap();
       state = await model();
       assert.equal(state.power - (beforeArmor.power - 23), predicted.power);
@@ -219,7 +219,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         await page
           .locator('#rig [data-layer="torso"]')
           .getAttribute("data-item"),
-        "torso-oracle",
+        "torso-chain",
       );
       // Independent recomputation of sums and power, equipped markers and unique IDs.
       const sums = {
@@ -309,8 +309,8 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       await screen("equipment");
       await page.locator('[data-open-slot="head"]').tap();
       assert.match(await page.locator("#slot-filter").innerText(), /Copricapo/);
-      assert.equal(await page.locator(".inventory-item").count(), 2);
-      await page.locator('[data-item-id="head-veil"]').tap();
+      assert.equal(await page.locator(".inventory-item").count(), 3);
+      await page.locator('[data-item-id="head-chain"]').tap();
       await page.locator("#equip-item").tap();
       await close();
       await page.locator("#clear-slot-filter").tap();
@@ -338,7 +338,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
           raw.equipment.torso.appearanceItem = "torso-warden";
           const restored = Equipment.normalize(raw);
           return (
-            restored.equipment.torso.equippedItem === "torso-oracle" &&
+            restored.equipment.torso.equippedItem === "torso-chain" &&
             restored.equipment.torso.appearanceItem === "torso-warden" &&
             JSON.stringify(restored.resultingStats) ===
               JSON.stringify(Equipment.state.resultingStats)
@@ -365,6 +365,24 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         // Exercise every catalogue item and its available modular representation.
         const catalogue = (await model()).inventory;
         for (const item of catalogue) {
+          if (["cloth", "leather"].includes(item.armorType)) {
+            await open(item.id);
+            assert.match(
+              await page.locator("#item-dialog .compatibility").innerText(),
+              /solamente armature/,
+            );
+            const before = await model();
+            await page.locator("#equip-item").tap();
+            assert.deepEqual(await model(), before);
+            await close();
+            continue;
+          }
+          if (item.armorType)
+            await page.evaluate(
+              (type) =>
+                ClassSystem.selectClass(type === "plate" ? "warden" : "hunter"),
+              item.armorType,
+            );
           if (item.slot === "support") {
             const main = catalogue.find(
               (i) =>
@@ -398,9 +416,10 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         await page.locator("#random").tap();
         assert.deepEqual((await model()).equipment, gearBeforeRandom);
         console.log(
-          "PASS 390px: all 44 catalogue items equipped by touch; all associated SVG layers present; random appearance preserves gear",
+          "PASS 390px: all 49 demo items tested by touch (usable equipped, Cloth/Leather rejected); all associated SVG layers present; random appearance preserves gear",
         );
       }
+      await page.evaluate(() => ClassSystem.selectClass("hunter"));
       await page.locator("#reset-demo").tap();
       assert.deepEqual(await model(), initial);
       await page.reload();
