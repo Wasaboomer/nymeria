@@ -88,6 +88,7 @@
           }
         }
       }
+      document.dispatchEvent(new Event("guild-rendered"));
     }
     root
       .querySelectorAll('button[type="submit"]')

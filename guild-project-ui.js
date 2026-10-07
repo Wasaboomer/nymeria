@@ -3,13 +3,14 @@
   if (typeof document === "undefined" || typeof GuildProjectSystem === "undefined" || !GuildProjectSystem) return;
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const labels = { crowns:"Corone", iron:"Ferro", fiber:"Fibre", ether:"Etere" };
-  let message = "";
+  let message = "", busy = false;
   function render() {
     const root = document.getElementById("guild-projects-root");
     if (!root || !GuildSystem.state.guild) return;
     const state = GuildProjectSystem.state;
     root.innerHTML = `<section class="guild-projects"><div class="section-title"><h2>Progetti di gilda</h2><span>COLLETTIVI</span></div>
       <p class="hint">M7.1 · I contributi ai progetti sono simulati e non consumano ancora le risorse del personaggio.</p>
+      ${GuildProjectSystem.storageIssue ? '<p class="guild-warning" role="alert">Salvataggio progetti non disponibile. Le operazioni non salvate non vengono applicate.</p>' : ""}
       ${GuildProjectData.projects.map(project => {
         const row = state.projects[project.id] || {progress:{},completed:false};
         const parts = Object.entries(project.requirements);
@@ -27,14 +28,21 @@
       }).join("")}
       <p id="guild-project-status" role="status" aria-live="polite">${esc(message)}</p></section>`;
   }
-  document.addEventListener("submit", (event) => {
+  document.addEventListener("guild-rendered", render);
+  document.addEventListener("submit", async (event) => {
     const form = event.target.closest?.("[data-project-form]");
     if (!form) return;
     event.preventDefault();
+    if (busy || !GuildSystem.state.guild) return;
     const fields = new FormData(form);
-    const result = GuildProjectSystem.contribute(form.dataset.projectForm, fields.get("kind"), fields.get("amount"));
-    message = result.message;
-    render();
+    busy = true;
+    form.querySelector("button").disabled = true;
+    try {
+      const result = await GuildProjectSystem.contribute(form.dataset.projectForm, fields.get("kind"), fields.get("amount"));
+      message = result.message;
+    } catch {
+      message = "Operazione progetto non disponibile. Nessuna modifica applicata.";
+    } finally { busy = false; render(); }
   });
   function init(){ render(); GuildProjectSystem.subscribe(render); GuildSystem.subscribe(render); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
