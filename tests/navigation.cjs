@@ -99,7 +99,7 @@ const modules = [
         );
       }
       const assets = requests.filter((url) => /\.(js|css)$/.test(url.pathname));
-      assert.equal(assets.length, 49);
+      assert.equal(assets.length, 50);
       assert.ok(
         assets.every((url) => url.searchParams.get("v") === "m73-review-1"),
       );

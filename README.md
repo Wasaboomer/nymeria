@@ -775,3 +775,12 @@ Gli XP professionali sono canonici (`totalXP` per professione); livello/XP resid
 JSON corrotto/incompleto recupera i dati validi disponibili o riparte dal solo ledger professioni vuoto; versioni future sono protette dalla sovrascrittura. Il lease Web Locks dedicato alla scheda scrittrice, la coda locale e storage/pageshow impediscono aggiornamenti obsoleti fra schede; senza Web Locks usare una sola scheda. La UI conserva feedback di successo/errore, blocca azioni non valide/in corso e aggiorna materiali/professioni al cambio di contesto.
 
 Test specifici: `node tests/profession-engine.cjs` e `NYMERIA_TEST_URL=http://127.0.0.1:8009/nymeria node tests/profession-browser.cjs`. Coprono guardie del motore, crafting atomico/insufficienza/overflow, ripetizioni, XP/cap/migrazione, corruzione/schema futuro/lettura negata/quota, navigazione Menu/World/Back, persistenza, due schede e handoff, isolamento dei ledger, console/rejection, touch e overflow a 320/375/390/430 px. Safari/iPhone richiede ancora test fisico di tap rapidi, focus/scroll dopo i feedback, Back e ripresa da sospensione/bfcache. Nessuna distribuzione DEV automatica.
+
+## Modular Character POC (isolated debug)
+
+On branch `character-modular-poc`, open `?test=1` → Menu → DEBUG →
+**Modular Character POC**. BASE / CUSTODE swap only a placeholder torso, leaving
+all other zones intact. This is a technical composition test, not final artwork;
+BODY MASTER v2 and the existing renderer are unchanged. No gameplay state or
+storage is read/written by the POC. See [Character Asset Spec v1](docs/character-asset-spec-v1.md)
+for canvas, bounds, anchors, layer order and removal instructions.
