@@ -54,7 +54,7 @@ const WorldUI = (() => {
     node("quest-detail").innerHTML = selectedQuest ? QuestUI.card(selectedQuest, state) : "";
     node("journal-badge").textContent = Object.values(frontier.quests).filter(q => q.status === "completed").length || "";
     node("world-locations").innerHTML = WorldData.locations.map(location => {
-      const unlocked = state.unlockedContent.includes(`world:${location.id}`), current = location.id === frontier.location;
+      const unlocked = state.unlockedContent.includes(`world:${location.id}`) || (location.discoveryType && WorldDiscovery.accessible(location.id)), current = location.id === frontier.location;
       return `<button class="world-node ${current ? "world-node-current" : ""}" data-world-enter="${location.id}" aria-pressed="${current}" ${!unlocked || frontier.activeEncounter || busy ? "disabled" : ""}>${mark(location.mark)}<span><strong>${escape(location.name)}</strong><small>${unlocked ? current ? "Ti trovi qui" : `Esplora · Liv. indicativo ${location.level}` : escape(location.unlockHint)}</small></span><b aria-hidden="true">${unlocked ? '<svg viewBox="0 0 12 12" width="12" height="12"><path d="M3 9 9 3M3 3H9V9" fill="none" stroke="currentColor"/></svg>' : '<svg viewBox="0 0 12 12" width="12" height="12"><path d="M6 1 11 6 6 11 1 6Z" fill="none" stroke="currentColor"/></svg>'}</b></button>`;
     }).join("");
     const location = WorldData.location(frontier.location);
@@ -73,8 +73,8 @@ const WorldUI = (() => {
       const enemy = WorldData.enemy(id);
       return `<article class="world-enemy enemy-${enemy.kind}"><div><small>${enemy.kind === "boss" ? "BOSS" : enemy.kind === "miniboss" ? "MINIBOSS" : "INCONTRO"} · LIV. ${enemy.level}</small><h4>${escape(enemy.name)}</h4><p>${estimates[id]} · ${enemy.rewards.xp} XP · ${enemy.rewards.crowns} Corone</p><small>${enemy.drops.map(id => escape(WorldData.supplyNames[id])).join(" · ") || "Nessun oggetto di missione"}</small></div><button data-world-fight="${id}" ${frontier.activeEncounter ? "disabled" : ""}>Combatti</button></article>`;
     }).join("")}</div>${location.enemies.length && !ClassSystem.kitRequirement(Equipment.equipped("mainHand"), Equipment.equipped("support")) ? '<p class="compatibility">Prepara il kit della classe prima degli incontri.</p><button data-world-equipment>Prepara equipaggiamento</button>' : ""}`;
-    node("world-location-detail").innerHTML += `<section class="world-destinations"><h4>Destinazioni</h4>${WorldData.connections[location.id].map(id => {
-      const destination = WorldData.location(id), unlocked = state.unlockedContent.includes(`world:${id}`);
+    node("world-location-detail").innerHTML += `<section class="world-destinations"><h4>Destinazioni</h4>${(WorldData.connections[location.id] || []).concat(location.id === "veyra" && WorldDiscovery.discovered("vesper-outpost") ? ["vesper-outpost"] : []).map(id => {
+      const destination = WorldData.location(id), unlocked = state.unlockedContent.includes(`world:${id}`) || (destination.discoveryType && WorldDiscovery.accessible(id));
       return `<button data-world-enter="${id}" ${!unlocked || frontier.activeEncounter || busy ? "disabled" : ""}><span><strong>${escape(destination.name)}</strong>${!unlocked ? `<small>Bloccato · ${escape(destination.unlockHint)}</small>` : ""}</span><b aria-hidden="true">${unlocked ? "→" : "🔒"}</b></button>`;
     }).join("")}</section>`;
     // Objective markers are semantic UI hints, never quest-engine branches.
