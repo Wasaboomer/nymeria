@@ -1,4 +1,4 @@
-# M6.5 — Visual Identity & Modular Character Vertical Slice
+# M6.5 / M6.5.1 — Modular Character Visual Pipeline
 
 Baseline: `4ac9ada7919a156e53d0fa65f6528be0df80ba46` (M6.2). Nessun nuovo sistema gameplay, formula, curva XP, ricompensa o contenuto del mondo.
 
@@ -8,10 +8,10 @@ Baseline: `4ac9ada7919a156e53d0fa65f6528be0df80ba46` (M6.2). Nessun nuovo sistem
 | --- | --- | --- |
 | Pipeline | Manifest, compositore SVG condiviso, cache, namespace, hide rules, mapping Equipment, fallback | Base tecnica utilizzabile e verificata; da estendere per produzione |
 | Personaggio | Corpo adulto, orecchie, volto, occhi, capelli separati, sottostrati | Vertical slice vettoriale originale; non artwork illustrato definitivo |
-| Custode | Plate A/B: torso, gambe, stivali, guanti, spallacci ed elmo; Sword A/B; Shield A/B | Geometrie distinte, vertical-slice quality |
+| Custode | Plate A/B: torso, gambe, stivali, guanti, spallacci ed elmo; Sword A/B; Shield A/B | M6.5.1: silhouette proxy; target semi-realistico non raggiunto |
 | Cacciatore | Mail A, Bow A, Quiver A sul medesimo rig | Vertical-slice quality |
 | Creator | 3 carnagioni, 3 acconciature, 3 colori capelli, 3 occhi, 2 volti/dettagli | Opzioni reali; nessuna barba in questa iterazione |
-| Mantelli/cinture | Due sagome per ciascuno, legate a oggetti esistenti | Vertical-slice quality |
+| Mantelli/cinture | Due sagome per ciascuno, legate a oggetti esistenti | Mantelli: vertical slice; cinture M6.5.1: proxy |
 | Accessori piccoli | Collana, orecchini, bracciali e anelli, anchor SX/DX | Placeholder condivisi per categoria; non artwork individuale per ogni gioiello |
 | Oggetti fuori dal slice | Fallback per slot/materiale/famiglia | Placeholder; non dichiarati asset definitivi dell'oggetto |
 | Nemici | Predone, Segugio, Sentinella di Elar, Cervo del Crepuscolo | Vettori stilizzati del slice, non artwork finale |
@@ -69,8 +69,8 @@ Caricamento asincrono con revisioni per layer e render: una risposta vecchia non
 - Palette pelle: body e face, senza tingere equipaggiamento.
 - Palette capelli e occhi: esclusivamente i rispettivi canali estetici.
 - `--dye`: soltanto inserti del torso, mai filtro sull'intero SVG.
-- Elmo Plate B chiuso: hide rules per `hair-front`, `hair-back`, `face`, `eyes`.
-- Plate A e Mail A aperti: nessuna hide rule capelli.
+- Elmi Plate A/B chiusi (M6.5.1): hide rules per `hair-front`, `hair-back`, `face`, `eyes`, `ears`.
+- Mail A aperto: nessuna hide rule capelli.
 - Arma **realmente** 2H: supporto nascosto, anche se il visual/glamour è 1H.
 - Sword + Shield e Bow + Quiver: entrambi i layer visibili.
 
@@ -142,3 +142,23 @@ Asset SVG creati (62):
 - `assets/world/`: `frontier.svg`.
 
 Risultato della validazione conclusiva: 141 verifiche Node delle 9 suite precedenti + 7 verifiche pipeline (148 complessive); 41 scenari browser M6.5; tutte le 13 suite browser precedenti M2–M6.2 verdi. Prova dedicata sotto `/nymeria/`: tutti i 62 SVG rispondono correttamente, script/CSS relativi validi, Equipment/Mappa/Combat funzionanti e nessuna collisione degli ID SVG/DOM. Screenshot finali tutti a 390 px, fuori dal repository; nessun errore JS o overflow nelle viewport touch 320/390/430.
+
+## M6.5.1 — silhouette first (proxy)
+
+I 18 asset ridisegnati conservano nomi, rig, anchors e mapping: `plate-{a,b}-{torso,shoulders,helmet,legs,gloves,boots}`, `belt-{a,b}`, `sword-{a,b}`, `shield-{a,b}`. Nessun asset composito e nessun nuovo layer. Le spalle restano bundle del torso, dato che i 16 slot attuali non comprendono uno slot shoulders; gli altri pezzi rimangono item autonomi.
+
+Plate A: spalle medie arrotondate, vita stretta, tassets corti, ginocchiere piccole e sabatons sottili. Plate B: spalle bilaterali larghe e laminate, pettorale ampio, gorget e falde, ginocchiere alate, guanti a piastre, stivali larghi e cintura corazzata. Helmet A: corona verticale compatta e visiera chiusa; Helmet B: profilo largo, cresta bassa e flange laterali. Sword A: lama rettilinea stretta, guardia lineare, impugnatura corta; Sword B: lama larga più corta, punta sfaccettata, guardia ricurva e impugnatura inclinata. Shield A: kite alto; Shield B: rotondo con boss centrale. Anche in nero la geometria è differente.
+
+Entrambi gli elmi Plate dichiarano hide rules per `hair-front`, `hair-back`, `face`, `eyes`, `ears`. Senza elmo, nessuna mutazione dell'aspetto salvato: il resolver ripristina i layer di base. `quality: proxy` esplicito per i nuovi asset; **non production-ready**. Non si è rifatto body, Mail, hairstyle o enemy art: il semi-realismo illustrato richiede ancora asset artistici dedicati e review fisica.
+
+Il DEBUG usa lo stesso `VisualRenderer.create` per due preparazioni temporanee: stesso aspetto/dye/equipaggiamento, override solo del gruppo confrontato. In mobile alterna visibilità dei due SVG nella stessa area; da 700px li affianca. La posa è ferma soltanto nello showcase. Il filtro nero è confinato al test silhouette DEBUG e non partecipa alla sostituzione degli item o ai colori del gioco.
+
+### Verifica M6.5.1
+
+- `tests/visual-language-browser.cjs`: 68 scenari mirati (17 × 320/390/430/800 px), più cambi indipendenti via Equipment normale, glamour/appearanceItem e refresh. Tutte le prove sono passate. I controlli verificano che i layer estranei conservino asset e nodi, che i due render condividano geometria/posizione, che le sagome B siano più larghe e Sword B più corta, e che nessun dato di gioco sia cambiato tramite showcase.
+- `tests/visual-manifest.cjs`: 7 gruppi metadata, mapping, hide rules, migrazione esistente e budget, passati. Nessuna nuova migrazione di salvataggio introdotta.
+- 9 suite motore: Combat, Class/Build, Armor/Smart Loot, Progression, Manual Rewards, Creator Lock, Stat Growth, World/Quest e Notifications, tutte passate.
+- 15 suite browser: Equipment (`browser`), Combat, Class/Build, Armor/Loot, Progression, Manual Rewards, Creator Lock, Stat Growth, World, World Side Quest, Notifications, Mobile UX, Navigation, Visual M6.5 e Visual Showcase, tutte passate. Usato il mount locale `/nymeria/` per verificare anche i percorsi Pages. Nessun errore JS/HTTP o overflow nei test mirati; touch e reduced motion verificati.
+- Proof full-body a 390 px: otto render A/B, showcase completo, silhouette nere A/B e tavola riassuntiva in `/workspace/nymeria-preview/m651`. Fuori dal checkout, mai caricati come asset del gioco.
+
+La verifica fisica Safari/iPhone della nuova qualità M6.5.1 resta da effettuare. Nessun commit/push e nessuna approvazione artistica implicita nel superamento dei test.

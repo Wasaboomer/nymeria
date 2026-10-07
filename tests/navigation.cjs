@@ -90,7 +90,7 @@ const modules = [
       const assets = requests.filter((url) => /\.(js|css)$/.test(url.pathname));
       assert.equal(assets.length, 38);
       assert.ok(
-        assets.every((url) => url.searchParams.get("v") === "m65-1"),
+        assets.every((url) => url.searchParams.get("v") === "m651-1"),
       );
       console.log(
         `PASS ${name}: panel visibility + hidden + aria-selected; versioned assets`,

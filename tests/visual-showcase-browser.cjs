@@ -34,7 +34,9 @@ const base = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8008";
       const before = await saved();
       assert.equal(await page.locator("#showcase-character").count(), 0);
       await page.locator("#visual-showcase > summary").tap();
+      await page.waitForFunction(()=>document.querySelector('#showcase-character [data-layer="head"]')?.dataset.asset === "plate-a-helmet");
       const ready = () => page.evaluate(() => VisualRenderer.ready());
+      await page.locator(".showcase-extra > summary").tap();
       await ready();
       const tap = async (selector) => {
         await page.locator("#visual-showcase " + selector).tap();

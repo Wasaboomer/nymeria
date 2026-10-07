@@ -1928,3 +1928,25 @@ body { min-height: 100dvh; }
 .showcase-appearance button span { display:inline-block; width:14px; height:14px; border:1px solid #aaa; border-radius:50%; vertical-align:middle; margin-right:5px; }
 .showcase-enemy { display:block; width:100%; height:400px; object-fit:contain; margin-top:12px; background:#192d33; border-radius:8px; }
 .showcase-enemy[hidden] { display:none; }
+
+/* M6.5.1 DEBUG comparison: fixed rig position, full-size instant A/B on phones. */
+#visual-showcase .showcase-controls fieldset { display:flex;flex-wrap:wrap;gap:7px;margin:4px 0;padding:7px;min-width:0;width:100%;border:1px solid var(--line);border-radius:6px; }
+#visual-showcase legend { font-size:11px;letter-spacing:.5px; }
+.showcase-extra { width:100%; }
+#visual-showcase .showcase-extra summary { font:12px sans-serif; }
+.showcase-comparison { display:flex;flex-wrap:wrap;gap:7px;margin-top:12px; }
+.showcase-comparison select { min-height:44px;max-width:100%;background:#1b3037;color:var(--ink);border:1px solid #526860;border-radius:6px;padding:8px; }
+#visual-showcase .showcase-stage { position:relative; }
+#showcase-character-b { display:none;width:100%;height:100%; }
+.showcase-stage.is-comparing[data-side="b"] #showcase-character { display:none; }
+.showcase-stage.is-comparing[data-side="b"] #showcase-character-b { display:block; }
+.showcase-stage.silhouette-review { background:#c9c7bd; }
+/* Deliberate DEBUG-only black silhouette proof, never an equipment/color effect. */
+.showcase-stage.silhouette-review svg .visual-rig { filter:brightness(0); }
+.showcase-stage .visual-rig,.showcase-stage [data-layer] { animation:none!important; }
+@media (min-width:700px) {
+ .showcase-stage.is-comparing { display:flex; }
+ .showcase-stage.is-comparing[data-side] #showcase-character,.showcase-stage.is-comparing[data-side] #showcase-character-b { display:block;width:50%; }
+ body[data-screen="debug"] .app { max-width:860px; }
+ #visual-showcase .showcase-stage.is-comparing { height:500px; }
+}

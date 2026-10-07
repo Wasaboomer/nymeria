@@ -89,7 +89,7 @@ check(
     }
   },
 );
-check("data-driven closed/open helmet and actual two-handed rules", () => {
+check("data-driven closed helmets and actual two-handed rules", () => {
   const f = fixture(),
     items = f.read("Equipment.state.inventory"),
     model = {
@@ -107,7 +107,9 @@ check("data-driven closed/open helmet and actual two-handed rules", () => {
   assert.equal(view.support, "shield-a");
   model.items.head = items.find((i) => i.id === "head-helm");
   view = art.resolve(model);
-  assert.equal(view["hair-front"], "hair-braid-front");
+  assert.equal(view["hair-front"], undefined);
+  delete model.items.head;
+  assert.equal(art.resolve(model)["hair-front"], "hair-braid-front");
   model.twoHanded = true;
   assert.equal(art.resolve(model).support, undefined);
 });

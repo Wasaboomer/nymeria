@@ -194,15 +194,31 @@ const VisualUI = (() => {
   const showcase = document.createElement("details");
   showcase.id = "visual-showcase";
   showcase.innerHTML = `<summary>Visual Showcase M6.5</summary>
-    <p class="hint">DEBUG · Anteprima indipendente. Nessuna modifica al personaggio salvato.</p>
+    <p class="hint">DEBUG · Anteprima indipendente. Nessuna modifica al personaggio salvato. Custode M6.5.1: proxy asset, non artwork finale.</p>
     <div class="showcase-controls" role="group" aria-label="Configurazione"></div>
+    <div class="showcase-comparison" role="group" aria-label="Confronto A/B">
+      <button data-compare-toggle aria-pressed="false">Confronto A/B</button>
+      <select aria-label="Elemento da confrontare" id="showcase-compare-part"><option value="armor">Plate A / B</option><option value="head">Helmet A / B</option><option value="mainHand">Sword A / B</option><option value="support">Shield A / B</option></select>
+      <button data-compare-side="a" aria-pressed="true">A</button><button data-compare-side="b" aria-pressed="false">B</button>
+      <button data-compare-silhouette aria-pressed="false">Silhouette nera</button>
+    </div>
     <div class="showcase-stage"></div>
     <p class="showcase-status" role="status" aria-live="polite"></p>
     <div class="showcase-appearance"></div>
     <h4>Enemy visual M6.5</h4><div class="showcase-enemies" role="group" aria-label="Nemico"></div>
     <img class="showcase-enemy" width="360" height="640" alt="" hidden />`;
   document.getElementById("debug-tools").append(showcase);
-  let renderer;
+  let renderer, comparisonRenderer;
+  let compare = false,
+    compareSide = "a",
+    silhouette = false;
+  const comparePart = showcase.querySelector("#showcase-compare-part");
+  const armorSlots = ["torso", "legs", "boots", "gloves", "belt"];
+  const alternatives = {
+    head: ["head-helm", "head-vesper"],
+    mainHand: ["sword", "vesper-sword"],
+    support: ["shield", "vesper-shield"],
+  };
   const preview = {
     character: { ...Equipment.state.character },
     dye: Equipment.state.equipmentAppearance.dye,
@@ -238,26 +254,27 @@ const VisualUI = (() => {
   const item = (id) => GearData.items.find((row) => row.id === id);
   let selected = "plateA";
   const controls = showcase.querySelector(".showcase-controls");
-  controls.innerHTML =
-    Object.entries(presets)
+  const itemButtons = (slot, ids, labels) =>
+    ids
+      .map(
+        (id, i) =>
+          `<button data-showcase-slot="${slot}" data-showcase-item="${id}" aria-pressed="false">${labels[i]}</button>`,
+      )
+      .join("");
+  controls.innerHTML = `<fieldset><legend>ARMOR · set di protezioni</legend><button data-showcase-armor="plateA">Plate A</button><button data-showcase-armor="plateB">Plate B</button></fieldset>
+    <fieldset><legend>HELMET</legend>${itemButtons("head", ["none", ...alternatives.head], ["Nessuno", "Helmet A", "Helmet B"])}</fieldset>
+    <fieldset><legend>WEAPON</legend>${itemButtons("mainHand", alternatives.mainHand, ["Sword A", "Sword B"])}</fieldset>
+    <fieldset><legend>SHIELD</legend>${itemButtons("support", alternatives.support, ["Shield A", "Shield B"])}</fieldset>
+    <details class="showcase-extra"><summary>Preset e altri visual M6.5</summary>${Object.entries(
+      presets,
+    )
       .map(
         ([id, row]) =>
           `<button data-showcase-preset="${id}" aria-pressed="false">${row.label}</button>`,
       )
-      .join("") +
-    "<button data-showcase-base>Body / base</button>" +
-    [
-      ["mainHand", "sword", "Sword A"],
-      ["mainHand", "vesper-sword", "Sword B"],
-      ["support", "shield", "Shield A"],
-      ["support", "vesper-shield", "Shield B"],
-    ]
-      .map(
-        ([slot, id, label]) =>
-          `<button data-showcase-slot="${slot}" data-showcase-item="${id}">${label}</button>`,
-      )
-      .join("") +
-    "<button data-showcase-bow>Bow A + Quiver A</button><button data-showcase-helmet>Mostra / rimuovi elmo</button>";
+      .join(
+        "",
+      )}<button data-showcase-base>Body / base</button><button data-showcase-bow>Bow A + Quiver A</button><button data-showcase-helmet>Mostra / rimuovi elmo</button></details>`;
   function appearanceGroup(key, label, options) {
     return `<fieldset><legend>${label}</legend>${options.map((row) => `<button data-showcase-appearance="${key}" data-showcase-value="${row.id}" aria-pressed="false">${row.color ? `<span style="background:${row.color}" aria-hidden="true"></span>` : ""}${row.name}</button>`).join("")}</fieldset>`;
   }
@@ -295,6 +312,36 @@ const VisualUI = (() => {
     });
     preview.twoHanded = false;
   }
+  function changeArmor(model, presetId) {
+    const preset = presets[presetId];
+    for (const slot of armorSlots) {
+      if (slot === "belt") {
+        model.items.belt = item(preset.belt);
+        continue;
+      }
+      const id = Object.keys(VisualManifest.itemVisuals).find((id) =>
+        VisualManifest.itemVisuals[id].some(
+          (asset) => asset === preset.set + "-" + slot,
+        ),
+      );
+      model.items[slot] = item(id);
+    }
+  }
+  function comparisonModel(side) {
+    const model = {
+      ...preview,
+      character: { ...preview.character },
+      items: { ...preview.items },
+    };
+    if (comparePart.value === "armor")
+      changeArmor(model, side === "a" ? "plateA" : "plateB");
+    else
+      model.items[comparePart.value] = item(
+        alternatives[comparePart.value][side === "a" ? 0 : 1],
+      );
+    return model;
+  }
+  comparePart.addEventListener("change", () => render());
   function render() {
     for (const button of showcase.querySelectorAll("[data-showcase-preset]"))
       button.setAttribute(
@@ -317,13 +364,44 @@ const VisualUI = (() => {
       button.setAttribute(
         "aria-pressed",
         String(
-          preview.items[button.dataset.showcaseSlot]?.id ===
+          (preview.items[button.dataset.showcaseSlot]?.id || "none") ===
             button.dataset.showcaseItem,
         ),
       );
     showcase.querySelector(".showcase-status").textContent =
       `${presets[selected]?.label || "Body / base"} · ${preview.items.mainHand?.name || "Nessuna arma"} · ${preview.items.support?.name || "Nessun supporto"}`;
-    return renderer?.render(preview);
+    for (const button of showcase.querySelectorAll("[data-showcase-armor]"))
+      button.setAttribute(
+        "aria-pressed",
+        String(
+          preview.items.torso?.id ===
+            (button.dataset.showcaseArmor === "plateA"
+              ? "torso-warden"
+              : "torso-vesper"),
+        ),
+      );
+    showcase
+      .querySelector("[data-compare-toggle]")
+      .setAttribute("aria-pressed", String(compare));
+    showcase
+      .querySelector("[data-compare-silhouette]")
+      .setAttribute("aria-pressed", String(silhouette));
+    for (const button of showcase.querySelectorAll("[data-compare-side]"))
+      button.setAttribute(
+        "aria-pressed",
+        String(button.dataset.compareSide === compareSide),
+      );
+    const stage = showcase.querySelector(".showcase-stage");
+    stage.classList.toggle("is-comparing", compare);
+    stage.classList.toggle("silhouette-review", silhouette);
+    stage.dataset.side = compareSide;
+    if (compare)
+      showcase.querySelector(".showcase-status").textContent =
+        `Confronto ${comparePart.selectedOptions[0].textContent} · ${compareSide.toUpperCase()} · stessa preparazione, varia soltanto l'elemento scelto`;
+    return Promise.all([
+      renderer?.render(compare ? comparisonModel("a") : preview),
+      comparisonRenderer?.render(comparisonModel("b")),
+    ]);
   }
   showcase.addEventListener("toggle", () => {
     if (!showcase.open || renderer) return;
@@ -333,38 +411,54 @@ const VisualUI = (() => {
     svg.id = "showcase-character";
     showcase.querySelector(".showcase-stage").append(svg);
     choosePreset("plateA");
-    renderer = VisualRenderer.create(svg, () => preview);
+    renderer = VisualRenderer.create(svg, () =>
+      compare ? comparisonModel("a") : preview,
+    );
+    const other = VisualRenderer.svg("Confronto B · stessa preparazione");
+    other.id = "showcase-character-b";
+    showcase.querySelector(".showcase-stage").append(other);
+    comparisonRenderer = VisualRenderer.create(other, () =>
+      comparisonModel("b"),
+    );
     render();
   });
   showcase.addEventListener("click", (event) => {
     const button = event.target.closest("button");
     if (!button || !renderer) return;
-    if (button.dataset.showcasePreset)
+    if (button.hasAttribute("data-compare-toggle")) compare = !compare;
+    if (button.dataset.compareSide) {
+      compare = true;
+      compareSide = button.dataset.compareSide;
+    }
+    if (button.hasAttribute("data-compare-silhouette"))
+      silhouette = !silhouette;
+    if (button.dataset.showcaseArmor) {
+      changeArmor(preview, button.dataset.showcaseArmor);
+      selected = button.dataset.showcaseArmor;
+      compare = false;
+    }
+    if (button.dataset.showcasePreset) {
       choosePreset(button.dataset.showcasePreset);
+      compare = false;
+    }
     if (button.hasAttribute("data-showcase-base")) {
+      compare = false;
       selected = null;
       preview.items = {};
     }
     if (button.dataset.showcaseItem) {
-      preview.items[button.dataset.showcaseSlot] = item(
-        button.dataset.showcaseItem,
-      );
-      if (
-        button.dataset.showcaseSlot === "mainHand" &&
-        preview.items.support?.type !== "shield"
-      )
-        preview.items.support = null;
-      if (
-        button.dataset.showcaseSlot === "support" &&
-        preview.items.mainHand?.weaponType !== "sword"
-      )
-        preview.items.mainHand = item("sword");
+      compare = false;
+      const slot = button.dataset.showcaseSlot;
+      if (button.dataset.showcaseItem === "none") delete preview.items[slot];
+      else preview.items[slot] = item(button.dataset.showcaseItem);
     }
     if (button.hasAttribute("data-showcase-bow")) {
+      compare = false;
       preview.items.mainHand = item("bow");
       preview.items.support = item("quiver");
     }
     if (button.hasAttribute("data-showcase-helmet")) {
+      compare = false;
       if (preview.items.head) delete preview.items.head;
       else
         preview.items.head = item(
@@ -374,6 +468,7 @@ const VisualUI = (() => {
         );
     }
     if (button.dataset.showcaseAppearance) {
+      compare = false;
       const key = button.dataset.showcaseAppearance;
       if (key === "dye") preview.dye = button.dataset.showcaseValue;
       else preview.character[key] = button.dataset.showcaseValue;

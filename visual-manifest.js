@@ -125,15 +125,19 @@ const VisualManifest = (() => {
       const layer = part === "helmet" ? "head" : part;
       asset(`${set}-${part}`, layer, {
         classCompatibility: [cls],
+        quality: set.startsWith("plate-") ? "proxy" : "vertical-slice",
         hideRules:
-          set === "plate-b" && part === "helmet"
-            ? ["hair-front", "hair-back", "face", "eyes"]
+          set.startsWith("plate-") && part === "helmet"
+            ? ["hair-front", "hair-back", "face", "eyes", "ears"]
             : [],
       });
       const ids = [`${set}-${part}`];
       if (part === "torso")
         ids.push(
-          asset(`${set}-shoulders`, "shoulders", { classCompatibility: [cls] }),
+          asset(`${set}-shoulders`, "shoulders", {
+            classCompatibility: [cls],
+            quality: set.startsWith("plate-") ? "proxy" : "vertical-slice",
+          }),
         );
       link(item, ids);
     }
@@ -150,7 +154,9 @@ const VisualManifest = (() => {
     ["bow-a", "weapon", "bow"],
     ["quiver-a", "support", "quiver"],
   ]) {
-    asset(id, layer);
+    asset(id, layer, {
+      quality: /^(belt|sword|shield)-/.test(id) ? "proxy" : "vertical-slice",
+    });
     link(item, [id]);
   }
   for (const [id, layer] of [

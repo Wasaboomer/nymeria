@@ -165,7 +165,7 @@ const H = {
         },
       );
       await check(
-        "Plate A all parts, open helmet keeps hair; sword + shield visible",
+        "Plate A all parts, full helmet hides hair; sword + shield visible",
         async () => {
           await equip(A);
           for (const part of ["torso", "legs", "boots", "gloves", "shoulders"])
@@ -173,7 +173,7 @@ const H = {
           assert.equal(await asset("head"), "plate-a-helmet");
           assert.equal(await asset("weapon"), "sword-a");
           assert.equal(await asset("support"), "shield-a");
-          assert.equal(await asset("hair-front"), "hair-braid-front");
+          assert.equal(await asset("hair-front"), "");
           await navigate(page, "character");
           await shot("02-custode-plate-a");
         },

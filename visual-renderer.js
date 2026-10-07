@@ -13,7 +13,7 @@ const VisualRenderer = (() => {
           if (!asset) throw Error(`Unknown visual ${id}`);
           if (asset.compatibleRig !== VisualManifest.rig.id)
             throw Error(`Incompatible rig ${id}`);
-          const response = await fetch(asset.file + "?v=m65-1");
+          const response = await fetch(asset.file + "?v=m651-1");
           if (!response.ok) throw Error(`Missing visual ${id}`);
           const source = new DOMParser().parseFromString(
             await response.text(),
