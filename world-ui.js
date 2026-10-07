@@ -124,10 +124,10 @@ const WorldUI = (() => {
     }
     if (busy) for (const b of node("panel-world").querySelectorAll("[data-quest-accept], [data-quest-claim], [data-quest-track]")) b.disabled = true;
     if(typeof ProfessionData!=="undefined"){
-      const localNodes=ProfessionData.gathering.filter(n=>n.location===frontier.location);
+      const localNodes=ProfessionData.gathering.filter(n=>n.location===location.id);
       if(localNodes.length){
         const host=node("world-location-detail"), section=document.createElement("section");
-        section.className="world-professions"; section.innerHTML=`<h4>Profession opportunities</h4>${localNodes.map(n=>`<button data-world-profession><span><strong>${escape(ProfessionData.materials.find(m=>m.id===n.material)?.name||n.material)}</strong><small>${escape(ProfessionData.profession(n.profession)?.name||n.profession)} · available here</small></span><b aria-hidden="true">→</b></button>`).join("")}`;
+        section.className="world-professions"; section.innerHTML=`<h4>Profession opportunities</h4>${localNodes.map(n=>`<button data-world-profession ${busy||frontier.activeEncounter?"disabled":""}><span><strong>${escape(ProfessionData.materials.find(m=>m.id===n.material)?.name||n.material)}</strong><small>${escape(ProfessionData.profession(n.profession)?.name||n.profession)} · available here</small></span><b aria-hidden="true">→</b></button>`).join("")}`;
         host.append(section);
       }
     }
