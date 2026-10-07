@@ -35,3 +35,38 @@ const ANATOMY={
  ears:'<path fill="url(#skin)" d="M125 89L110 81 113 101 127 108ZM175 89L190 81 187 101 173 108Z"/><path fill="none" stroke="#8e6159" d="M117 89L122 100M183 89L178 100"/>',
  'arms/gloves':'<path fill="url(#cloth)" d="M108 160L122 167 116 200 110 228 95 225 99 198ZM179 167L192 160 202 183 221 193 215 207 190 198Z"/><path fill="url(#metal)" d="M98 197L115 202 111 220 95 216ZM201 184L214 190 207 205 194 198Z"/><path fill="#394d55" d="M96 215L111 218 112 231 106 240 95 235 92 225ZM214 191L224 190 233 197 230 210 220 213 209 205Z"/><path fill="none" stroke="#b4b8a0" d="M101 204L109 207M202 193L207 196M216 198L225 202"/>'
 };
+
+// Additive Creator choices; legacy hairstyle IDs remain valid.
+ITEMS.hair.push({
+  id: "braid",
+  name: "Treccia del guado",
+  detail: "Raccolto · treccia laterale",
+  back: "",
+  front: "",
+});
+PALETTES.skin = [
+  {
+    id: "warm",
+    name: "Ambra chiara",
+    color: "#ba896e",
+    light: "#e5bd9f",
+    shadow: "#81594b",
+  },
+  {
+    id: "umber",
+    name: "Terra bruna",
+    color: "#795441",
+    light: "#b18464",
+    shadow: "#49352e",
+  },
+  {
+    id: "pale",
+    name: "Avorio freddo",
+    color: "#c7b0a3",
+    light: "#eee0c8",
+    shadow: "#8a7776",
+  },
+];
+
+ITEMS.face = [{id:'calm',name:'Volto sereno'},{id:'scar',name:'Segno della frontiera'}];
+if(typeof module!=='undefined' && module.exports) module.exports={ITEMS,PALETTES};

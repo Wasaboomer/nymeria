@@ -9,40 +9,44 @@
     <meta name="theme-color" content="#101c24" />
     <title>Nymeria Frontiera del Vespro &amp; Quest System 0.1</title>
     <!-- Bump this shared asset version together on releases to avoid mixed cached scripts. -->
-    <link rel="stylesheet" href="styles.css?v=m6-mobile-0.2" />
-    <script src="navigation.js?v=m6-mobile-0.2" defer></script>
-    <script src="progression-data.js?v=m6-mobile-0.2" defer></script>
-    <script src="expedition-data.js?v=m6-mobile-0.2" defer></script>
-    <script src="combat-data.js?v=m6-mobile-0.2" defer></script>
-    <script src="classes-data.js?v=m6-mobile-0.2" defer></script>
-    <script src="armor-rules.js?v=m6-mobile-0.2" defer></script>
-    <script src="build-system.js?v=m6-mobile-0.2" defer></script>
-    <script src="class-system.js?v=m6-mobile-0.2" defer></script>
-    <script src="items.js?v=m6-mobile-0.2" defer></script>
-    <script src="equipment-data.js?v=m6-mobile-0.2" defer></script>
-    <script src="personal-loot.js?v=m6-mobile-0.2" defer></script>
-    <script src="world-data.js?v=m6-mobile-0.2" defer></script>
-    <script src="quest-data.js?v=m6-mobile-0.2" defer></script>
-    <script src="quest-events.js?v=m6-mobile-0.2" defer></script>
-    <script src="quest-system.js?v=m6-mobile-0.2" defer></script>
-    <script src="progression-events.js?v=m6-mobile-0.2" defer></script>
-    <script src="progression-store.js?v=m6-mobile-0.2" defer></script>
-    <script src="equipment.js?v=m6-mobile-0.2" defer></script>
-    <script src="character.js?v=m6-mobile-0.2" defer></script>
-    <script src="inventory.js?v=m6-mobile-0.2" defer></script>
-    <script src="app.js?v=m6-mobile-0.2" defer></script>
-    <script src="combat-engine.js?v=m6-mobile-0.2" defer></script>
-    <script src="combat-ui.js?v=m6-mobile-0.2" defer></script>
-    <script src="class-ui.js?v=m6-mobile-0.2" defer></script>
-    <script src="expedition-engine.js?v=m6-mobile-0.2" defer></script>
-    <script src="progression-system.js?v=m6-mobile-0.2" defer></script>
-    <script src="expedition-ui.js?v=m6-mobile-0.2" defer></script>
-    <script src="world-system.js?v=m6-mobile-0.2" defer></script>
-    <script src="quest-ui.js?v=m6-mobile-0.2" defer></script>
-    <script src="world-ui.js?v=m6-mobile-0.2" defer></script>
-    <script src="notification-system.js?v=m6-mobile-0.2" defer></script>
-    <script src="notification-ui.js?v=m6-mobile-0.2" defer></script>
-    <script src="mobile-ui.js?v=m6-mobile-0.2" defer></script>
+    <link rel="stylesheet" href="styles.css?v=m65-1" />
+    <script src="navigation.js?v=m65-1" defer></script>
+    <script src="progression-data.js?v=m65-1" defer></script>
+    <script src="expedition-data.js?v=m65-1" defer></script>
+    <script src="combat-data.js?v=m65-1" defer></script>
+    <script src="classes-data.js?v=m65-1" defer></script>
+    <script src="armor-rules.js?v=m65-1" defer></script>
+    <script src="build-system.js?v=m65-1" defer></script>
+    <script src="class-system.js?v=m65-1" defer></script>
+    <script src="items.js?v=m65-1" defer></script>
+    <script src="equipment-data.js?v=m65-1" defer></script>
+    <script src="personal-loot.js?v=m65-1" defer></script>
+    <script src="world-data.js?v=m65-1" defer></script>
+    <script src="quest-data.js?v=m65-1" defer></script>
+    <script src="quest-events.js?v=m65-1" defer></script>
+    <script src="quest-system.js?v=m65-1" defer></script>
+    <script src="progression-events.js?v=m65-1" defer></script>
+    <script src="progression-store.js?v=m65-1" defer></script>
+    <script src="equipment.js?v=m65-1" defer></script>
+    <script src="visual-manifest.js?v=m65-1" defer></script>
+    <script src="visual-renderer.js?v=m65-1" defer></script>
+    <script src="character.js?v=m65-1" defer></script>
+    <script src="inventory.js?v=m65-1" defer></script>
+    <script src="app.js?v=m65-1" defer></script>
+    <script src="combat-engine.js?v=m65-1" defer></script>
+    <script src="combat-ui.js?v=m65-1" defer></script>
+    <script src="class-ui.js?v=m65-1" defer></script>
+    <script src="expedition-engine.js?v=m65-1" defer></script>
+    <script src="progression-system.js?v=m65-1" defer></script>
+    <script src="expedition-ui.js?v=m65-1" defer></script>
+    <script src="world-system.js?v=m65-1" defer></script>
+    <script src="quest-ui.js?v=m65-1" defer></script>
+    <script src="world-ui.js?v=m65-1" defer></script>
+    <script src="notification-system.js?v=m65-1" defer></script>
+    <script src="notification-ui.js?v=m65-1" defer></script>
+    <script src="mobile-ui.js?v=m65-1" defer></script>
+    <script src="visual-icons.js?v=m65-1" defer></script>
+    <script src="visual-ui.js?v=m65-1" defer></script>
   </head>
   <body>
     <main class="app">
@@ -138,37 +142,10 @@
           </nav>
           <svg
             id="character"
-            viewBox="0 0 300 440"
+            viewBox="0 0 360 640"
             role="img"
             aria-label="Iria, personaggio fantasy adulto con equipaggiamento modulare"
           >
-            <defs>
-              <linearGradient id="skin" x2="1" y2="1">
-                <stop stop-color="#ddb69d" />
-                <stop offset=".5" stop-color="#b98270" />
-                <stop offset="1" stop-color="#76564f" />
-              </linearGradient>
-              <linearGradient id="metal" x2="1" y2="1">
-                <stop stop-color="#ced4c6" />
-                <stop offset=".3" stop-color="#758e8d" />
-                <stop offset=".6" stop-color="#344b55" />
-                <stop offset="1" stop-color="#132a35" />
-              </linearGradient>
-              <linearGradient id="cloth" x2="1" y2="1">
-                <stop stop-color="#435c62" />
-                <stop offset="1" stop-color="#182731" />
-              </linearGradient>
-              <linearGradient id="blade" x2="1" y2="0">
-                <stop stop-color="#4d727e" />
-                <stop offset=".5" stop-color="#e8e8d1" />
-                <stop offset=".54" stop-color="#a0c2c2" />
-                <stop offset="1" stop-color="#486473" />
-              </linearGradient>
-              <linearGradient id="hairShade" x2="1" y2="1">
-                <stop stop-color="white" stop-opacity=".2" />
-                <stop offset="1" stop-color="#050f18" stop-opacity=".5" />
-              </linearGradient>
-            </defs>
             <g id="rig"></g>
           </svg>
           <div class="stage-caption">
@@ -192,7 +169,7 @@
             <span>ASPETTO</span>
           </div>
           <p class="hint">
-            Scegli capelli e occhi, poi conferma con Crea personaggio.
+            Scegli carnagione, volto, capelli e occhi, poi conferma con Crea personaggio.
           </p>
           <div id="character-appearance-options"></div>
         </section>
@@ -307,24 +284,7 @@
           <span class="versus">VS</span>
           <article class="fighter">
             <div class="combat-avatar guardian-avatar">
-              <svg viewBox="0 0 90 120" aria-hidden="true">
-                <path
-                  fill="#47585d"
-                  stroke="#182b32"
-                  stroke-width="2"
-                  d="M33 9L57 9 68 30 60 44 74 51 83 73 69 80 61 68 60 93 66 112 48 112 44 98 40 112 23 112 30 92 29 67 20 80 7 73 16 51 30 44 22 30Z"
-                />
-                <path
-                  fill="#263c43"
-                  d="M35 16H55L59 34 45 42 31 34ZM28 52L45 61 62 52 59 85 45 94 31 85Z"
-                />
-                <path
-                  fill="none"
-                  stroke="#b7a277"
-                  stroke-width="2"
-                  d="M33 27H40M50 27H57M45 67V83M32 95L30 106M58 95L60 106"
-                />
-              </svg>
+              <img src="assets/enemies/sentinel.svg?v=m65-1" width="360" height="640" alt="Guardiano delle Rovine · visual condiviso provvisorio" />
             </div>
             <h3 id="combat-enemy-name">Guardiano delle Rovine</h3>
             <p id="combat-enemy-hp"></p>

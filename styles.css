@@ -1850,3 +1850,81 @@ body { min-height: 100dvh; }
 .npc-offer > small { display: none; }
 #panel-world .npc-offer > button { width: auto; margin: 0; font-size: 11px; }
 #world-location-detail > h4 { margin-top: 18px; }
+
+/* M6.5: art composition, reserved portrait canvases and original map. */
+.nymeria-icon { width: 24px; height: 24px; flex-shrink: 0; vertical-align: middle; color: #c7b895; }
+.bottom-nav .nymeria-icon { width: 25px; height: 25px; }
+.character-links button > .nymeria-icon { display: block; margin: 0 auto 5px; }
+.hub-links:not(.character-links) button .nymeria-icon { width: 22px; }
+.world-shortcuts button .nymeria-icon { width: 18px; height: 18px; margin-right: 5px; }
+.stage { height: 400px; background: radial-gradient(ellipse at 50% 37%,#4156525c,transparent 58%),linear-gradient(135deg,#172933,#101923); border-radius: 80px 80px 8px 8px; overflow: hidden; }
+.stage::before { width: 90%; height: 96%; border-color:#73847933; }
+#character { width: 225px; height: 400px; bottom: 0; }
+.stage-heading { top: 10px; font-size: 9px; opacity:.65; }
+.stage .equipment { top: 145px; }
+.stage .equipment button { background:#172a30cc; border-color:#61736c66; }
+.visual-character { overflow: visible; }
+.visual-character .layer { stroke: none; stroke-width: 0; animation: none; }
+.visual-rig { transform-origin:180px 580px; animation:visual-breathe 5s ease-in-out infinite; }
+.visual-character [data-layer="cloak"] { transform-origin:180px 140px; animation:visual-cloak 7s ease-in-out infinite; }
+.visual-character [data-layer="eyes"] { transform-origin:180px 85px; animation:visual-blink 6.2s infinite; }
+.visual-character [data-layer="weapon"], .visual-character [data-layer="arms/gloves"], .visual-character [data-layer="gloves"] { transform-origin:180px 170px; animation:visual-hand 5s ease-in-out infinite; }
+@keyframes visual-breathe { 0%,100% { transform:translateY(0) scaleY(1); } 50% { transform:translateY(-1.3px) scaleY(1.002); } }
+@keyframes visual-cloak { 0%,100% { transform:skewX(0); } 50% { transform:skewX(.5deg); } }
+@keyframes visual-hand { 0%,100% { transform:rotate(0); } 50% { transform:rotate(.25deg); } }
+@keyframes visual-blink { 0%,43%,46%,100% { transform:scaleY(1); } 44%,45% { transform:scaleY(.05); } }
+.hair-choice { min-height:85px; }.hair-choice svg { width:50px; height:64px; flex-shrink:0; }
+.face-options { display:flex; gap:8px; }.face-options button { flex:1; padding:10px 6px; font-size:12px; }
+.face-options button[aria-pressed="true"] { border-color:var(--accent); background:#344b49; }
+.equipment-stage { position:relative; height:480px; background:radial-gradient(ellipse,#354f4b70,transparent 70%); border:1px solid #344a4d; border-radius:60px 60px 6px 6px; }
+#equipment-character { position:absolute; top:14px; left:50%; transform:translateX(-50%); width:235px; height:450px; pointer-events:none; }
+#equipment-grid { position:relative; display:grid; grid-template-columns:64px 64px; justify-content:space-between; grid-auto-flow:row; height:100%; gap:4px; margin:0; padding:12px 7px; }
+#equipment-grid .slot-card { display:flex; flex-direction:column; min-width:0; min-height:50px; gap:2px; padding:3px 2px; text-align:center; background:#152831e8; border-radius:6px; }
+#equipment-grid .slot-icon { width:25px; height:25px; }.slot-card .slot-icon svg { width:25px; height:25px; }
+#equipment-grid .slot-card small { font-size:9px; line-height:1.1; }
+#equipment-grid .slot-card strong,#equipment-grid .slot-card em { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+#equipment-grid .slot-card.locked { opacity:.6; }
+.visual-world-map { position:relative; width:100%; height:620px; max-height:none; background:#253a3d url('assets/world/frontier.svg?v=m65-1') center/100% 100%; border:1px solid #76816b77; border-radius:8px; overflow:hidden; display:block; }
+.map-title { position:absolute; left:14px; top:10px; margin:0; font:10px Georgia,serif; letter-spacing:1.5px; color:#cbb990; }
+#world-locations .map-node { position:absolute; left:var(--map-x); top:var(--map-y); transform:translate(-50%,-50%); display:flex; flex-direction:column; width:133px; min-height:64px; gap:3px; padding:0; border:0; background:transparent; color:#e0ddc9; text-align:center; }
+.map-node-sigil { display:flex; align-items:center; justify-content:center; width:40px; height:40px; background:#192d33; border:1px solid #bcaa80; border-radius:50%; box-shadow:0 3px 8px #0006; }
+.map-node-label { display:block; border:1px solid #6b7e7277; border-radius:4px; background:#162930ee; padding:5px; width:100%; }
+.map-node-label strong { display:block; font:12px Georgia,serif; line-height:1.2; }.map-node-label small { display:block; font:10px Arial,sans-serif; margin-top:4px; }
+#world-locations .world-node-current .map-node-sigil { border:2px solid #e4cca0; background:#426459; box-shadow:0 0 0 4px #bdad7755; }
+#world-locations .map-objective .map-node-label { border-color:#e0c68c; }
+#world-locations .map-node:disabled { opacity:.6; cursor:default; }
+.map-legend { position:absolute; bottom:5px; left:0; width:100%; font-size:10px; text-align:center; color:#d3ccb0; }
+.visual-battle-arena { position:relative; height:300px; display:flex; justify-content:center; background:radial-gradient(ellipse at 50% 85%,#79908030,transparent 60%),linear-gradient(155deg,#223f42,#15232f); border:1px solid #50655e66; border-radius:35px 35px 6px 6px; overflow:hidden; }
+.visual-battle-arena::before { content:''; position:absolute; width:85%; height:35px; bottom:22px; border:1px solid #85917a44; border-radius:50%; }
+.visual-battle-arena > .visual-character,.visual-battle-arena > .visual-enemy { width:50%; max-width:180px; height:285px; align-self:flex-end; object-fit:contain; margin-bottom:10px; }
+.visual-skill-feedback { position:absolute; bottom:2px; left:3%; width:94%; text-align:center; padding:5px; margin:0; font-size:11px; background:#10242bea; color:#e0d2ad; border-radius:4px; }
+.visual-attack { animation:visual-strike .25s ease-out; }
+@keyframes visual-strike { 50% { translate:3px -1px; } }
+#world-battle-log { max-height:80px; overflow:auto; opacity:.8; font-size:11px; }
+.world-fighters { margin:14px 0; }.world-fighters strong { font-size:12px; }.world-fighters p { font-size:12px; }
+@media(max-width:350px) { #character { width:211px; height:375px; }.stage { height:375px; }.stage .equipment { top:133px; }.equipment-stage { height:450px; }#equipment-character { width:216px; height:425px; }#equipment-grid { grid-template-columns:55px 55px; }.visual-world-map { height:600px; }#world-locations .map-node { width:113px; }.map-node-label strong { font-size:11px; }.visual-battle-arena { height:265px; }.visual-battle-arena>.visual-character,.visual-battle-arena>.visual-enemy { height:250px; } }
+@media(prefers-reduced-motion:reduce) { .visual-rig,.visual-character [data-layer],.visual-attack { animation:none !important; } }
+.guardian-avatar img { width:100%; height:100%; object-fit:contain; }
+.slot-card[data-open-slot]:focus-visible { outline:2px solid #d8c396; outline-offset:2px; }
+.map-node-sigil .world-mark { width:29px; height:29px; margin:0; color:#d0bd93; }
+#expedition-wealth .nymeria-icon,#inventory-resources .nymeria-icon { width:16px; height:16px; margin-right:4px; }
+.visual-character [data-layer="support"] { transform-origin:180px 170px; animation:visual-hand 5s ease-in-out infinite; }
+#visual-diagnostics { padding:10px; border:1px solid var(--line); }
+#visual-diagnostics p { overflow-wrap:anywhere; font-size:12px; }
+@media(prefers-reduced-motion:reduce) { .visual-character [data-layer="support"] { animation:none; } }
+.face-options button { background:#1b3037; border:1px solid #526860; border-radius:6px; color:var(--ink); }
+.face-options button[aria-pressed="true"] { background:#344b49; border-color:#d8c396; }
+/* DEBUG showcase: only instantiated in Test Mode. */
+#visual-showcase { border:1px solid var(--line); border-radius:8px; padding:12px; }
+#visual-showcase summary { min-height:44px; cursor:pointer; padding:10px 0; font:18px Georgia,serif; }
+.showcase-controls,.showcase-enemies { display:flex; flex-wrap:wrap; gap:7px; }
+#visual-showcase button { min-height:44px; padding:9px; background:#1b3037; color:var(--ink); border:1px solid #526860; border-radius:6px; font-size:12px; }
+#visual-showcase button[aria-pressed="true"] { background:#344b49; border-color:#d8c396; }
+.showcase-stage { height:400px; margin:12px 0; background:radial-gradient(ellipse,#354f4b70,transparent 70%); }
+#showcase-character { display:block; width:100%; height:100%; }
+.showcase-status { font-size:12px; line-height:1.5; }
+.showcase-appearance fieldset { border:1px solid var(--line); border-radius:6px; padding:8px; margin:12px 0; display:flex; flex-wrap:wrap; gap:7px; min-width:0; }
+.showcase-appearance legend { font-size:12px; padding:0 5px; }
+.showcase-appearance button span { display:inline-block; width:14px; height:14px; border:1px solid #aaa; border-radius:50%; vertical-align:middle; margin-right:5px; }
+.showcase-enemy { display:block; width:100%; height:400px; object-fit:contain; margin-top:12px; background:#192d33; border-radius:8px; }
+.showcase-enemy[hidden] { display:none; }

@@ -556,6 +556,28 @@ const GearData = (() => {
       description: "Le abilità di barriera durano +1 secondo.",
     },
   ];
+  // M6.5 visual alternatives inherit existing gameplay data without new balance.
+  for (const [source, id, name] of [
+    ["torso-warden", "torso-vesper", "Corazza del Vespro"],
+    ["legs-sentinel", "legs-vesper", "Gambali del Vespro"],
+    ["boots-plate", "boots-vesper", "Stivali del Vespro"],
+    ["gloves-iron", "gloves-vesper", "Guanti del Vespro"],
+    ["head-helm", "head-vesper", "Elmo chiuso del Vespro"],
+    ["sword", "vesper-sword", "Lama delle faglie"],
+    ["shield", "vesper-shield", "Scudo ottagonale del Vespro"],
+  ]) {
+    const original = items.find((i) => i.id === source);
+    items.push({
+      ...original,
+      id,
+      name,
+      stats: { ...original.stats },
+      appearance: { ...original.appearance },
+      demoMigration: true,
+      description:
+        "Alternativa visiva del vertical slice. Stesse statistiche del modello originale.",
+    });
+  }
   const icons = {
     weapon: "M7 25L25 5 28 7 10 27M8 20L15 27M7 27L4 30",
     support: "M7 6L17 3 27 6 25 21 17 29 9 21Z",

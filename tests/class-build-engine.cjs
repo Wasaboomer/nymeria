@@ -100,7 +100,7 @@ check(
       bad.advance(2);
       assert.equal(bad.status, "idle");
       assert.equal(bad.time, 0);
-      assert.equal(m.read("Equipment.state.inventory.length"), 49);
+      assert.equal(m.read("Equipment.state.inventory.length"), 56);
       const other = cls === "hunter" ? "warden" : "hunter";
       assert.equal(
         m.run(

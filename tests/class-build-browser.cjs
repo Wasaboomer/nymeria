@@ -76,7 +76,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       );
       assert.equal(
         await page.evaluate(() => Equipment.state.inventory.length),
-        49,
+        56,
       );
       await tab("combat");
       assert.ok(await page.locator("#combat-start").isDisabled());
@@ -298,7 +298,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       assert.equal(await page.evaluate(() => CombatUI.start()), false);
       assert.equal(
         await page.evaluate(() => Equipment.state.inventory.length),
-        49,
+        56,
       );
       await overflow();
       assert.deepEqual(errors, []);

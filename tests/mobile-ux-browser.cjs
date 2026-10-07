@@ -53,7 +53,7 @@ const shot = async (p, name, width, cls) => { if (width === 390 && cls === 'hunt
     await tap(`[data-item-id="${id}"]`);if(await page.locator('#equip-item').isDisabled()){await tap('#close-detail');await tap('#navigation-back');}else await tap('#equip-item');
    }
    await tap('#navigation-back');assert.equal(await page.evaluate(()=>NymeriaNavigation.route.screen),'character');
-   await tap('[data-nav="inventory"]');assert.equal(await page.locator('.inventory-item').count(),49);
+   await tap('[data-nav="inventory"]');assert.equal(await page.locator('.inventory-item').count(),56);
    // Unfiltered inventory retains foreign-class items and feedback.
    await tap(`[data-item-id="${cls==='hunter'?'torso-warden':'torso-chain'}"]`);
    assert.match(await page.locator('#detail-body').innerText(),/solamente armature|Non utilizzabile/);

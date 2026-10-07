@@ -32,24 +32,34 @@
     options.textContent = "";
     if (available) {
       const state = Equipment.state.character;
-      document.querySelector("#creator-heading").textContent =
-        Equipment.state.characterCreated
-          ? "Editor personaggio · DEBUG"
-          : "Crea il tuo personaggio";
+      document.querySelector("#creator-heading").textContent = Equipment.state
+        .characterCreated
+        ? "Editor personaggio · DEBUG"
+        : "Crea il tuo personaggio";
       document.querySelector("#save").innerHTML =
         `${Equipment.state.characterCreated ? "Conferma aspetto · DEBUG" : "Crea personaggio"} <span>→</span>`;
       options.innerHTML =
         '<p class="option-label">SILHOUETTE CAPELLI</p><div class="item-grid">' +
-        ITEMS.hair
+        VisualManifest.hairstyles
           .map(
             (x) =>
-              `<button class="item" data-key="hair" data-id="${x.id}" aria-pressed="${state.hair === x.id}"><svg viewBox="105 50 90 90" aria-hidden="true" style="--hair:${Character.color("hair", state.hairColor)}"><g class="layer">${x.back + x.front}</g></svg><span><strong>${x.name}</strong><small>${x.detail}</small></span></button>`,
+              `<button class="item hair-choice" data-key="hair" data-id="${x.id}" aria-pressed="${state.hair === x.id}"><svg viewBox="120 25 115 110" aria-hidden="true" style="--hair:${Character.color("hair", state.hairColor)}"><image href="assets/character/hair-${x.id}-front.svg?v=m65-1" width="360" height="640"/></svg><span><strong>${x.name}</strong><small>${x.detail}</small></span></button>`,
           )
           .join("") +
         '</div><p class="option-label">COLORE CAPELLI</p>' +
         swatches("hairColor", "hair") +
         '<p class="option-label">COLORE OCCHI</p>' +
-        swatches("eyes", "eyes");
+        swatches("eyes", "eyes") +
+        '<p class="option-label">CARNAGIONE</p>' +
+        swatches("skin", "skin") +
+        '<p class="option-label">VOLTO / DETTAGLIO</p><div class="face-options">' +
+        VisualManifest.faces
+          .map(
+            (x) =>
+              `<button data-key="face" data-id="${x.id}" aria-pressed="${state.face === x.id}">${x.name}</button>`,
+          )
+          .join("") +
+        "</div>";
     }
     document.querySelector("#reset-demo").hidden = !Equipment.testMode;
     document.querySelector("#creator-debug").hidden = !Equipment.testMode;

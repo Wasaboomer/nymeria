@@ -84,13 +84,13 @@ const modules = [
         );
         assert.equal(
           await page.locator("#inventory-grid .inventory-item").count(),
-          49,
+          56,
         );
       }
       const assets = requests.filter((url) => /\.(js|css)$/.test(url.pathname));
-      assert.equal(assets.length, 34);
+      assert.equal(assets.length, 38);
       assert.ok(
-        assets.every((url) => url.searchParams.get("v") === "m6-mobile-0.2"),
+        assets.every((url) => url.searchParams.get("v") === "m65-1"),
       );
       console.log(
         `PASS ${name}: panel visibility + hidden + aria-selected; versioned assets`,

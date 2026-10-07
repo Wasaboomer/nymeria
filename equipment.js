@@ -12,6 +12,8 @@ const Equipment = (() => {
   };
   const defaultCharacter = {
     hair: "veil",
+    skin: "warm",
+    face: "calm",
     hairColor: "ink",
     eyes: "amber",
     level: 1,
@@ -20,6 +22,8 @@ const Equipment = (() => {
   const itemById = Object.fromEntries(GearData.items.map((i) => [i.id, i]));
   const appearanceAllowed = {
     hair: ITEMS.hair.map((x) => x.id),
+    skin: PALETTES.skin.map((x) => x.id),
+    face: ITEMS.face.map((x) => x.id),
     hairColor: PALETTES.hair.map((x) => x.id),
     eyes: PALETTES.eyes.map((x) => x.id),
   };
@@ -35,7 +39,9 @@ const Equipment = (() => {
     const totals =
       typeof ProgressionData !== "undefined"
         ? ProgressionData.baseStats(
-            model.character.level, baseStats, currentClass()?.statGrowthPerLevel,
+            model.character.level,
+            baseStats,
+            currentClass()?.statGrowthPerLevel,
           )
         : { ...baseStats };
     for (const entry of Object.values(model.equipment)) {

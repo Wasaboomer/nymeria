@@ -230,7 +230,7 @@ async function check(name, test) {
       assert.equal(restored.classes.build().id, "lacerator");
       for (const id of raw.inventory.map((i) => i.id))
         assert.ok(restored.equipment.state.inventory.some((i) => i.id === id));
-      assert.equal(restored.equipment.state.inventory.length, 49);
+      assert.equal(restored.equipment.state.inventory.length, 56);
       assert.equal(restored.equipment.equipped("torso"), null);
       assert.ok(
         restored.equipment.state.inventory

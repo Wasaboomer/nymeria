@@ -483,7 +483,7 @@ async function check(name, test) {
       assert.equal(restored.classes.selected().id, "warden");
       assert.equal(restored.classes.build().id, "command");
       assert.deepEqual(restored.read("Equipment.state.equipment"), gear);
-      assert.equal(restored.equipment.state.inventory.length, 49);
+      assert.equal(restored.equipment.state.inventory.length, 56);
       const raw = {
         ...Storage.initial(),
         totalXP: 637 + 340,

@@ -121,6 +121,7 @@ const WorldUI = (() => {
       for (const b of node("world-location-detail").querySelectorAll("button")) b.disabled = true;
     }
     if (busy) for (const b of node("panel-world").querySelectorAll("[data-quest-accept], [data-quest-claim], [data-quest-track]")) b.disabled = true;
+    document.dispatchEvent(new Event("nymeria:world-render"));
   }
   function stopClock() {
     if (frameId !== null) cancelAnimationFrame(frameId);
@@ -156,6 +157,7 @@ const WorldUI = (() => {
     node("world-battle-resume").disabled = settling;
     node("world-battle-pause").disabled = engine?.status !== "running" || settling;
     node("world-battle-log").innerHTML = engine ? engine.log.slice(-5).reverse().map(event => `<li>${event.time.toFixed(1)}s · ${event.type === "enemyAction" ? ticket.template.name : event.type === "playerAction" ? ticket.snapshot.profile.abilities.find(a => a.id === event.abilityId)?.name : event.type === "result" ? "Scontro concluso" : event.type === "dodge" ? "Schivata" : "Effetto"}${event.damage !== undefined ? ` · ${event.damage} danni` : ""}</li>`).join("") : '<li class="hint">Incontro salvato. Riprendi quando vuoi.</li>';
+    document.dispatchEvent(new Event("nymeria:world-battle-render"));
   }
   async function settle() {
     if (settling || !ticketId) return;
@@ -235,5 +237,5 @@ const WorldUI = (() => {
     if (document.hidden && engine?.status === "running") { engine.pause(); stopClock(); renderBattle(); }
   });
   render();
-  return { selectView, render, resume, settle, get engine() { return engine; } };
+  return { mark, selectView, render, resume, settle, get engine() { return engine; } };
 })();

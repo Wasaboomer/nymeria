@@ -190,7 +190,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
       );
       assert.equal(
         await page.evaluate(() => Equipment.state.inventory.length),
-        50,
+        57,
       );
       assert.ok(await page.locator("#expedition-claim").isHidden());
       assert.ok(await page.locator("#expedition-claimed").isVisible());
@@ -406,8 +406,8 @@ const frozen = new Date("2026-10-06T12:00:00Z");
     await b.evaluate(() => ProgressionStore.refresh());
     assert.equal(await a.evaluate(() => ProgressionStore.state.totalXP), 108);
     assert.equal(await b.evaluate(() => ProgressionStore.state.totalXP), 108);
-    assert.equal(await a.evaluate(() => Equipment.state.inventory.length), 50);
-    assert.equal(await b.evaluate(() => Equipment.state.inventory.length), 50);
+    assert.equal(await a.evaluate(() => Equipment.state.inventory.length), 57);
+    assert.equal(await b.evaluate(() => Equipment.state.inventory.length), 57);
     console.log(
       "PASS concurrent tabs: one expedition, one claim, synchronized level/resources/loot",
     );
@@ -475,7 +475,7 @@ const frozen = new Date("2026-10-06T12:00:00Z");
       );
       assert.equal(
         await persistedPage.evaluate(() => Equipment.state.inventory.length),
-        50,
+        57,
       );
       assert.equal(
         (

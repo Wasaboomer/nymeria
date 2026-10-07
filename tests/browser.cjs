@@ -60,7 +60,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
       }
       let state = await model();
       const initial = JSON.parse(JSON.stringify(state));
-      assert.equal(state.inventory.length, 49);
+      assert.equal(state.inventory.length, 56);
       assert.equal(Object.keys(state.equipment).length, 16);
       for (const i of state.inventory) {
         for (const field of [
@@ -417,7 +417,7 @@ const baseURL = process.env.NYMERIA_TEST_URL || "http://127.0.0.1:8000";
         await page.locator("#random").tap();
         assert.deepEqual((await model()).equipment, gearBeforeRandom);
         console.log(
-          "PASS 390px: all 49 demo items tested by touch (usable equipped, Cloth/Leather rejected); all associated SVG layers present; random appearance preserves gear",
+          "PASS 390px: all 56 demo items tested by touch (usable equipped, Cloth/Leather rejected); all associated SVG layers present; random appearance preserves gear",
         );
       }
       await page.evaluate(() => ClassSystem.selectClass("hunter"));

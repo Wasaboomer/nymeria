@@ -130,28 +130,16 @@ const CombatUI = (() => {
     saveSettings();
     renderSettings();
   }
+  let visualPlayer;
   function clonePlayer() {
-    const clone = node("character").cloneNode(true),
-      ids = new Map();
-    clone.querySelectorAll("[id]").forEach((element) => {
-      ids.set(element.id, "combat-" + element.id);
-      element.id = "combat-" + element.id;
-    });
-    clone.id = "combat-player-figure";
-    clone.removeAttribute("role");
-    clone.removeAttribute("aria-label");
-    clone.setAttribute("aria-hidden", "true");
-    clone.querySelectorAll("*").forEach((element) => {
-      for (const attribute of [...element.attributes])
-        if (attribute.value.includes("url(#")) {
-          let value = attribute.value;
-          for (const [from, to] of ids)
-            value = value.split(`url(#${from})`).join(`url(#${to})`);
-          element.setAttribute(attribute.name, value);
-        }
-    });
-    node("combat-player-avatar").textContent = "";
-    node("combat-player-avatar").appendChild(clone);
+    if (!visualPlayer) {
+      const svg = VisualRenderer.svg("Iria · equipaggiamento attuale");
+      svg.id = "combat-player-figure";
+      node("combat-player-avatar").replaceChildren(svg);
+      visualPlayer = VisualRenderer.create(svg);
+      svg.querySelector(".visual-rig").id = "combat-rig";
+    }
+    visualPlayer.render();
   }
   function makeEngine(seed) {
     return CombatEngine.create({
@@ -206,9 +194,7 @@ const CombatUI = (() => {
     );
     text(
       "combat-reward-level",
-      receipt?.levelUps.length
-        ? ProgressionData.levelUpSummary(receipt)
-        : "",
+      receipt?.levelUps.length ? ProgressionData.levelUpSummary(receipt) : "",
     );
     text(
       "combat-reward-status",

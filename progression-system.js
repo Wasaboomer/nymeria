@@ -54,6 +54,14 @@ const ProgressionLifecycle = (() => {
         gearIds: Object.values(equipment.state.equipment).map(
           (entry) => entry.equippedItem,
         ),
+        // Presentation metadata only; the combat engine still uses actual stats/gear.
+        visualSnapshot: {
+          character: { ...equipment.state.character },
+          dye: equipment.state.equipmentAppearance?.dye || "sea",
+          appearanceIds: Object.values(equipment.state.equipment).map(
+            (entry) => entry.appearanceItem,
+          ),
+        },
       });
     }
     function start(activityId, options = {}) {
