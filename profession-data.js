@@ -19,9 +19,9 @@ const ProfessionData = (() => {
       discovery:"vesper-fragment-chart", purpose:"Assemble three fragments into a readable frontier chart." },
   ];
   const gathering = [
-    { id:"vesper-iron-vein", profession:"blacksmithing", material:"raw-iron", amount:2, xp:10 },
-    { id:"vesper-herbs", profession:"herbalism", material:"wild-herbs", amount:2, xp:12 },
-    { id:"vesper-map-scrap", profession:"cartography", material:"weathered-map-fragment", amount:1, xp:15 },
+    { id:"vesper-iron-vein", location:"broken-path", profession:"blacksmithing", material:"raw-iron", amount:2, xp:10 },
+    { id:"vesper-herbs", location:"lantern-wood", profession:"herbalism", material:"wild-herbs", amount:2, xp:12 },
+    { id:"vesper-map-scrap", location:"vesper-outpost", profession:"cartography", material:"weathered-map-fragment", amount:1, xp:15 },
   ];
   const profession=(id)=>professions.find(x=>x.id===id)||null;
   const recipe=(id)=>recipes.find(x=>x.id===id)||null;
