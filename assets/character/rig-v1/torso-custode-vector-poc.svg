@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="374" height="480" viewBox="0 0 374 480">
+<defs>
+  <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#71838a"/><stop offset=".28" stop-color="#35464e"/><stop offset=".64" stop-color="#202c35"/><stop offset="1" stop-color="#617078"/></linearGradient>
+  <linearGradient id="gold" x1="0" x2="1" y2=".4"><stop stop-color="#c8a46d"/><stop offset=".55" stop-color="#685339"/><stop offset="1" stop-color="#e0bd7b"/></linearGradient>
+  <linearGradient id="cloth" x1="0" x2="1" y2="1"><stop stop-color="#243d4d"/><stop offset="1" stop-color="#101e2b"/></linearGradient>
+</defs>
+<!-- Origin 325,360; fixed 374x480 torso zone. Transparent background. -->
+<path d="M110 30 Q187 3 264 30 L328 94 L319 298 Q280 386 187 454 Q94 386 55 298 L46 94Z" fill="url(#cloth)" stroke="#17252d" stroke-width="7"/>
+<path d="M113 39 L187 64 L261 39 L306 103 L281 281 L187 361 L93 281 L68 103Z" fill="url(#steel)" stroke="#a6a18a" stroke-width="5"/>
+<path d="M187 64 L187 351 M90 112 Q187 169 284 112 M103 253 Q187 287 271 253" fill="none" stroke="url(#gold)" stroke-width="8"/>
+<path d="M68 104 L29 83 L6 141 L43 195 L94 177 L109 128Z M306 104 L345 83 L368 141 L331 195 L280 177 L265 128Z" fill="url(#steel)" stroke="url(#gold)" stroke-width="6"/>
+<path d="M117 49 Q187 96 257 49 L239 12 L187 26 L135 12Z" fill="#142a36" stroke="url(#gold)" stroke-width="6"/>
+<path d="M157 171 L187 149 L217 171 L208 208 L187 223 L166 208Z" fill="#a18a60" stroke="#e2c58a" stroke-width="4"/>
+<path d="M177 178 L187 167 L197 178 L187 198Z" fill="#193e4b"/>
+<path d="M83 318 Q187 365 291 318 L278 357 Q187 402 96 357Z" fill="#263743" stroke="#b5975e" stroke-width="6"/>
+<path d="M129 375 L187 421 L245 375" fill="none" stroke="#8f7951" stroke-width="5"/>
+<g fill="#e0c58e"><circle cx="91" cy="129" r="5"/><circle cx="283" cy="129" r="5"/><circle cx="118" cy="302" r="4"/><circle cx="256" cy="302" r="4"/></g>
+</svg>
