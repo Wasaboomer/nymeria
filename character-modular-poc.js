@@ -28,9 +28,14 @@
     var group = element('g', {'data-zone': id, 'data-module': id + '-' + variant, transform: 'translate(' + x + ' ' + y + ')'});
     var shape;
     if (id === 'torso' && variant === 'custode') {
-      shape = element('path', {d: 'M0 50 L75 0 L187 45 L299 0 L374 50 L340 330 L187 480 L34 330 Z', fill: '#57697d'});
+      // External, deterministic rig-fit vector. No transforms other than zone origin.
+      // The SVG is a POC graphic, not a BODY MASTER replacement or final item art.
+      shape = element('image', {
+        href: 'assets/character/rig-v1/torso-custode-vector-poc.svg',
+        x: 0, y: 0, width: w, height: h,
+        preserveAspectRatio: 'none'
+      });
       group.appendChild(shape);
-      group.appendChild(element('path', {d: 'M187 45 V410 M40 160 L187 210 L334 160', fill: 'none', stroke: '#e9b86e', 'stroke-width': 12}));
     } else if (id === 'arms' || id === 'legs' || id === 'feet') {
       // Paired placeholder pieces leave the central torso visible.
       var breadth = id === 'arms' ? 90 : id === 'legs' ? 115 : 140;
@@ -41,10 +46,12 @@
       shape = element('rect', {x: 8, y: 8, width: w - 16, height: h - 16, rx: 26, fill: id === 'head' ? '#aa8473' : '#314955'});
       group.appendChild(shape);
     }
-    shape.setAttribute('stroke', '#94a6b1'); shape.setAttribute('stroke-width', '5');
+    if (!(id === 'torso' && variant === 'custode')) {
+      shape.setAttribute('stroke', '#94a6b1'); shape.setAttribute('stroke-width', '5');
+    }
     var label = element('text', {x: id === 'arms' || id === 'legs' || id === 'feet' ? 60 : w / 2, y: h / 2, fill: '#ffffff', 'text-anchor': 'middle', 'font-size': 30});
     label.textContent = id === 'torso' ? variant.toUpperCase() : id;
-    group.appendChild(label);
+    if (!(id === 'torso' && variant === 'custode')) group.appendChild(label);
     return group;
   }
   function createRenderer(svg) {
@@ -64,7 +71,7 @@
     if (!mount || document.getElementById('modular-character-poc')) return;
     var section = document.createElement('details');
     section.id = 'modular-character-poc';
-    section.innerHTML = '<summary>Modular Character POC</summary><p>PLACEHOLDER · Character Asset Spec v1 · 1024×1536. Nessun asset definitivo. BODY MASTER v2 invariato.</p><div class="poc-switch" role="group" aria-label="Modulo torso"><button data-poc-torso="base" aria-pressed="true">BASE</button><button data-poc-torso="custode" aria-pressed="false">CUSTODE</button></div><svg role="img" aria-label="Personaggio composto da nove zone placeholder indipendenti"></svg><p role="status" aria-live="polite">Torso BASE · altri 8 moduli invariati</p>';
+    section.innerHTML = '<summary>Modular Character POC</summary><p>POC · Character Asset Spec v1 · 1024×1536. Torso CUSTODE: SVG vettoriale a geometria controllata, non arte definitiva. Altri moduli placeholder. BODY MASTER v2 invariato.</p><div class="poc-switch" role="group" aria-label="Modulo torso"><button data-poc-torso="base" aria-pressed="true">BASE</button><button data-poc-torso="custode" aria-pressed="false">CUSTODE</button></div><svg role="img" aria-label="Personaggio composto da nove zone placeholder indipendenti"></svg><p role="status" aria-live="polite">Torso BASE · altri 8 moduli invariati</p>';
     var style = document.createElement('style');
     style.textContent = '#modular-character-poc {margin-block:16px;padding:12px;border:1px solid #657583;min-width:0} #modular-character-poc summary {min-height:44px;cursor:pointer} #modular-character-poc p {overflow-wrap:anywhere} #modular-character-poc svg {display:block;width:100%;max-width:340px;height:auto;margin:12px auto;background:#101c24} #modular-character-poc .poc-switch {display:flex;gap:8px;flex-wrap:wrap} #modular-character-poc button {min-height:44px;min-width:88px} #modular-character-poc button[aria-pressed="true"] {outline:2px solid #e9b86e}';
     section.appendChild(style);
