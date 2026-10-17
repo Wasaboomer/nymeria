@@ -1,0 +1,1 @@
+function rwd(id,x,g,elv){if(S.done[id])return'';const f=fac(elv),xp=Math.round(x*f),co=Math.round(g*f*(S.race==='umano'?1.05:1));S.done[id]=1;S.g+=co;const up=addXp(xp);return' (+'+xp+' XP, +'+co+' Corone'+(up?', livello '+S.lv+'!':'')+')'}
