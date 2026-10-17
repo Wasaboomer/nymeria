@@ -1,0 +1,29 @@
+function qprog(ty,tg,n){QD.forEach(q=>{if(S.q[q.id]===1&&q.ty===ty&&q.tg===tg)S.qp[q.id]=Math.min(q.n,S.qp[q.id]+n)})}
+const ORG={kharun:'qk3',velhiri:'qv3'};
+const NPC={mira:'Mira, custode delle lanterne',dorn:'Dorn, guardiano del ponte',eldra:'Eldra, erborista errante',ossian:'Ossian, studioso delle rovine',thrain:'Thrain, anziano dei Kharun',ylen:'Ylen, anziana dei Velhiri',tarsa:'Tarsa, cacciatrice della selva',pell:'Pell, intrecciatore di liane',serah:'Serah, capitana dell’Avamposto',brann:'Brann, mercante e fabbro'};
+function finish(q,c){S.q[q.id]=2;ftSet('qd');if(q.bag)S.bx=(S.bx||0)+q.bag;S.qp[q.id]=q.n||1;if(c&&c.craft)S.craft=c.craft;if(c&&c.fl)Object.assign(S.fl,c.fl);
+ let t=rwd(q.id,q.x*((c&&c.xm)||1),q.g*((c&&c.gm)||1),q.elv);t+=repQuest(q);
+ if(c&&c.pay){S.g=Math.max(0,S.g-c.pay);t+=' (−'+c.pay+' Corone)'}
+ let n='';if(c&&c.it){n=dropNote(giveItem(c.it))}
+ if(q.ep===5)S.ch5=1;else if(q.ep===4)S.ch4=1;else if(q.ep===3)S.ch3=1;else if(q.ep===2)S.ch2=1;else if(q.ep)S.ch1=1;if(c&&c.rep)c.rep.forEach(([f,n])=>{t+=repAdd(f,n)});const txt=(c&&c.tx)||q.dn||'Missione completata.';save();
+ if(c&&c.fight)return ask(txt+t,[['Combatti','Preparati allo scontro',()=>fight(c.fight)]]);
+ show(txt+t+n+(c&&c.craft?' Ora puoi usare il tuo mestiere a Veyra.':'')+(q.ep===5?epilogo5():q.ep===4?epilogo4():q.ep===3?epilogo3():q.ep===2?epilogo2():q.ep?epilogo():''))}
+function askCh(q){ask(q.cq||'Cosa scegli?',q.ch.filter(c=>(!c.race||c.race===S.race)&&(!c.req||c.req())).map(c=>[c.l,c.d||'',()=>c.craft?ask('Sei sicuro? Il mestiere di '+c.l+' non si può più cambiare.',[['Sì, divento '+c.l,'',()=>finish(q,c)],['Torna indietro','',()=>askCh(q)]]):finish(q,c)]))}
+function epilogo(){const f=S.fl;return'<br><br><b>Capitolo 1 concluso.</b> '+(f.lan==='pura'?'La lanterna maestra arde di fiamma pura. ':'La lanterna maestra arde di luce viola. ')+(f.cuore==='dato'?'Il Cuore ora scalda le lanterne di Veyra.':'Il Cuore della Fiamma Nera pulsa ancora, ma ora è tuo.')}
+function epilogo2(){const a=S.fl.albero;return'<br><br><b>Capitolo 2 concluso.</b> '+(a==='salvo'?'L’Albero Madre vive, e la Selva ascolta. Nei sogni la Voce ti ringrazia.':'L’Albero Madre non c’è più. L’olio rallenta, ma nei sogni la Voce non tace.')+' La strada riporta a Veyra: la Lanterna maestra ti aspetta (Capitolo 3, «La gabbia di luce»).'}
+function epilogo4(){const f=S.fl,p=(f.sm==='libero')+(f.sn==='dorme')+(f.sd==='spenta');return'<br><br><b>Atto II concluso.</b> '+(p===3?'Le tre schegge sono state donate in pace: i custodi riposano. ':p===0?'Le tre schegge sono state prese con la forza: i custodi non riposano. ':'Le schegge raccontano due strade: pace per alcuni, forza per altri. ')+(f.atto2==='uniti'?'I popoli sono riuniti a Veyra. ':f.atto2==='custodi'?'Ylen e Thrain custodiscono le schegge. ':'Il segreto resta a Veyra, per ora. ')+'L’atto III comincia: le sei lanterne dei popoli cedono. Serah ti aspetta a Veyra.'}
+function epilogo3(){const c=S.fl.caldrec;return'<br><br><b>Capitolo 3 concluso.</b> '+(c==='giustizia'?'Caldrec è nelle mani del consiglio, ma il consiglio ora ha paura di te. ':c==='perdono'?'Caldrec se ne va senza la sua catena, portando con sé la verità. ':'Caldrec è davanti a Thrain e Ylen, e per la prima volta i popoli si ascoltano. ')+'La Lanterna maestra è incrinata e dentro la luce si sente un respiro. L’atto II comincia: ogni popolo custodisce una scheggia (in preparazione).'}
+function talk(id){const tq=QD.find(q=>S.q[q.id]===1&&q.ty==='talk'&&q.tg===id);if(tq)return tq.ch?askCh(tq):finish(tq);
+ if(id==='brann'&&S.q.q4===2)return shop();const o=[];
+ QD.filter(q=>q.giver===id).forEach(q=>{const st=S.q[q.id]||0;if(st===2||(q.pre&&S.q[q.pre]!==2)||(q.rc&&q.rc!==S.race)||(q.fr&&repGr(q.fr[0])<q.fr[1])||(id==='serah'&&ORG[S.race]&&S.q[ORG[S.race]]!==2)||(q.rqa&&!q.rqa.every(k=>S.fl[k]))||(q.rq&&!Object.entries(q.rq).every(([k,v])=>S.fl[k]===v)))return;
+  if(!st){if(S.lv<q.min)o.push([q.t,'Richiede livello '+q.min,()=>show('Torna quando sarai livello '+q.min+'.')]);else o.push(['Accetta: '+q.t,(q.main?'Storia principale. ':q.origin?'Origine. ':'Secondaria. ')+'Livello consigliato '+q.elv,()=>{S.q[q.id]=1;S.qp[q.id]=0;trkAdd(q.id);ftSet('qa');save();show(q.tx)}])}
+  else if(S.qp[q.id]>=q.n)o.push(['Consegna: '+q.t,'Ricompensa proporzionata a livello e difficoltà',()=>q.ch?askCh(q):finish(q)]);
+  else o.push([q.t,q.ty==='talk'?'Vai a parlare con '+NPC[q.tg].split(',')[0]:'In corso: '+S.qp[q.id]+'/'+q.n,()=>show('Ti aspetto.')])});
+ if(id==='brann')o.push(['Mercato','Compra strumenti e armature, vendi materiali',shop]);
+ o.push(['Congedati','',()=>{}]);ask(NPC[id]+': «'+(o.length>1?'Ho bisogno di te.':'Per ora niente. Torna più avanti.')+'»',o)}
+function shop(){const o=[],n=Object.entries(S.inv).reduce((a,[k,v])=>a+(isP(k)?0:v*(PRICE[k]||0)),0);
+ if(n)o.push(['Vendi tutti i materiali','+'+n+' Corone',()=>{S.g+=n;Object.keys(S.inv).forEach(k=>{if(!isP(k))delete S.inv[k]});save();shop()}]);
+ [['Zaino rinforzato','bx','bnz','slot dello zaino',60],['Sacca dei materiali','mx','bns','slot della borsa dei materiali',60]].forEach(([nm,f,c,d,b])=>{const k=S[c]||0;if(k<4){const pr=px(b*Math.pow(2,k));o.push(['Compra: '+nm+' ('+(k+1)+'/4)',pr+' Corone, +4 '+d,()=>{if(S.g<pr)show('Non hai abbastanza Corone.');else{S.g-=pr;S[c]=k+1;S[f]=(S[f]||0)+4;save();shop()}}])}});
+ Object.entries(TOOL).forEach(([k,[nm]])=>{if(S.tools[k]===1)o.push(['Migliora: '+nm+' II',px(80)+' Corone, apre i nodi di grado II',()=>{if(S.g<px(80))show('Non hai abbastanza Corone.');else{S.g-=px(80);S.tools[k]=2;save();shop()}}])});
+ Object.entries(TOOL).forEach(([k,[nm,p]])=>{if(!S.tools[k])o.push(['Compra: '+nm,px(p)+' Corone, serve per raccogliere '+k,()=>{if(S.g<px(p))show('Non hai abbastanza Corone.');else{S.g-=px(p);S.tools[k]=1;save();shop()}}])});
+ o.push(['Congedati','',()=>{}]);ask('Brann: «Hai '+S.g+' Corone.»'+(repDisc()?' (sconto reputazione −'+Math.round(repDisc()*100)+'%)':''),o)}

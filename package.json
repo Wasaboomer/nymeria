@@ -1,0 +1,12 @@
+{
+  "name": "nymeria",
+  "version": "0.2.0",
+  "private": true,
+  "description": "NYMERIA - MMORPG mobile testuale. Client (HTML unico generato) e server con account e salvataggio online.",
+  "engines": { "node": ">=22.5" },
+  "scripts": {
+    "build": "node tools/build.js",
+    "start": "node tools/build.js && node server/server.js",
+    "test": "node tools/build.js && node --test test/*.test.js"
+  }
+}
